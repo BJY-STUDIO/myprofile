@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Two+Tone" rel="stylesheet">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dialog Example</title>
+    <title>Kernel的个人博客正在建设中</title>
     <style>
         /* 样式用于控制对话框的大小和位置 */
         #dialog {
@@ -31,35 +36,57 @@
             --md-dialog-container-shape: 28px;
         }
 
+        /* 样式 */
+        .contacts {
+            min-width: calc(100vw - 212px);
+        }
+
+        .contacts [slot='header'] {
+            display: flex;
+            flex-direction: row-reverse;
+            align-items: center;
+        }
+
+        .contacts .headline {
+            flex: 1;
+        }
+
+        .contact-content,
+        .contact-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .contact-content {
+            flex-direction: column;
+        }
+
+        .contact-row > * {
+            flex: 1;
+        }
+
+        /* Flexbox布局 */
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* 上下居中对齐 */
+            justify-content: center; /* 左右居中对齐 */
+            height: 100vh; /* 设置容器高度为视窗高度 */
+        }
+
+        /* 表单元素样式 */
+        .form-element {
+            margin-bottom: 10px; /* 设置元素间距 */
+        }
+
     </style>
-  <script type="module" crossorigin src="/assets/index-BqkfSSju.js"></script>
+  <script type="module" crossorigin src="/assets/index-CGe5SwWx.js"></script>
 </head>
 <body>
 
-<!-- 对话框 -->
-<div id="dialog">
-    <div id="dialogHeadline">Dialog Title</div>
-    <div id="dialogContent">
-        <label for="inputText">Input:</label>
-        <input type="text" id="inputText" name="inputText"><br><br>
-    </div>
-    <div id="dialogActions">
-        <button id="cancelBtn" value="cancel">Cancel</button>
-        <button id="okBtn" value="ok">Ok</button>
-    </div>
-</div>
-
+<!-- 添加对话框元素 -->
 <md-dialog>
-    <div slot="headline">Title</div>
-    <div slot="content">Dialog content</div>
-</md-dialog>
-
-<!-- 按钮用于打开对话框 -->
-<button id="openDialogBtn">Open Dialog</button>
-
-<!-- 一个默认打开的对话框 -->
-<md-dialog type="alert" open>
-    <div slot="headline">Hello world! </div>
+    <div slot="headline">Hello world!</div>
     <form slot="content" id="form-id" method="dialog">
         欢迎访问我的个人博客，该博客正在建设中。
     </form>
@@ -68,5 +95,15 @@
         <md-text-button form="form-id" value="ok">确认</md-text-button>
     </div>
 </md-dialog>
+<div class="form-container">
+    <div class="form-element">
+        <md-outlined-button id="openDialogBtn">欢迎</md-outlined-button>
+    </div>
+    <div class="form-element">
+        <!-- 加载进度 -->
+        <md-circular-progress four-color indeterminate></md-circular-progress>
+    </div>
+</div>
+
 </body>
 </html>
