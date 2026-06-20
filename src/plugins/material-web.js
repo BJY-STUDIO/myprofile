@@ -25,6 +25,9 @@ import '@material/web/menu/menu.js'
 import '@material/web/menu/menu-item.js'
 import '@material/web/menu/sub-menu.js'
 
+import '@material/web/slider/slider.js'
+import '@material/web/switch/switch.js'
+
 import '@material/web/divider/divider.js'
 import '@material/web/elevation/elevation.js'
 import '@material/web/fab/fab.js'

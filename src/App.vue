@@ -1,18 +1,20 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import TopAppBar from '@/components/TopAppBar.vue'
+import NavigationRail from '@/components/NavigationRail.vue'
 
 const route = useRoute()
 const router = useRouter()
 
 const navItems = [
-  { id: 'home', label: '首页', route: '/' },
-  { id: 'about', label: '关于', route: '/about' },
-  { id: 'blog', label: '博客', route: '/blog' },
-  { id: 'projects', label: '项目', route: '/projects' },
-  { id: 'contact', label: '联系', route: '/contact' },
+  { id: 'home', label: '首页', icon: 'home', activeIcon: 'home', route: '/' },
+  { id: 'about', label: '关于', icon: 'person_outline', activeIcon: 'person', route: '/about' },
+  { id: 'blog', label: '博客', icon: 'description', activeIcon: 'description', route: '/blog' },
+  { id: 'projects', label: '项目', icon: 'code', activeIcon: 'code', route: '/projects' },
+  { id: 'contact', label: '联系', icon: 'mail_outline', activeIcon: 'mail', route: '/contact' },
 ]
+
+const fabConfig = { icon: 'create', label: '新建' }
 
 const activeNavId = computed(() => {
   const matched = navItems.find(
@@ -24,35 +26,157 @@ const activeNavId = computed(() => {
 function navigateTo(item) {
   if (item.route) router.push(item.route)
 }
+
+function onFabClick() {
+  // FAB 点击事件，后续扩展
+}
 </script>
 
 <template>
-  <div class="app-layout" :data-theme-mode="activeNavId">
-    <!-- Top App Bar -->
-    <TopAppBar />
+  <div class="app-layout">
+    <!-- 桌面端：左侧 Navigation Rail -->
+    <NavigationRail
+      class="app-layout__rail"
+      :items="navItems"
+      :fab="fabConfig"
+      @fab-click="onFabClick"
+    />
 
-    <!-- 导航标签栏 -->
-    <nav class="app-layout__nav" role="navigation" aria-label="Page navigation">
-      <div class="app-layout__nav-inner">
-        <button
-          v-for="item in navItems"
-          :key="item.id"
-          class="nav-tab"
-          :class="{ 'nav-tab--active': activeNavId === item.id }"
-          @click="navigateTo(item)"
-        >
-          <span class="nav-tab__indicator" v-if="activeNavId === item.id"></span>
-          <span class="nav-tab__label">{{ item.label }}</span>
-        </button>
-      </div>
-    </nav>
-
-    <!-- 主内容区 -->
+    <!-- 右侧主区域 -->
     <div class="app-layout__body">
+      <!-- Top App Bar：站点标题 + GitHub + 主题按钮 -->
+      <header class="top-bar">
+        <div class="top-bar__content">
+          <span class="top-bar__title">M3 Blog</span>
+          <div class="top-bar__actions">
+            <!-- GitHub 链接 -->
+            <a
+              class="top-bar__icon-btn"
+              href="https://github.com/BJY-STUDIO/myprofile"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="GitHub repository"
+              title="GitHub repository"
+            >
+              <svg viewBox="0 0 16 16" width="24" height="24" fill="currentColor">
+                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+              </svg>
+            </a>
+
+            <!-- 主题切换按钮 -->
+            <button
+              id="theme-btn"
+              class="top-bar__icon-btn"
+              aria-label="Toggle theme"
+              title="Toggle theme"
+            >
+              <span class="material-icons-round">palette</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- 主内容 -->
       <main class="app-main">
         <router-view />
       </main>
     </div>
+
+    <!-- 移动端：底部 Navigation Bar -->
+    <nav class="app-layout__bottom-nav" role="navigation" aria-label="Mobile navigation">
+      <div
+        v-for="item in navItems"
+        :key="item.id"
+        class="bottom-nav__item"
+        :class="{ 'bottom-nav__item--active': activeNavId === item.id }"
+        @click="navigateTo(item)"
+      >
+        <div class="bottom-nav__indicator">
+          <div class="bottom-nav__state-layer"></div>
+          <span class="material-icons-round bottom-nav__icon">
+            {{ activeNavId === item.id ? (item.activeIcon || item.icon) : item.icon }}
+          </span>
+        </div>
+        <span class="bottom-nav__label">{{ item.label }}</span>
+      </div>
+    </nav>
+
+    <!-- 主题面板 (md-menu, anchor 到 theme-btn) -->
+    <md-menu id="theme-menu" anchor="theme-btn" has-overflow>
+      <div class="theme-panel">
+        <div class="theme-panel__header">
+          <span class="material-icons-round theme-panel__header-icon">palette</span>
+          <span class="theme-panel__header-title">Theme Controls</span>
+        </div>
+
+        <md-divider></md-divider>
+
+        <!-- Source Color 输入 -->
+        <div class="theme-panel__section">
+          <label class="theme-panel__label">Hex Source Color</label>
+          <div class="theme-panel__color-input">
+            <input
+              id="source-color-picker"
+              type="color"
+              class="theme-panel__color-swatch"
+            />
+            <md-filled-text-field
+              id="source-color-text"
+              label=""
+              type="text"
+              maxlength="7"
+              value="#6750a4"
+              style="flex:1"
+            ></md-filled-text-field>
+          </div>
+        </div>
+
+        <!-- Hue 滑块 -->
+        <div class="theme-panel__section">
+          <label class="theme-panel__label">Hue</label>
+          <div class="theme-panel__slider-row">
+            <md-slider id="hue-slider" min="0" max="360" value="270" labeled></md-slider>
+            <span id="hue-value" class="theme-panel__slider-value">0</span>
+          </div>
+        </div>
+
+        <!-- Chroma 滑块 -->
+        <div class="theme-panel__section">
+          <label class="theme-panel__label">Chroma</label>
+          <div class="theme-panel__slider-row">
+            <md-slider id="chroma-slider" min="0" max="150" value="55" labeled></md-slider>
+            <span id="chroma-value" class="theme-panel__slider-value">0</span>
+          </div>
+        </div>
+
+        <!-- Tone 滑块 -->
+        <div class="theme-panel__section">
+          <label class="theme-panel__label">Tone</label>
+          <div class="theme-panel__slider-row">
+            <md-slider id="tone-slider" min="0" max="100" value="50" labeled></md-slider>
+            <span id="tone-value" class="theme-panel__slider-value">0</span>
+          </div>
+        </div>
+
+        <md-divider></md-divider>
+
+        <!-- 明暗模式切换 -->
+        <div class="theme-panel__section">
+          <label class="theme-panel__label">Color Scheme</label>
+          <div class="theme-panel__mode-buttons">
+            <button class="theme-mode-btn" data-mode="dark" aria-label="dark color scheme" title="Dark">
+              <span class="material-icons-round">dark_mode</span>
+            </button>
+            <button class="theme-mode-btn" data-mode="system" aria-label="auto color scheme" title="Auto">
+              <span class="material-icons-round">brightness_medium</span>
+            </button>
+            <button class="theme-mode-btn" data-mode="light" aria-label="light color scheme" title="Light">
+              <span class="material-icons-round">light_mode</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </md-menu>
   </div>
 </template>
 
@@ -60,113 +184,352 @@ function navigateTo(item) {
 .app-layout {
   min-height: 100vh;
   display: flex;
+  flex-direction: row;
+}
+
+.app-layout__body {
+  flex: 1;
+  margin-left: 80px;
+  min-height: 100vh;
+  display: flex;
   flex-direction: column;
-  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
 }
 
-/* ======== 导航标签栏 ======== */
-.app-layout__nav {
+/* ======== Top Bar ======== */
+.top-bar {
   position: sticky;
-  top: 64px;
-  z-index: 199;
-  background-color: var(--md-sys-color-surface, #fffbfe);
+  top: 0;
+  z-index: 150;
+  background-color: var(--md-sys-color-surface-container, #f3edf7);
   border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-}
-
-.app-layout__nav-inner {
+  height: 64px;
   display: flex;
   align-items: center;
+  padding: 0 16px;
+}
+
+.top-bar__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 16px;
-  gap: 4px;
-  overflow-x: auto;
 }
 
-.nav-tab {
+.top-bar__title {
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  line-height: 28px;
+}
+
+.top-bar__actions {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  height: 48px;
-  padding: 0 20px;
+  gap: 4px;
+}
+
+/* 图标按钮（GitHub SVG + palette）*/
+.top-bar__icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
   border: none;
   background: none;
-  cursor: pointer;
-  position: relative;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-  outline: none;
   color: var(--md-sys-color-on-surface-variant, #49454f);
-  transition: color 0.2s cubic-bezier(0.2, 0, 0, 1);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.2s;
 }
 
-.nav-tab:hover {
-  background-color: var(--md-sys-color-on-surface-variant, #49454f);
+.top-bar__icon-btn:hover {
   background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent);
-  border-radius: 12px;
-}
-
-.nav-tab:focus-visible {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 12%, transparent);
-  border-radius: 12px;
-}
-
-.nav-tab--active {
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
-.nav-tab__label {
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: 0.1px;
-  line-height: 20px;
+.top-bar__icon-btn:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary, #6750a4);
+  outline-offset: 2px;
 }
 
-.nav-tab--active .nav-tab__label {
-  font-weight: 600;
+.top-bar__icon-btn:active {
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 12%, transparent);
 }
 
-/* 底部指示线 */
-.nav-tab__indicator {
-  position: absolute;
-  bottom: 0;
-  left: 20px;
-  right: 20px;
-  height: 3px;
-  background-color: var(--md-sys-color-primary, #6750a4);
-  border-radius: 3px 3px 0 0;
+.top-bar__icon-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+.top-bar__icon-btn .material-icons-round {
+  font-size: 24px;
 }
 
 /* ======== 主内容区 ======== */
-.app-layout__body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
 .app-main {
   flex: 1;
-  padding: 32px;
+  padding: 24px 32px;
   max-width: 1200px;
   width: 100%;
   box-sizing: border-box;
   margin: 0 auto;
 }
 
-/* ======== 移动端 ======== */
+/* ======== 主题面板 ======== */
+#theme-menu {
+  --md-menu-container-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  --md-menu-container-shape: 16px;
+}
+
+.theme-panel {
+  padding: 16px;
+  min-width: 300px;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.theme-panel__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.theme-panel__header-icon {
+  font-size: 24px;
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+.theme-panel__header-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.theme-panel__section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.theme-panel__label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.theme-panel__color-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-panel__color-swatch {
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  padding: 0;
+  background: none;
+}
+
+.theme-panel__color-swatch::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.theme-panel__color-swatch::-webkit-color-swatch {
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: 12px;
+}
+
+.theme-panel__slider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.theme-panel__slider-row md-slider {
+  flex: 1;
+}
+
+.theme-panel__slider-value {
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  min-width: 28px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 明暗模式按钮组 */
+.theme-panel__mode-buttons {
+  display: flex;
+  border: 1px solid var(--md-sys-color-outline, #79747e);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.theme-mode-btn {
+  flex: 1;
+  height: 40px;
+  border: none;
+  background: none;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, color 0.2s;
+  position: relative;
+}
+
+.theme-mode-btn:not(:last-child) {
+  border-right: 1px solid var(--md-sys-color-outline, #79747e);
+}
+
+.theme-mode-btn:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent);
+}
+
+.theme-mode-btn.selected {
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+.theme-mode-btn .material-icons-round {
+  font-size: 20px;
+}
+
+/* ======== 移动端底部 Navigation Bar (M3) ======== */
+.app-layout__bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background-color: var(--md-sys-color-surface, #fffbfe);
+  border-top: 1px solid var(--md-sys-color-outline-variant, #c4c7c5);
+  z-index: 100;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0 8px;
+}
+
+.bottom-nav__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.bottom-nav__indicator {
+  width: 64px;
+  height: 32px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  transition: background-color 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.bottom-nav__item--active .bottom-nav__indicator {
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
+}
+
+.bottom-nav__state-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  opacity: 0;
+  transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.bottom-nav__item:not(.bottom-nav__item--active) .bottom-nav__state-layer {
+  background-color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.bottom-nav__item--active .bottom-nav__state-layer {
+  background-color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+.bottom-nav__item:hover .bottom-nav__state-layer {
+  opacity: 0.08;
+}
+
+.bottom-nav__item:active .bottom-nav__state-layer {
+  opacity: 0.12;
+}
+
+.bottom-nav__icon {
+  font-size: 24px;
+  position: relative;
+  z-index: 2;
+  transition: color 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.bottom-nav__item--active .bottom-nav__icon {
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+.bottom-nav__label {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+  transition: color 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.bottom-nav__item--active .bottom-nav__label {
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  font-weight: 600;
+}
+
+/* ======== 响应式 ======== */
 @media (max-width: 840px) {
-  .app-layout__nav {
-    top: 56px;
+  .app-layout__rail {
+    display: none !important;
   }
 
-  .app-main {
-    padding: 20px 16px;
+  .app-layout__body {
+    margin-left: 0;
+    padding-bottom: 80px;
   }
 
-  .nav-tab {
-    padding: 0 14px;
-    height: 44px;
+  .app-layout__bottom-nav {
+    display: flex;
+  }
+
+  .top-bar {
+    height: 56px;
+    padding: 0 8px;
+  }
+
+  .top-bar__title {
+    font-size: 18px;
   }
 }
 </style>
