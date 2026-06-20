@@ -1,0 +1,405 @@
+<script setup>
+/**
+ * Navigation Rail 组件
+ * 严格遵循 Material Design 3 规范
+ *
+ * M3 规范要点：
+ * - 宽度 80dp，固定左侧
+ * - 每个目标项高度 72dp
+ * - Indicator（药丸）：56x32dp，full round (16dp radius)
+ * - State layer 在 indicator 内部，不在整个 item 上
+ * - 选中态：secondary-container 药丸 + on-secondary-container 图标
+ * - 未选中态：透明背景 + on-surface-variant 图标
+ * - Hover: state layer 8% / Focus: 12% / Pressed: 12%
+ * - 选中项 hover state layer 颜色用 on-secondary-container
+ * - 未选中项 hover state layer 颜色用 on-surface-variant
+ * - Ripple: 从点击位置扩散，0.4s 动画
+ */
+import { computed, ref, nextTick } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+
+const props = defineProps({
+  items: {
+    type: Array,
+    required: true,
+    validator: (v) => v.length >= 3 && v.length <= 7,
+  },
+  fab: {
+    type: Object,
+    default: null,
+  },
+})
+
+const emit = defineEmits(['fab-click'])
+
+const route = useRoute()
+const router = useRouter()
+
+const activeId = computed(() => {
+  const matched = props.items.find((item) => {
+    if (item.route) return route.path === item.route || route.path.startsWith(item.route + '/')
+    return false
+  })
+  return matched ? matched.id : props.items[0]?.id
+})
+
+function navigate(item) {
+  if (item.route) router.push(item.route)
+}
+
+// ======== Ripple 逻辑 ========
+const ripples = ref([])
+
+function handleRipple(event, itemId) {
+  const indicator = event.currentTarget.querySelector('.nav-rail__indicator')
+  if (!indicator) return
+
+  const rect = indicator.getBoundingClientRect()
+  const x = event.clientX - rect.left
+  const y = event.clientY - rect.top
+  const size = Math.max(rect.width, rect.height) * 2
+
+  const id = Date.now() + Math.random()
+  ripples.value.push({
+    id,
+    itemId,
+    x: x - size / 2,
+    y: y - size / 2,
+    size,
+    active: activeId.value === itemId,
+  })
+
+  nextTick(() => {
+    setTimeout(() => {
+      ripples.value = ripples.value.filter((r) => r.id !== id)
+    }, 400)
+  })
+}
+</script>
+
+<template>
+  <nav class="nav-rail" role="navigation" aria-label="Main navigation">
+    <!-- FAB 区域 -->
+    <div v-if="fab" class="nav-rail__fab-container">
+      <button
+        class="nav-rail__fab"
+        :aria-label="fab.label"
+        @click="emit('fab-click')"
+      >
+        <span class="material-icons-round">{{ fab.icon }}</span>
+      </button>
+    </div>
+
+    <div v-else class="nav-rail__fab-spacer"></div>
+
+    <!-- 导航目标项 -->
+    <div
+      v-for="item in items"
+      :key="item.id"
+      class="nav-rail__destination"
+      :class="{ 'nav-rail__destination--active': activeId === item.id }"
+      role="tab"
+      :aria-selected="activeId === item.id"
+      :aria-label="item.label"
+      tabindex="0"
+      @click="navigate(item); handleRipple($event, item.id)"
+      @keydown.enter="navigate(item)"
+      @keydown.space.prevent="navigate(item)"
+    >
+      <!-- Indicator 容器 -->
+      <div class="nav-rail__indicator">
+        <!-- State Layer（严格在 indicator 内部） -->
+        <div class="nav-rail__state-layer"></div>
+        <!-- Vue 驱动的 Ripple -->
+        <div
+          v-for="ripple in ripples.filter(r => r.itemId === item.id)"
+          :key="ripple.id"
+          class="nav-rail__ripple"
+          :class="{ 'nav-rail__ripple--active': ripple.active }"
+          :style="{
+            left: ripple.x + 'px',
+            top: ripple.y + 'px',
+            width: ripple.size + 'px',
+            height: ripple.size + 'px',
+          }"
+        ></div>
+        <!-- 图标 -->
+        <span class="nav-rail__icon material-icons-round">
+          {{ activeId === item.id ? (item.activeIcon || item.icon) : item.icon }}
+        </span>
+      </div>
+      <span class="nav-rail__label">{{ item.label }}</span>
+    </div>
+  </nav>
+</template>
+
+<style scoped>
+/* ======== Navigation Rail 容器 ======== */
+.nav-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 80px;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 100;
+  background-color: var(--md-sys-color-surface, #fffbfe);
+  border-right: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ======== FAB ======== */
+.nav-rail__fab-container {
+  padding: 16px 0 24px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.nav-rail__fab-spacer {
+  height: 16px;
+}
+
+.nav-rail__fab {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  border: none;
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.2s cubic-bezier(0.2, 0, 0, 1);
+  box-shadow: var(--md-sys-elevation-1, 0 1px 2px 0 rgba(0,0,0,0.3), 0 1px 3px 1px rgba(0,0,0,0.15));
+}
+
+/* FAB State Layer */
+.nav-rail__fab::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  background-color: var(--md-sys-color-on-primary-container, #21005d);
+  opacity: 0;
+  transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
+  pointer-events: none;
+}
+
+.nav-rail__fab:hover::before {
+  opacity: 0.08;
+}
+
+.nav-rail__fab:focus-visible::before {
+  opacity: 0.12;
+}
+
+.nav-rail__fab:active::before {
+  opacity: 0.12;
+}
+
+.nav-rail__fab:hover {
+  box-shadow: var(--md-sys-elevation-2, 0 1px 2px 0 rgba(0,0,0,0.3), 0 2px 6px 2px rgba(0,0,0,0.15));
+}
+
+.nav-rail__fab:active {
+  box-shadow: var(--md-sys-elevation-1, 0 1px 2px 0 rgba(0,0,0,0.3), 0 1px 3px 1px rgba(0,0,0,0.15));
+}
+
+.nav-rail__fab .material-icons-round {
+  font-size: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ======== 目标项 ======== */
+.nav-rail__destination {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 72px;
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+/* ======== Indicator（药丸容器） ======== */
+.nav-rail__indicator {
+  width: 56px;
+  height: 32px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  transition: background-color 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* 选中态 - indicator 药丸背景 */
+.nav-rail__destination--active .nav-rail__indicator {
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
+}
+
+/* ======== State Layer（在 indicator 内部） ======== */
+.nav-rail__state-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  opacity: 0;
+  transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 未选中项 state layer 颜色 */
+.nav-rail__destination:not(.nav-rail__destination--active) .nav-rail__state-layer {
+  background-color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+/* 选中项 state layer 颜色 */
+.nav-rail__destination--active .nav-rail__state-layer {
+  background-color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+/* Hover - 8% */
+.nav-rail__destination:hover .nav-rail__state-layer {
+  opacity: 0.08;
+}
+
+/* Focus - 12% */
+.nav-rail__destination:focus-visible .nav-rail__state-layer {
+  opacity: 0.12;
+}
+
+/* Pressed - 12% */
+.nav-rail__destination:active .nav-rail__state-layer {
+  opacity: 0.12;
+}
+
+/* ======== Ripple（Vue 驱动，从点击位置扩散） ======== */
+.nav-rail__ripple {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+  transform: scale(0);
+  animation: m3-ripple 0.4s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+/* 未选中项 ripple 颜色 */
+.nav-rail__ripple:not(.nav-rail__ripple--active) {
+  background-color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+/* 选中项 ripple 颜色 */
+.nav-rail__ripple--active {
+  background-color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+@keyframes m3-ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.12;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+/* ======== 图标 ======== */
+.nav-rail__icon {
+  font-size: 24px;
+  line-height: 1;
+  position: relative;
+  z-index: 2;
+  transition: color 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* 选中态图标颜色 */
+.nav-rail__destination--active .nav-rail__icon {
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+/* ======== 标签 ======== */
+.nav-rail__label {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  line-height: 16px;
+  margin-top: 4px;
+  text-align: center;
+  transition: color 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.nav-rail__destination--active .nav-rail__label {
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  font-weight: 600;
+}
+
+/* ======== 暗色主题 ======== */
+@media (prefers-color-scheme: dark) {
+  .nav-rail {
+    background-color: var(--md-sys-color-surface, #1c1b1f);
+  }
+
+  .nav-rail__fab {
+    background-color: var(--md-sys-color-primary-container, #4f378b);
+    color: var(--md-sys-color-on-primary-container, #eaddff);
+    box-shadow: var(--md-sys-elevation-1, 0 1px 3px 1px rgba(0,0,0,0.3));
+  }
+
+  .nav-rail__fab::before {
+    background-color: var(--md-sys-color-on-primary-container, #eaddff);
+  }
+
+  .nav-rail__fab:hover {
+    box-shadow: var(--md-sys-elevation-2, 0 2px 6px 2px rgba(0,0,0,0.3));
+  }
+
+  .nav-rail__destination {
+    color: var(--md-sys-color-on-surface-variant, #cac4d0);
+  }
+
+  .nav-rail__destination--active .nav-rail__indicator {
+    background-color: var(--md-sys-color-secondary-container, #4a4458);
+  }
+
+  .nav-rail__destination:not(.nav-rail__destination--active) .nav-rail__state-layer {
+    background-color: var(--md-sys-color-on-surface-variant, #cac4d0);
+  }
+
+  .nav-rail__destination--active .nav-rail__state-layer {
+    background-color: var(--md-sys-color-on-secondary-container, #e8def8);
+  }
+
+  .nav-rail__destination--active .nav-rail__icon {
+    color: var(--md-sys-color-on-secondary-container, #e8def8);
+  }
+
+  .nav-rail__destination--active .nav-rail__label {
+    color: var(--md-sys-color-on-surface, #e6e1e5);
+  }
+
+  .nav-rail__ripple:not(.nav-rail__ripple--active) {
+    background-color: var(--md-sys-color-on-surface-variant, #cac4d0);
+  }
+
+  .nav-rail__ripple--active {
+    background-color: var(--md-sys-color-on-secondary-container, #e8def8);
+  }
+}
+</style>
