@@ -145,9 +145,10 @@ function closeDrawer() {
       </aside>
     </Teleport>
 
-    <!-- 主题面板 (md-menu, anchor 到 theme-btn) -->
-    <md-menu id="theme-menu" anchor="theme-btn" has-overflow>
-      <div class="theme-panel">
+    <!-- 主题面板 (md-menu, Teleport 到 body 避免 z-index 遮挡) -->
+    <Teleport to="body">
+      <md-menu id="theme-menu" anchor="theme-btn" has-overflow>
+        <div class="theme-panel">
         <div class="theme-panel__header">
           <span class="material-icons-round theme-panel__header-icon">palette</span>
           <span class="theme-panel__header-title">Theme Controls</span>
@@ -220,7 +221,8 @@ function closeDrawer() {
           </div>
         </div>
       </div>
-    </md-menu>
+      </md-menu>
+    </Teleport>
   </div>
 </template>
 
@@ -509,10 +511,11 @@ function closeDrawer() {
   background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent);
 }
 
-/* ======== 主题面板 ======== */
-#theme-menu {
+/* ======== 主题面板（Teleported to body，需要全局选择器） ======== */
+:global(#theme-menu) {
   --md-menu-container-color: var(--md-sys-color-surface-container-high, #ece6f0);
   --md-menu-container-shape: 16px;
+  z-index: 300;
 }
 
 .theme-panel {
