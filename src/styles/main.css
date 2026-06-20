@@ -1,8 +1,8 @@
 @import './base.css';
 
 /* ============================================
-   Material Design 3 完整色彩令牌 (Light)
-   基于 M3 默认主题色（Purple/Violet）
+   Material Design 3 色彩令牌
+   默认值（Purple 方案，由 theme.js JS 动态覆盖）
    ============================================ */
 :root {
   /* Primary */
@@ -47,10 +47,6 @@
   --md-sys-color-outline: #79747e;
   --md-sys-color-outline-variant: #cac4d0;
 
-  /* Typography */
-  --md-sys-typescale-body-medium: 'Google Sans Text', system-ui, 14px/20px;
-  --md-sys-typescale-headline-small: 'Google Sans', system-ui, 24px/32px;
-
   /* Shape */
   --md-dialog-container-shape: 28px;
 
@@ -61,55 +57,12 @@
 }
 
 /* ============================================
-   暗色主题
-   ============================================ */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --md-sys-color-primary: #d0bcff;
-    --md-sys-color-on-primary: #381e72;
-    --md-sys-color-primary-container: #4f378b;
-    --md-sys-color-on-primary-container: #eaddff;
-
-    --md-sys-color-secondary: #ccc2dc;
-    --md-sys-color-on-secondary: #332d41;
-    --md-sys-color-secondary-container: #4a4458;
-    --md-sys-color-on-secondary-container: #e8def8;
-
-    --md-sys-color-tertiary: #efb8c8;
-    --md-sys-color-on-tertiary: #492532;
-    --md-sys-color-tertiary-container: #633b48;
-    --md-sys-color-on-tertiary-container: #ffd8e4;
-
-    --md-sys-color-error: #f2b8b5;
-    --md-sys-color-on-error: #601410;
-    --md-sys-color-error-container: #8c1d18;
-    --md-sys-color-on-error-container: #f9dedc;
-
-    --md-sys-color-surface: #1c1b1f;
-    --md-sys-color-on-surface: #e6e1e5;
-    --md-sys-color-on-surface-variant: #cac4d0;
-    --md-sys-color-surface-container-lowest: #0f0d13;
-    --md-sys-color-surface-container-low: #1d1b20;
-    --md-sys-color-surface-container: #211f26;
-    --md-sys-color-surface-container-high: #2b2930;
-    --md-sys-color-surface-container-highest: #36343b;
-    --md-sys-color-surface-dim: #141218;
-    --md-sys-color-surface-bright: #3b383e;
-    --md-sys-color-inverse-surface: #e6e1e5;
-    --md-sys-color-inverse-on-surface: #313033;
-
-    --md-sys-color-outline: #938f99;
-    --md-sys-color-outline-variant: #49454f;
-  }
-}
-
-/* ============================================
-   全局重置与基础
+   全局基础
    ============================================ */
 #app {
   font-weight: normal;
   background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
-  color: var(--md-sys-color-on-surface);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
