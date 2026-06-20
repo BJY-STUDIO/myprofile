@@ -79,56 +79,86 @@ function handleRipple(event, itemId) {
 
 <template>
   <nav class="nav-rail" role="navigation" aria-label="Main navigation">
-    <!-- FAB 区域 -->
-    <div v-if="fab" class="nav-rail__fab-container">
-      <button
-        class="nav-rail__fab"
-        :aria-label="fab.label"
-        @click="emit('fab-click')"
+    <!-- 上半部分（可滚动）：FAB + 导航项 -->
+    <div class="nav-rail__top">
+      <!-- FAB 区域 -->
+      <div v-if="fab" class="nav-rail__fab-container">
+        <button
+          class="nav-rail__fab"
+          :aria-label="fab.label"
+          @click="emit('fab-click')"
+        >
+          <span class="material-icons-round">{{ fab.icon }}</span>
+        </button>
+      </div>
+
+      <div v-else class="nav-rail__fab-spacer"></div>
+
+      <!-- 导航目标项 -->
+      <div
+        v-for="item in items"
+        :key="item.id"
+        class="nav-rail__destination"
+        :class="{ 'nav-rail__destination--active': activeId === item.id }"
+        role="tab"
+        :aria-selected="activeId === item.id"
+        :aria-label="item.label"
+        tabindex="0"
+        @click="navigate(item); handleRipple($event, item.id)"
+        @keydown.enter="navigate(item)"
+        @keydown.space.prevent="navigate(item)"
       >
-        <span class="material-icons-round">{{ fab.icon }}</span>
-      </button>
+        <!-- Indicator 容器 -->
+        <div class="nav-rail__indicator">
+          <!-- State Layer（严格在 indicator 内部） -->
+          <div class="nav-rail__state-layer"></div>
+          <!-- Vue 驱动的 Ripple -->
+          <div
+            v-for="ripple in ripples.filter(r => r.itemId === item.id)"
+            :key="ripple.id"
+            class="nav-rail__ripple"
+            :class="{ 'nav-rail__ripple--active': ripple.active }"
+            :style="{
+              left: ripple.x + 'px',
+              top: ripple.y + 'px',
+              width: ripple.size + 'px',
+              height: ripple.size + 'px',
+            }"
+          ></div>
+          <!-- 图标 -->
+          <span class="nav-rail__icon material-icons-round">
+            {{ activeId === item.id ? (item.activeIcon || item.icon) : item.icon }}
+          </span>
+        </div>
+        <span class="nav-rail__label">{{ item.label }}</span>
+      </div>
     </div>
 
-    <div v-else class="nav-rail__fab-spacer"></div>
-
-    <!-- 导航目标项 -->
-    <div
-      v-for="item in items"
-      :key="item.id"
-      class="nav-rail__destination"
-      :class="{ 'nav-rail__destination--active': activeId === item.id }"
-      role="tab"
-      :aria-selected="activeId === item.id"
-      :aria-label="item.label"
-      tabindex="0"
-      @click="navigate(item); handleRipple($event, item.id)"
-      @keydown.enter="navigate(item)"
-      @keydown.space.prevent="navigate(item)"
-    >
-      <!-- Indicator 容器 -->
-      <div class="nav-rail__indicator">
-        <!-- State Layer（严格在 indicator 内部） -->
-        <div class="nav-rail__state-layer"></div>
-        <!-- Vue 驱动的 Ripple -->
-        <div
-          v-for="ripple in ripples.filter(r => r.itemId === item.id)"
-          :key="ripple.id"
-          class="nav-rail__ripple"
-          :class="{ 'nav-rail__ripple--active': ripple.active }"
-          :style="{
-            left: ripple.x + 'px',
-            top: ripple.y + 'px',
-            width: ripple.size + 'px',
-            height: ripple.size + 'px',
-          }"
-        ></div>
-        <!-- 图标 -->
-        <span class="nav-rail__icon material-icons-round">
-          {{ activeId === item.id ? (item.activeIcon || item.icon) : item.icon }}
-        </span>
+    <!-- 下半部分（固定底部）：GitHub + 调色板 -->
+    <div class="nav-rail__bottom">
+      <md-divider></md-divider>
+      <div class="nav-rail__bottom-actions">
+        <a
+          class="nav-rail__action-btn"
+          href="https://github.com/BJY-STUDIO/myprofile"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="GitHub repository"
+          title="GitHub repository"
+        >
+          <svg viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+          </svg>
+        </a>
+        <button
+          id="theme-btn"
+          class="nav-rail__action-btn"
+          aria-label="Toggle theme"
+          title="Toggle theme"
+        >
+          <span class="material-icons-round">palette</span>
+        </button>
       </div>
-      <span class="nav-rail__label">{{ item.label }}</span>
     </div>
   </nav>
 </template>
@@ -148,8 +178,17 @@ function handleRipple(event, itemId) {
   background-color: var(--md-sys-color-surface, #fffbfe);
   border-right: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   padding: 0;
+  overflow: visible;
+}
+
+/* ======== 上半部分（可滚动） ======== */
+.nav-rail__top {
+  flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* ======== FAB ======== */
@@ -350,6 +389,84 @@ function handleRipple(event, itemId) {
   font-weight: 600;
 }
 
+/* ======== 下半部分（固定底部） ======== */
+.nav-rail__bottom {
+  flex-shrink: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 8px;
+  padding-bottom: 16px;
+}
+
+.nav-rail__bottom md-divider {
+  width: 56px;
+  margin-bottom: 12px;
+}
+
+.nav-rail__bottom-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ======== 底部操作按钮 ======== */
+.nav-rail__action-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;
+  border: none;
+  background: none;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.2s;
+}
+
+.nav-rail__action-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background-color: var(--md-sys-color-on-surface-variant, #49454f);
+  opacity: 0;
+  transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
+  pointer-events: none;
+}
+
+.nav-rail__action-btn:hover::before {
+  opacity: 0.08;
+}
+
+.nav-rail__action-btn:focus-visible::before {
+  opacity: 0.12;
+}
+
+.nav-rail__action-btn:active::before {
+  opacity: 0.12;
+}
+
+.nav-rail__action-btn svg {
+  width: 24px;
+  height: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.nav-rail__action-btn .material-icons-round {
+  font-size: 24px;
+  position: relative;
+  z-index: 1;
+}
+
 /* ======== 暗色主题 ======== */
 @media (prefers-color-scheme: dark) {
   .nav-rail {
@@ -400,6 +517,15 @@ function handleRipple(event, itemId) {
 
   .nav-rail__ripple--active {
     background-color: var(--md-sys-color-on-secondary-container, #e8def8);
+  }
+
+  /* 底部按钮暗色 */
+  .nav-rail__action-btn {
+    color: var(--md-sys-color-on-surface-variant, #cac4d0);
+  }
+
+  .nav-rail__action-btn::before {
+    background-color: var(--md-sys-color-on-surface-variant, #cac4d0);
   }
 }
 </style>

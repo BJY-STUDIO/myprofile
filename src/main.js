@@ -19,8 +19,9 @@ setTimeout(initThemePanel, 100)
 
 function initThemePanel() {
   const themeBtn = document.getElementById('theme-btn')
+  const themeBtnMobile = document.getElementById('theme-btn-mobile')
   const themeMenu = document.getElementById('theme-menu')
-  if (!themeBtn || !themeMenu) {
+  if (!themeMenu || (!themeBtn && !themeBtnMobile)) {
     // 移动端可能还没有渲染，等路由完成再试
     setTimeout(initThemePanel, 500)
     return
@@ -62,10 +63,21 @@ function initThemePanel() {
   }
   updatePreview()
 
-  // 绑定打开菜单
-  themeBtn.addEventListener('click', () => {
-    themeMenu.open = !themeMenu.open
-  })
+  // 绑定打开菜单——桌面端
+  if (themeBtn) {
+    themeBtn.addEventListener('click', () => {
+      themeMenu.setAttribute('anchor', 'theme-btn')
+      themeMenu.open = !themeMenu.open
+    })
+  }
+
+  // 绑定打开菜单——移动端
+  if (themeBtnMobile) {
+    themeBtnMobile.addEventListener('click', () => {
+      themeMenu.setAttribute('anchor', 'theme-btn-mobile')
+      themeMenu.open = !themeMenu.open
+    })
+  }
 
   // 应用主题
   function apply() {

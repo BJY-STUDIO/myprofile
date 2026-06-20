@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import NavigationRail from '@/components/NavigationRail.vue'
 
@@ -25,10 +25,22 @@ const activeNavId = computed(() => {
 
 function navigateTo(item) {
   if (item.route) router.push(item.route)
+  closeDrawer()
 }
 
 function onFabClick() {
   // FAB 点击事件，后续扩展
+}
+
+// ======== 移动端 Navigation Drawer ========
+const drawerOpen = ref(false)
+
+function toggleDrawer() {
+  drawerOpen.value = !drawerOpen.value
+}
+
+function closeDrawer() {
+  drawerOpen.value = false
 }
 </script>
 
@@ -44,35 +56,38 @@ function onFabClick() {
 
     <!-- 右侧主区域 -->
     <div class="app-layout__body">
-      <!-- Top App Bar：站点标题 + GitHub + 主题按钮 -->
-      <header class="top-bar">
-        <div class="top-bar__content">
-          <span class="top-bar__title">M3 Blog</span>
-          <div class="top-bar__actions">
-            <!-- GitHub 链接 -->
-            <a
-              class="top-bar__icon-btn"
-              href="https://github.com/BJY-STUDIO/myprofile"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="GitHub repository"
-              title="GitHub repository"
-            >
-              <svg viewBox="0 0 16 16" width="24" height="24" fill="currentColor">
-                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
-              </svg>
-            </a>
-
-            <!-- 主题切换按钮 -->
-            <button
-              id="theme-btn"
-              class="top-bar__icon-btn"
-              aria-label="Toggle theme"
-              title="Toggle theme"
-            >
-              <span class="material-icons-round">palette</span>
-            </button>
-          </div>
+      <!-- 移动端：顶部 App Bar -->
+      <header class="mobile-top-bar">
+        <button
+          class="mobile-top-bar__menu-btn"
+          aria-label="Open navigation menu"
+          title="Menu"
+          @click="toggleDrawer"
+        >
+          <span class="material-icons-round">menu</span>
+        </button>
+        <span class="mobile-top-bar__title">Kernel's Blog</span>
+        <div class="mobile-top-bar__actions">
+          <a
+            class="mobile-top-bar__icon-btn"
+            href="https://github.com/BJY-STUDIO/myprofile"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="GitHub repository"
+            title="GitHub repository"
+          >
+            <svg viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+            </svg>
+          </a>
+          <button
+            id="theme-btn-mobile"
+            class="mobile-top-bar__icon-btn"
+            aria-label="Toggle theme"
+            title="Toggle theme"
+          >
+            <span class="material-icons-round">palette</span>
+          </button>
         </div>
       </header>
 
@@ -82,24 +97,53 @@ function onFabClick() {
       </main>
     </div>
 
-    <!-- 移动端：底部 Navigation Bar -->
-    <nav class="app-layout__bottom-nav" role="navigation" aria-label="Mobile navigation">
+    <!-- 移动端：Navigation Drawer + 遮罩 -->
+    <Teleport to="body">
       <div
-        v-for="item in navItems"
-        :key="item.id"
-        class="bottom-nav__item"
-        :class="{ 'bottom-nav__item--active': activeNavId === item.id }"
-        @click="navigateTo(item)"
+        v-if="drawerOpen"
+        class="drawer-scrim"
+        @click="closeDrawer"
+      ></div>
+      <aside
+        class="nav-drawer"
+        :class="{ 'nav-drawer--open': drawerOpen }"
+        role="navigation"
+        aria-label="Mobile navigation"
       >
-        <div class="bottom-nav__indicator">
-          <div class="bottom-nav__state-layer"></div>
-          <span class="material-icons-round bottom-nav__icon">
-            {{ activeNavId === item.id ? (item.activeIcon || item.icon) : item.icon }}
-          </span>
+        <div class="nav-drawer__header">
+          <span class="nav-drawer__title">Kernel's Blog</span>
         </div>
-        <span class="bottom-nav__label">{{ item.label }}</span>
-      </div>
-    </nav>
+        <md-divider></md-divider>
+        <nav class="nav-drawer__items">
+          <div
+            v-for="item in navItems"
+            :key="item.id"
+            class="nav-drawer__item"
+            :class="{ 'nav-drawer__item--active': activeNavId === item.id }"
+            @click="navigateTo(item)"
+          >
+            <span class="material-icons-round nav-drawer__icon">
+              {{ activeNavId === item.id ? (item.activeIcon || item.icon) : item.icon }}
+            </span>
+            <span class="nav-drawer__label">{{ item.label }}</span>
+          </div>
+        </nav>
+        <md-divider></md-divider>
+        <div class="nav-drawer__footer">
+          <a
+            class="nav-drawer__footer-link"
+            href="https://github.com/BJY-STUDIO/myprofile"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <svg viewBox="0 0 16 16" fill="currentColor" width="20" height="20">
+              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+            </svg>
+            <span>GitHub</span>
+          </a>
+        </div>
+      </aside>
+    </Teleport>
 
     <!-- 主题面板 (md-menu, anchor 到 theme-btn) -->
     <md-menu id="theme-menu" anchor="theme-btn" has-overflow>
@@ -195,46 +239,89 @@ function onFabClick() {
   flex-direction: column;
 }
 
-/* ======== Top Bar ======== */
-.top-bar {
-  position: sticky;
-  top: 0;
-  z-index: 150;
-  background-color: var(--md-sys-color-surface-container, #f3edf7);
-  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  height: 64px;
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-}
-
-.top-bar__content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
+/* ======== 主内容区 ======== */
+.app-main {
+  flex: 1;
+  padding: 24px 32px;
   max-width: 1200px;
+  width: 100%;
+  box-sizing: border-box;
   margin: 0 auto;
 }
 
-.top-bar__title {
+/* ======== 移动端顶部 App Bar ======== */
+.mobile-top-bar {
+  display: none;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: 64px;
+  background-color: var(--md-sys-color-surface, #fffbfe);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  align-items: center;
+  padding: 0 4px 0 4px;
+  gap: 4px;
+}
+
+.mobile-top-bar__menu-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;
+  border: none;
+  background: none;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-top-bar__menu-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background-color: var(--md-sys-color-on-surface-variant, #49454f);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.mobile-top-bar__menu-btn:hover::before {
+  opacity: 0.08;
+}
+
+.mobile-top-bar__menu-btn:active::before {
+  opacity: 0.12;
+}
+
+.mobile-top-bar__menu-btn .material-icons-round {
+  font-size: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.mobile-top-bar__title {
+  flex: 1;
   font-size: 22px;
   font-weight: 400;
   color: var(--md-sys-color-on-surface, #1c1b1f);
   line-height: 28px;
 }
 
-.top-bar__actions {
+.mobile-top-bar__actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0;
 }
 
-/* 图标按钮（GitHub SVG + palette）*/
-.top-bar__icon-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 20px;
+.mobile-top-bar__icon-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;
   border: none;
   background: none;
   color: var(--md-sys-color-on-surface-variant, #49454f);
@@ -246,40 +333,180 @@ function onFabClick() {
   overflow: hidden;
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
-  transition: color 0.2s;
 }
 
-.top-bar__icon-btn:hover {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent);
-  color: var(--md-sys-color-on-surface, #1c1b1f);
+.mobile-top-bar__icon-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background-color: var(--md-sys-color-on-surface-variant, #49454f);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
 }
 
-.top-bar__icon-btn:focus-visible {
-  outline: 2px solid var(--md-sys-color-primary, #6750a4);
-  outline-offset: 2px;
+.mobile-top-bar__icon-btn:hover::before {
+  opacity: 0.08;
 }
 
-.top-bar__icon-btn:active {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 12%, transparent);
+.mobile-top-bar__icon-btn:active::before {
+  opacity: 0.12;
 }
 
-.top-bar__icon-btn svg {
+.mobile-top-bar__icon-btn svg {
   width: 24px;
   height: 24px;
+  position: relative;
+  z-index: 1;
 }
 
-.top-bar__icon-btn .material-icons-round {
+.mobile-top-bar__icon-btn .material-icons-round {
   font-size: 24px;
+  position: relative;
+  z-index: 1;
 }
 
-/* ======== 主内容区 ======== */
-.app-main {
+/* ======== Navigation Drawer（移动端） ======== */
+.drawer-scrim {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 200;
+  animation: scrim-fade-in 0.2s ease-out;
+}
+
+@keyframes scrim-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.nav-drawer {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 360px;
+  max-width: calc(100vw - 56px);
+  background-color: var(--md-sys-color-surface, #fffbfe);
+  z-index: 201;
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1);
+  display: flex;
+  flex-direction: column;
+  border-radius: 0 16px 16px 0;
+  box-shadow: var(--md-sys-elevation-2, 0 1px 2px 0 rgba(0,0,0,0.3), 0 2px 6px 2px rgba(0,0,0,0.15));
+}
+
+.nav-drawer--open {
+  transform: translateX(0);
+}
+
+.nav-drawer__header {
+  padding: 28px 24px 20px 24px;
+}
+
+.nav-drawer__title {
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  line-height: 32px;
+}
+
+.nav-drawer__items {
   flex: 1;
-  padding: 24px 32px;
-  max-width: 1200px;
-  width: 100%;
-  box-sizing: border-box;
-  margin: 0 auto;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+}
+
+.nav-drawer__item {
+  display: flex;
+  align-items: center;
+  height: 56px;
+  border-radius: 28px;
+  padding: 0 24px 0 16px;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1), color 0.2s;
+  position: relative;
+}
+
+.nav-drawer__item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 28px;
+  background-color: var(--md-sys-color-on-surface-variant, #49454f);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.nav-drawer__item:hover::before {
+  opacity: 0.08;
+}
+
+.nav-drawer__item:active::before {
+  opacity: 0.12;
+}
+
+.nav-drawer__item--active {
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+.nav-drawer__item--active::before {
+  background-color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+.nav-drawer__icon {
+  font-size: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.nav-drawer__label {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+  position: relative;
+  z-index: 1;
+}
+
+.nav-drawer__item--active .nav-drawer__label {
+  font-weight: 600;
+}
+
+.nav-drawer__footer {
+  padding: 12px 16px 16px;
+}
+
+.nav-drawer__footer-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 48px;
+  border-radius: 24px;
+  padding: 0 16px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  position: relative;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.2s;
+}
+
+.nav-drawer__footer-link:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent);
 }
 
 /* ======== 主题面板 ======== */
@@ -411,103 +638,6 @@ function onFabClick() {
   font-size: 20px;
 }
 
-/* ======== 移动端底部 Navigation Bar (M3) ======== */
-.app-layout__bottom-nav {
-  display: none;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 80px;
-  background-color: var(--md-sys-color-surface, #fffbfe);
-  border-top: 1px solid var(--md-sys-color-outline-variant, #c4c7c5);
-  z-index: 100;
-  justify-content: space-around;
-  align-items: center;
-  padding: 0 8px;
-}
-
-.bottom-nav__item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 64px;
-  height: 64px;
-  cursor: pointer;
-  position: relative;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-  outline: none;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-}
-
-.bottom-nav__indicator {
-  width: 64px;
-  height: 32px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-  transition: background-color 0.3s cubic-bezier(0.2, 0, 0, 1);
-}
-
-.bottom-nav__item--active .bottom-nav__indicator {
-  background-color: var(--md-sys-color-secondary-container, #e8def8);
-}
-
-.bottom-nav__state-layer {
-  position: absolute;
-  inset: 0;
-  border-radius: 16px;
-  opacity: 0;
-  transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
-  pointer-events: none;
-  z-index: 1;
-}
-
-.bottom-nav__item:not(.bottom-nav__item--active) .bottom-nav__state-layer {
-  background-color: var(--md-sys-color-on-surface-variant, #49454f);
-}
-
-.bottom-nav__item--active .bottom-nav__state-layer {
-  background-color: var(--md-sys-color-on-secondary-container, #1d192b);
-}
-
-.bottom-nav__item:hover .bottom-nav__state-layer {
-  opacity: 0.08;
-}
-
-.bottom-nav__item:active .bottom-nav__state-layer {
-  opacity: 0.12;
-}
-
-.bottom-nav__icon {
-  font-size: 24px;
-  position: relative;
-  z-index: 2;
-  transition: color 0.2s cubic-bezier(0.2, 0, 0, 1);
-}
-
-.bottom-nav__item--active .bottom-nav__icon {
-  color: var(--md-sys-color-on-secondary-container, #1d192b);
-}
-
-.bottom-nav__label {
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.5px;
-  margin-top: 4px;
-  transition: color 0.2s cubic-bezier(0.2, 0, 0, 1);
-}
-
-.bottom-nav__item--active .bottom-nav__label {
-  color: var(--md-sys-color-on-surface, #1c1b1f);
-  font-weight: 600;
-}
-
 /* ======== 响应式 ======== */
 @media (max-width: 840px) {
   .app-layout__rail {
@@ -516,20 +646,10 @@ function onFabClick() {
 
   .app-layout__body {
     margin-left: 0;
-    padding-bottom: 80px;
   }
 
-  .app-layout__bottom-nav {
+  .mobile-top-bar {
     display: flex;
-  }
-
-  .top-bar {
-    height: 56px;
-    padding: 0 8px;
-  }
-
-  .top-bar__title {
-    font-size: 18px;
   }
 }
 </style>
