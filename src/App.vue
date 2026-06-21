@@ -87,6 +87,16 @@ watch(activeNavId, () => {
   if (isWideScreen.value) {
     subPanelInlineOpen.value = !!activeSubItems.value
   }
+  // 父级菜单切换时，子面板内容会变化，短暂禁用 indicator 过渡
+  // 防止新活跃项的药丸从 scaleX(0.32)→1 播放动画（m3 上是瞬间出现的）
+  if (activeSubItems.value) {
+    subPanelTransitionsReady.value = false
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        subPanelTransitionsReady.value = true
+      })
+    })
+  }
 })
 
 watch(isWideScreen, (wide) => {
@@ -107,6 +117,17 @@ function onRailItemHover(itemId) {
   if (hoverLeaveTimer.value) {
     clearTimeout(hoverLeaveTimer.value)
     hoverLeaveTimer.value = null
+  }
+  // 如果切换到不同的有子菜单的项，短暂禁用 indicator 过渡
+  const prevItem = navItems.find(i => i.id === hoveredNavId.value)
+  const nextItem = navItems.find(i => i.id === itemId)
+  if (hoveredNavId.value !== itemId && prevItem?.children && nextItem?.children) {
+    subPanelTransitionsReady.value = false
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        subPanelTransitionsReady.value = true
+      })
+    })
   }
   hoveredNavId.value = itemId
 }
@@ -879,7 +900,7 @@ const bodyMarginLeft = computed(() => {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 24px;
+  border-radius: 100px;
   opacity: 0;
   transform: scaleX(0.32);
   background-color: var(--md-sys-color-secondary-container, #e8def8);

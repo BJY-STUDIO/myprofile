@@ -267,7 +267,7 @@ function onItemLeave() {
   height: 100%;
   opacity: 0;
   transform: scaleX(0.32);
-  border-radius: 16px;
+  border-radius: 100px;
   background-color: var(--md-sys-color-secondary-container, #e8def8);
   z-index: -1;
   /* 默认无 transition，通过 --animate-indicator 启用 */
@@ -286,10 +286,7 @@ function onItemLeave() {
   transform: scaleX(1);
 }
 
-/* 首次渲染后才启用 indicator transition */
-.nav-rail__destination--animate-indicator .nav-rail__icon::before {
-  /* 已在默认样式中定义，无需额外处理 */
-}
+
 
 /* ---- Hover 交互 ---- */
 /* 未选中项 hover：图标加粗 + 8% state layer */
