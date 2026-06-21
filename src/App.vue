@@ -58,15 +58,12 @@ const activeSubItemId = computed(() => {
   return prefix ? prefix.id : activeSubItems.value[0]?.id
 })
 
-// 响应式：宽屏自动展开 inline，窄屏通过 hover 浮层
+// 响应式：宽屏下子面板始终可用（active 项常驻 + hover 其他项临时切换）
 const isWideScreen = ref(true)
-const subPanelInlineOpen = ref(false)
 const hoveredNavId = ref(null) // 当前鼠标悬停的一级菜单 id
 
 function updateScreenWidth() {
-  isWideScreen.value = window.innerWidth >= 1240
-  // 宽屏下：当前选中项有 children 则自动展开 inline
-  subPanelInlineOpen.value = isWideScreen.value && !!activeSubItems.value
+  isWideScreen.value = window.innerWidth >= 840
 }
 
 // 首次渲染完成标记（控制 --animate class）
@@ -87,9 +84,27 @@ onUnmounted(() => {
   window.removeEventListener('resize', updateScreenWidth)
 })
 
+// 计算当前要显示在子面板中的子菜单项
+// 优先级：hover 项 > active 项（宽屏下，hover 任何有 children 的项会临时覆盖）
+const displaySubItems = computed(() => {
+  if (!isWideScreen.value) return null
+  // hover 优先
+  if (hoveredNavId.value) {
+    const hoverItem = navItems.find(i => i.id === hoveredNavId.value)
+    if (hoverItem?.children) return hoverItem.children
+  }
+  // 否则显示 active 项的子菜单
+  return activeSubItems.value
+})
+
+// 子面板是否显示
+const subPanelVisible = computed(() => {
+  return isWideScreen.value && !!displaySubItems.value
+})
+
 // 当子面板内容变化时（切到不同父级菜单），延迟添加 active class
 // 使 indicator 能从 scaleX(0.32) 过渡到 scaleX(1)（从中间向两端展开）
-watch(activeSubItems, (newItems, oldItems) => {
+watch(displaySubItems, (newItems, oldItems) => {
   // 子项列表发生变化 = 切到了不同的父级菜单
   if (newItems !== oldItems && newItems) {
     subPanelActiveReady.value = false
@@ -105,62 +120,40 @@ watch(activeSubItems, (newItems, oldItems) => {
   }
 })
 
-watch(activeNavId, () => {
-  if (isWideScreen.value) {
-    subPanelInlineOpen.value = !!activeSubItems.value
-  }
-})
-
-watch(isWideScreen, (wide) => {
-  subPanelInlineOpen.value = wide && !!activeSubItems.value
-})
-
-// 计算当前要显示的 hover 浮层 children（仅窄屏桌面端）
-const hoveredSubItems = computed(() => {
-  if (isWideScreen.value) return null // 宽屏用 inline
-  if (!hoveredNavId.value) return null
-  const item = navItems.find(i => i.id === hoveredNavId.value)
-  return item?.children || null
-})
-
 const hoverLeaveTimer = ref(null)
 
-// hover 浮层面版的 indicator 同样需要延迟激活
-const hoverPanelActiveReady = ref(true)
-
+// hover 进入 Rail 项
 function onRailItemHover(itemId) {
   if (hoverLeaveTimer.value) {
     clearTimeout(hoverLeaveTimer.value)
     hoverLeaveTimer.value = null
   }
-  // 如果切换到不同的有子菜单的项，延迟添加 active 以触发展开动画
-  const prevItem = navItems.find(i => i.id === hoveredNavId.value)
-  const nextItem = navItems.find(i => i.id === itemId)
-  if (hoveredNavId.value !== itemId && prevItem?.children && nextItem?.children) {
-    hoverPanelActiveReady.value = false
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        hoverPanelActiveReady.value = true
-      })
-    })
-  }
   hoveredNavId.value = itemId
 }
 
+// hover 离开 Rail 项（延迟清除，给鼠标移到子面板留时间）
 function onRailItemLeave() {
-  hoverLeaveTimer.value = setTimeout(() => {
+  // 只有当前 hover 项有 children 时才延迟，否则立即清除
+  const item = navItems.find(i => i.id === hoveredNavId.value)
+  if (item?.children) {
+    hoverLeaveTimer.value = setTimeout(() => {
+      hoveredNavId.value = null
+    }, 150)
+  } else {
     hoveredNavId.value = null
-  }, 150)
+  }
 }
 
-function onHoverPanelEnter() {
+// 鼠标进入子面板时取消离开计时
+function onSubPanelEnter() {
   if (hoverLeaveTimer.value) {
     clearTimeout(hoverLeaveTimer.value)
     hoverLeaveTimer.value = null
   }
 }
 
-function onHoverPanelLeave() {
+// 鼠标离开子面板
+function onSubPanelLeave() {
   hoveredNavId.value = null
 }
 
@@ -191,9 +184,9 @@ function closeDrawer() {
 
 // 桌面端内容区左边距
 const bodyMarginLeft = computed(() => {
-  if (!isWideScreen.value) return '80px'
+  if (!isWideScreen.value) return '0px'
   let margin = 80
-  if (activeSubItems.value && subPanelInlineOpen.value) margin += 256
+  if (subPanelVisible.value) margin += 240
   return margin + 'px'
 })
 </script>
@@ -210,14 +203,17 @@ const bodyMarginLeft = computed(() => {
       @item-leave="onRailItemLeave"
     />
 
-    <!-- 宽屏 (≥1240px)：inline 二级面板 -->
+    <!-- 宽屏 (≥840px)：二级子面板（参照 m3.material.io 右侧子面板） -->
+    <!-- active 项常驻 + hover 其他有子菜单项时临时切换 -->
     <aside
-      v-if="subPanelInlineOpen && activeSubItems"
-      class="sub-panel sub-panel--inline"
+      v-if="subPanelVisible && displaySubItems"
+      class="sub-panel"
+      @mouseenter="onSubPanelEnter"
+      @mouseleave="onSubPanelLeave"
     >
       <nav class="sub-panel__items">
         <a
-          v-for="child in activeSubItems"
+          v-for="child in displaySubItems"
           :key="child.id"
           class="sub-panel__item"
           :class="{
@@ -230,31 +226,6 @@ const bodyMarginLeft = computed(() => {
         </a>
       </nav>
     </aside>
-
-    <!-- 中等屏幕 (840-1240px)：hover 浮层面板 -->
-    <Teleport to="body">
-      <aside
-        v-if="hoveredSubItems && !isWideScreen"
-        class="sub-panel sub-panel--hover"
-        @mouseenter="onHoverPanelEnter"
-        @mouseleave="onHoverPanelLeave"
-      >
-        <nav class="sub-panel__items">
-          <a
-            v-for="child in hoveredSubItems"
-            :key="child.id"
-            class="sub-panel__item"
-            :class="{
-              'sub-panel__item--active': hoverPanelActiveReady && activeSubItemId === child.id,
-              'sub-panel__item--animate': subPanelTransitionsReady,
-            }"
-            @click.prevent="navigateToSubItem(child)"
-          >
-            <span class="sub-panel__item-label">{{ child.label }}</span>
-          </a>
-        </nav>
-      </aside>
-    </Teleport>
 
     <!-- 右侧主区域 -->
     <div class="app-layout__body" :style="{ marginLeft: bodyMarginLeft }">
@@ -850,42 +821,27 @@ const bodyMarginLeft = computed(() => {
   font-size: 20px;
 }
 
-/* ======== 二级子菜单面板（参照 m3.material.io 右侧子面板） ======== */
+/* ======== 二级子菜单面板（严格参照 m3.material.io Shadow DOM 样式） ======== */
+/* m3 实测: border-radius: 0 16px 16px 0; left: 88px; top:0; bottom:0;
+   background: var(--mio-theme-color-surface-2);
+   border-left: 1px solid var(--mio-theme-color-surface-variant);
+   box-shadow: var(--mio-theme-elevation-2); width: 240px */
 .sub-panel {
   position: fixed;
   left: 80px;
-  top: 12px;
-  bottom: 12px;
-  width: 256px;
-  border-radius: 16px;
+  top: 0;
+  bottom: 0;
+  width: 240px;
+  border-radius: 0 16px 16px 0;
   background-color: var(--md-sys-color-surface-2, #f3edf7);
+  border-left: 1px solid var(--md-sys-color-surface-variant, #e7e0ec);
+  box-shadow: var(--md-sys-elevation-2, 0 1px 2px 0 rgba(0,0,0,0.3), 0 2px 6px 2px rgba(0,0,0,0.15));
   z-index: 99;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
-}
-
-/* 宽屏 inline 面板：圆角 + 柔和阴影 */
-.sub-panel--inline {
-  box-shadow: var(--md-sys-elevation-1, 0 1px 2px 0 rgba(0,0,0,0.3), 0 1px 3px 1px rgba(0,0,0,0.15));
-}
-
-/* 中等屏幕 hover 浮层面板：圆角 + 阴影 + 浮于 Rail 之上 */
-.sub-panel--hover {
-  box-shadow: var(--md-sys-elevation-2, 0 1px 2px 0 rgba(0,0,0,0.3), 0 2px 6px 2px rgba(0,0,0,0.15));
-  animation: sub-panel-fade-in 0.2s cubic-bezier(0.2, 0, 0, 1);
-}
-
-@keyframes sub-panel-fade-in {
-  from {
-    opacity: 0;
-    transform: translateX(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.3s cubic-bezier(0.2, 0, 0, 1);
 }
 
 .sub-panel__items {
@@ -1015,7 +971,8 @@ const bodyMarginLeft = computed(() => {
 
 /* ======== 暗色主题（通过 data-theme 属性切换） ======== */
 :global([data-theme="dark"]) .sub-panel {
-  background-color: var(--md-sys-color-surface-2, #1d1b20);
+  background-color: var(--md-sys-color-surface-2, #211f26);
+  border-left-color: var(--md-sys-color-surface-variant, #49454f);
 }
 
 :global([data-theme="dark"]) .sub-panel__item::before {
