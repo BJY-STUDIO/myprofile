@@ -943,7 +943,7 @@ const bodyMarginLeft = computed(() => {
   color: var(--md-sys-color-on-secondary-container, #1d192b);
 }
 
-/* Hover state layer */
+/* Hover state layer（inactive 项） */
 .sub-panel__item:not(.sub-panel__item--active):hover::after {
   content: '';
   position: absolute;
@@ -953,16 +953,9 @@ const bodyMarginLeft = computed(() => {
   z-index: 1;
 }
 
-.sub-panel__item--active:hover::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 24px;
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1c1b1f) 8%, var(--md-sys-color-secondary-container, #e8def8));
-  z-index: 1;
-}
+/* Active 项 hover 无 state layer（与 m3 一致，仅有 font-variation 变化） */
 
-/* Pressed state layer */
+/* Pressed state layer（inactive 项） */
 .sub-panel__item:not(.sub-panel__item--active):active::after {
   content: '';
   position: absolute;
@@ -972,14 +965,7 @@ const bodyMarginLeft = computed(() => {
   z-index: 1;
 }
 
-.sub-panel__item--active:active::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 24px;
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1c1b1f) 12%, var(--md-sys-color-secondary-container, #e8def8));
-  z-index: 1;
-}
+/* Active 项 pressed 无 state layer（与 m3 一致） */
 
 .sub-panel__item-label {
   font-size: 14px;
@@ -1043,16 +1029,10 @@ const bodyMarginLeft = computed(() => {
   background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent);
 }
 
-:global([data-theme="dark"]) .sub-panel__item--active:hover::after {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #e6e1e5) 8%, var(--md-sys-color-secondary-container, #4a4458));
-}
+/* 暗色 active hover/pressed 无 state layer（与 m3 一致） */
 
 :global([data-theme="dark"]) .sub-panel__item:not(.sub-panel__item--active):active::after {
   background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 12%, transparent);
-}
-
-:global([data-theme="dark"]) .sub-panel__item--active:active::after {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #e6e1e5) 12%, var(--md-sys-color-secondary-container, #4a4458));
 }
 
 /* 暗色主题 - 移动端 Top Bar 和 Drawer */

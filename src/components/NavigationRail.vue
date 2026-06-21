@@ -256,7 +256,8 @@ function onItemLeave() {
   font-size: 24px;
   font-variation-settings: "FILL" 0, "wght" 400, "opsz" 24;
   transition: font-variation-settings 0.2s cubic-bezier(0.2, 0, 0, 1),
-              background-color 0.2s cubic-bezier(0.2, 0, 0, 1);
+              background-color 0.2s cubic-bezier(0.2, 0, 0, 1),
+              background-image 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
 /* Indicator 药丸 — ::before 伪元素（严格复刻 m3.material.io） */
@@ -289,9 +290,9 @@ function onItemLeave() {
 
 
 /* ---- Hover 交互 ---- */
-/* 未选中项 hover：图标加粗 + 8% state layer */
+/* 未选中项 hover：图标加粗 + 8% state layer（用 background-image 不遮盖 ::before indicator） */
 .nav-rail__destination:not(.nav-rail__destination--active):hover .nav-rail__icon {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent);
+  background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent));
   font-variation-settings: "FILL" 0, "wght" 600, "opsz" 24;
 }
 
@@ -300,9 +301,8 @@ function onItemLeave() {
   font-variation-settings: "GRAD" 50;
 }
 
-/* 选中项 hover：图标 FILL 1 + wght 600 + 8% state layer on indicator */
+/* 选中项 hover：图标 FILL 1 + wght 600（m3 无 state layer 背景色） */
 .nav-rail__destination--active:hover .nav-rail__icon {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1c1b1f) 8%, var(--md-sys-color-secondary-container, #e8def8));
   font-variation-settings: "FILL" 1, "wght" 600, "opsz" 24;
 }
 
@@ -317,7 +317,7 @@ function onItemLeave() {
 /* ---- Pressed 交互 ---- */
 /* 未选中项 pressed：wght 300 + 12% state layer */
 .nav-rail__destination:not(.nav-rail__destination--active):active .nav-rail__icon {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 12%, transparent);
+  background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 12%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 12%, transparent));
   font-variation-settings: "FILL" 0, "wght" 300, "opsz" 24;
 }
 
@@ -325,9 +325,8 @@ function onItemLeave() {
   font-variation-settings: "GRAD" -50;
 }
 
-/* 选中项 pressed：FILL 1 + wght 300 + 12% state layer */
+/* 选中项 pressed：FILL 1 + wght 300（m3 无额外 state layer） */
 .nav-rail__destination--active:active .nav-rail__icon {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1c1b1f) 12%, var(--md-sys-color-secondary-container, #e8def8));
   font-variation-settings: "FILL" 1, "wght" 300, "opsz" 24;
 }
 
@@ -468,12 +467,10 @@ function onItemLeave() {
 }
 
 :global([data-theme="dark"]) .nav-rail__destination:not(.nav-rail__destination--active):hover .nav-rail__icon {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent);
+  background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent));
 }
 
-:global([data-theme="dark"]) .nav-rail__destination--active:hover .nav-rail__icon {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #e6e1e5) 8%, var(--md-sys-color-secondary-container, #4a4458));
-}
+/* 暗色模式 active hover 无 state layer（与 m3 一致） */
 
 :global([data-theme="dark"]) .nav-rail__destination--active .nav-rail__icon {
   color: var(--md-sys-color-on-secondary-container, #e8def8);
@@ -484,12 +481,10 @@ function onItemLeave() {
 }
 
 :global([data-theme="dark"]) .nav-rail__destination:not(.nav-rail__destination--active):active .nav-rail__icon {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 12%, transparent);
+  background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 12%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 12%, transparent));
 }
 
-:global([data-theme="dark"]) .nav-rail__destination--active:active .nav-rail__icon {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #e6e1e5) 12%, var(--md-sys-color-secondary-container, #4a4458));
-}
+/* 暗色模式 active pressed 无 state layer（与 m3 一致） */
 
 :global([data-theme="dark"]) .nav-rail__action-btn {
   color: var(--md-sys-color-on-surface-variant, #cac4d0);
