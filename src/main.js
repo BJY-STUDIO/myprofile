@@ -68,6 +68,7 @@ function initThemePanel() {
     themeBtn.addEventListener('click', () => {
       themeMenu.setAttribute('anchor', 'theme-btn')
       themeMenu.open = !themeMenu.open
+      if (themeMenu.open) patchMenuZIndex(themeMenu)
     })
   }
 
@@ -76,6 +77,23 @@ function initThemePanel() {
     themeBtnMobile.addEventListener('click', () => {
       themeMenu.setAttribute('anchor', 'theme-btn-mobile')
       themeMenu.open = !themeMenu.open
+      if (themeMenu.open) patchMenuZIndex(themeMenu)
+    })
+  }
+
+  // 覆盖 md-menu shadow DOM 内部 .menu 的 z-index，
+  // 使其高于 Navigation Rail (z-index:100) 和 Drawer (z-index:201)
+  function patchMenuZIndex(menuEl) {
+    requestAnimationFrame(() => {
+      const innerMenu = menuEl.shadowRoot?.querySelector('.menu')
+      if (innerMenu) {
+        innerMenu.style.zIndex = '300'
+        // 限制最大高度，避免菜单超出视口
+        const items = innerMenu.querySelector('.items')
+        if (items) {
+          items.style.maxHeight = 'calc(100vh - 96px)'
+        }
+      }
     })
   }
 

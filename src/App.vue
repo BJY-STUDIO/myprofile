@@ -147,7 +147,7 @@ function closeDrawer() {
 
     <!-- 主题面板 (md-menu, Teleport 到 body 避免 z-index 遮挡) -->
     <Teleport to="body">
-      <md-menu id="theme-menu" anchor="theme-btn" has-overflow>
+      <md-menu id="theme-menu" anchor="theme-btn" has-overflow positioning="fixed">
         <div class="theme-panel">
         <div class="theme-panel__header">
           <span class="material-icons-round theme-panel__header-icon">palette</span>
@@ -515,7 +515,7 @@ function closeDrawer() {
 :global(#theme-menu) {
   --md-menu-container-color: var(--md-sys-color-surface-container-high, #ece6f0);
   --md-menu-container-shape: 16px;
-  z-index: 300;
+  --md-menu-container-elevation: 3;
 }
 
 .theme-panel {
