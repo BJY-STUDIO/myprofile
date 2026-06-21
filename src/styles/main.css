@@ -81,9 +81,9 @@ a,
   }
 }
 
-/* Material Icons Round 全局辅助 */
-.material-icons-round {
-  font-family: 'Material Icons Round';
+/* Material Symbols Rounded 全局辅助（可变字体，支持 font-variation-settings） */
+.material-symbols-rounded {
+  font-family: 'Material Symbols Rounded';
   font-weight: normal;
   font-style: normal;
   font-size: 24px;
@@ -96,4 +96,5 @@ a,
   direction: ltr;
   -webkit-font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
 }

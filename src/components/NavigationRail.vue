@@ -1,13 +1,30 @@
 <script setup>
 /**
  * Navigation Rail 组件
- * 严格遵循 Material Design 3 规范
+ * 参照 m3.material.io 实际实现：
  *
- * Indicator 药丸动画：
- * - 激活：药丸从中心线向两端展开 (scaleX 0→1)
- * - 失活：药丸从两端向中心线收缩 (scaleX 1→0)
- * - transform-origin: center，实现双向对称缩放
- * - 首次渲染不播放动画（mounted 后才启用 transition）
+ * 核心交互机制（无 ripple，纯 font-variation-settings + state layer）：
+ *
+ * 图标 (google-symbols / material-symbols)：
+ *   默认:   "FILL" 0, "wght" 400, "opsz" 24
+ *   hover:  "wght" 600, "opsz" 24 + 背景 state layer 8%
+ *   active: "FILL" 1, "wght" 400, "opsz" 24
+ *   active+hover: "FILL" 1, "wght" 600, "opsz" 24
+ *   pressed:      "wght" 300, "opsz" 24 + 背景 state layer 12%
+ *   active+pressed: "FILL" 1, "wght" 300, "opsz" 24
+ *
+ * 标签 (label)：
+ *   默认:   "GRAD" 0
+ *   hover:  "GRAD" 50
+ *   active: "GRAD" 125
+ *   pressed: "GRAD" -50
+ *
+ * Indicator (::before 伪元素)：
+ *   默认:   opacity:0, scaleX(0.32)
+ *   active: opacity:1, scaleX(1)
+ *   transition: transform 0.2s linear, opacity 0.2s linear
+ *
+ * font-variation-settings transition: 0.2s cubic-bezier(0.2, 0, 0, 1) ≈ 200ms
  */
 import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -37,10 +54,9 @@ const activeId = computed(() => {
   return matched ? matched.id : props.items[0]?.id
 })
 
-// 首次渲染完成标记——mounted 之后才启用药丸 transition，避免初始化时播放动画
+// 首次渲染完成标记——mounted 后才启用 indicator transition
 const transitionsReady = ref(false)
 onMounted(() => {
-  // 下一帧再启用，确保初始渲染已完成
   requestAnimationFrame(() => {
     transitionsReady.value = true
   })
@@ -71,52 +87,40 @@ function onItemLeave() {
           :aria-label="fab.label"
           @click="emit('fab-click')"
         >
-          <md-ripple></md-ripple>
-          <span class="material-icons-round">{{ fab.icon }}</span>
+          <span class="material-symbols-rounded">{{ fab.icon }}</span>
         </button>
       </div>
 
       <div v-else class="nav-rail__fab-spacer"></div>
 
       <!-- 导航目标项 -->
-      <div
+      <a
         v-for="item in items"
         :key="item.id"
         class="nav-rail__destination"
         :class="{
           'nav-rail__destination--active': activeId === item.id,
           'nav-rail__destination--has-children': item.children,
+          'nav-rail__destination--animate-indicator': transitionsReady,
         }"
-        role="tab"
+        role="link"
         :aria-selected="activeId === item.id"
         :aria-expanded="item.children ? activeId === item.id : undefined"
         :aria-label="item.label"
+        :aria-controls="item.id"
         tabindex="0"
-        @click="navigate(item)"
+        @click.prevent="navigate(item)"
         @keydown.enter="navigate(item)"
         @keydown.space.prevent="navigate(item)"
         @mouseenter="onItemHover(item.id)"
         @mouseleave="onItemLeave"
       >
-        <!-- Indicator 容器（透明背景） -->
-        <div class="nav-rail__indicator">
-          <!-- 药丸背景（独立动画层） -->
-          <div
-            class="nav-rail__indicator-pill"
-            :class="{
-              'nav-rail__indicator-pill--active': activeId === item.id,
-              'nav-rail__indicator-pill--animate': transitionsReady,
-            }"
-          ></div>
-          <!-- md-ripple bounded 到 indicator 形状 -->
-          <md-ripple class="nav-rail__md-ripple"></md-ripple>
-          <!-- 图标 -->
-          <span class="nav-rail__icon material-icons-round">
-            {{ activeId === item.id ? (item.activeIcon || item.icon) : item.icon }}
-          </span>
-        </div>
-        <span class="nav-rail__label">{{ item.label }}</span>
-      </div>
+        <!-- 图标区域（含 indicator + state layer + 图标本身） -->
+        <span class="nav-rail__icon">
+          {{ activeId === item.id ? (item.activeIcon || item.icon) : item.icon }}
+        </span>
+        <div class="nav-rail__label">{{ item.label }}</div>
+      </a>
     </div>
 
     <!-- 下半部分（固定底部）：GitHub + 调色板 -->
@@ -131,7 +135,6 @@ function onItemLeave() {
           aria-label="GitHub repository"
           title="GitHub repository"
         >
-          <md-ripple></md-ripple>
           <svg viewBox="0 0 16 16" fill="currentColor">
             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
           </svg>
@@ -142,8 +145,7 @@ function onItemLeave() {
           aria-label="Toggle theme"
           title="Toggle theme"
         >
-          <md-ripple></md-ripple>
-          <span class="material-icons-round">palette</span>
+          <span class="material-symbols-rounded">palette</span>
         </button>
       </div>
     </div>
@@ -162,7 +164,7 @@ function onItemLeave() {
   left: 0;
   top: 0;
   z-index: 100;
-  background-color: var(--md-sys-color-surface, #fffbfe);
+  background-color: var(--md-sys-color-surface-2, #f3edf7);
   padding: 0;
   overflow: visible;
 }
@@ -175,17 +177,18 @@ function onItemLeave() {
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin-top: 20px;
 }
 
 /* ======== FAB ======== */
 .nav-rail__fab-container {
-  padding: 16px 0 24px 0;
   display: flex;
   justify-content: center;
+  margin-bottom: 24px;
 }
 
 .nav-rail__fab-spacer {
-  height: 16px;
+  height: 20px;
 }
 
 .nav-rail__fab {
@@ -193,138 +196,179 @@ function onItemLeave() {
   height: 56px;
   border-radius: 16px;
   border: none;
-  background-color: var(--md-sys-color-primary-container, #eaddff);
-  color: var(--md-sys-color-on-primary-container, #21005d);
+  background-color: var(--md-sys-color-tertiary-container, #ffd8e4);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  overflow: hidden;
-  transition: box-shadow 0.2s cubic-bezier(0.2, 0, 0, 1);
-  box-shadow: var(--md-sys-elevation-1, 0 1px 2px 0 rgba(0,0,0,0.3), 0 1px 3px 1px rgba(0,0,0,0.15));
+  transition: box-shadow 0.2s cubic-bezier(0.2, 0, 0, 1), color 0.2s;
 }
 
 .nav-rail__fab:hover {
-  box-shadow: var(--md-sys-elevation-2, 0 1px 2px 0 rgba(0,0,0,0.3), 0 2px 6px 2px rgba(0,0,0,0.15));
+  color: var(--md-sys-color-on-tertiary-container, #31111d);
 }
 
-.nav-rail__fab:active {
-  box-shadow: var(--md-sys-elevation-1, 0 1px 2px 0 rgba(0,0,0,0.3), 0 1px 3px 1px rgba(0,0,0,0.15));
-}
-
-.nav-rail__fab md-ripple {
-  --md-ripple-hover-color: var(--md-sys-color-on-primary-container, #21005d);
-  --md-ripple-pressed-color: var(--md-sys-color-on-primary-container, #21005d);
-  --md-ripple-hover-opacity: 0.08;
-  --md-ripple-pressed-opacity: 0.12;
-}
-
-.nav-rail__fab .material-icons-round {
+.nav-rail__fab .material-symbols-rounded {
   font-size: 24px;
-  position: relative;
-  z-index: 1;
+  margin-bottom: 0;
 }
 
-/* ======== 目标项 ======== */
+/* ======== 导航目标项 ======== */
+/* 参照 m3.material.io .section-link 实现 */
 .nav-rail__destination {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   width: 80px;
-  height: 72px;
+  margin: -2px auto 14px;
+  padding: 2px;
   cursor: pointer;
-  position: relative;
+  text-decoration: none;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   outline: none;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
+  border: none;
+  background: none;
+  font-family: inherit;
 }
 
-/* ======== Indicator（药丸容器，透明背景） ======== */
-.nav-rail__indicator {
-  width: 56px;
-  height: 32px;
-  border-radius: 16px;
+.nav-rail__destination:hover,
+.nav-rail__destination:focus {
+  border: none;
+  outline: none;
+  box-shadow: none;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+/* ======== 图标 (参照 .google-symbols) ======== */
+.nav-rail__icon {
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  overflow: hidden;
+  width: 56px;
+  height: 32px;
+  margin: 0 auto 4px;
+  border-radius: 16px;
+  font-family: 'Material Symbols Rounded';
+  font-size: 24px;
+  font-variation-settings: "FILL" 0, "wght" 400, "opsz" 24;
+  transition: font-variation-settings 0.2s cubic-bezier(0.2, 0, 0, 1),
+              background-color 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
-/* ======== 药丸背景（独立动画层） ======== */
-.nav-rail__indicator-pill {
+/* Indicator 药丸 — 实现 ::before 伪元素（m3.material.io 方式） */
+.nav-rail__icon::before {
+  content: '';
   position: absolute;
-  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transform: scaleX(0.32);
   border-radius: 16px;
   background-color: var(--md-sys-color-secondary-container, #e8def8);
-  transform: scaleX(0);
-  transform-origin: center;
-  /* 初始无 transition，通过 pill--animate 类启用 */
+  z-index: -1;
+  /* 默认无 transition，通过 --animate-indicator 启用 */
 }
 
-/* 激活态：药丸展开 */
-.nav-rail__indicator-pill--active {
+/* mounted 后启用 indicator transition，避免首次渲染播放动画 */
+.nav-rail__destination--animate-indicator .nav-rail__icon::before {
+  transition-duration: 0.2s;
+  transition-property: transform, opacity;
+  transition-timing-function: linear;
+}
+
+/* 激活态 indicator */
+.nav-rail__destination--active .nav-rail__icon::before {
+  opacity: 1;
   transform: scaleX(1);
 }
 
-/* mounted 后启用 transition，避免首次渲染播放动画 */
-.nav-rail__indicator-pill--animate {
-  transition: transform 300ms cubic-bezier(0.2, 0, 0, 1);
+/* 首次渲染后才启用 indicator transition */
+.nav-rail__destination--animate-indicator .nav-rail__icon::before {
+  /* 已在默认样式中定义，无需额外处理 */
 }
 
-/* ======== md-ripple 颜色 ======== */
-/* 未选中项 */
-.nav-rail__destination:not(.nav-rail__destination--active) .nav-rail__md-ripple {
-  --md-ripple-hover-color: var(--md-sys-color-on-surface-variant, #49454f);
-  --md-ripple-pressed-color: var(--md-sys-color-on-surface-variant, #49454f);
-  --md-ripple-hover-opacity: 0.08;
-  --md-ripple-pressed-opacity: 0.12;
+/* ---- Hover 交互 ---- */
+/* 未选中项 hover：图标加粗 + 8% state layer */
+.nav-rail__destination:not(.nav-rail__destination--active):hover .nav-rail__icon {
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent);
+  font-variation-settings: "FILL" 0, "wght" 600, "opsz" 24;
 }
 
-/* 选中项 */
-.nav-rail__destination--active .nav-rail__md-ripple {
-  --md-ripple-hover-color: var(--md-sys-color-on-secondary-container, #1d192b);
-  --md-ripple-pressed-color: var(--md-sys-color-on-secondary-container, #1d192b);
-  --md-ripple-hover-opacity: 0.08;
-  --md-ripple-pressed-opacity: 0.12;
+/* 未选中项 hover：标签 GRAD 50 */
+.nav-rail__destination:not(.nav-rail__destination--active):hover .nav-rail__label {
+  font-variation-settings: "GRAD" 50;
 }
 
-/* ======== 图标 ======== */
-.nav-rail__icon {
-  font-size: 24px;
-  line-height: 1;
-  position: relative;
-  z-index: 2;
-  transition: color 0.2s cubic-bezier(0.2, 0, 0, 1);
+/* 选中项 hover：图标 FILL 1 + wght 600 + 8% state layer on indicator */
+.nav-rail__destination--active:hover .nav-rail__icon {
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1c1b1f) 8%, var(--md-sys-color-secondary-container, #e8def8));
+  font-variation-settings: "FILL" 1, "wght" 600, "opsz" 24;
 }
 
+/* 选中项 hover：标签 GRAD 50 (已在 active 是 125，hover 时无特殊覆盖) */
+
+/* ---- Active 状态 ---- */
 .nav-rail__destination--active .nav-rail__icon {
   color: var(--md-sys-color-on-secondary-container, #1d192b);
+  font-variation-settings: "FILL" 1, "wght" 400, "opsz" 24;
 }
 
-/* ======== 标签 ======== */
+/* ---- Pressed 交互 ---- */
+/* 未选中项 pressed：wght 300 + 12% state layer */
+.nav-rail__destination:not(.nav-rail__destination--active):active .nav-rail__icon {
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 12%, transparent);
+  font-variation-settings: "FILL" 0, "wght" 300, "opsz" 24;
+}
+
+.nav-rail__destination:not(.nav-rail__destination--active):active .nav-rail__label {
+  font-variation-settings: "GRAD" -50;
+}
+
+/* 选中项 pressed：FILL 1 + wght 300 + 12% state layer */
+.nav-rail__destination--active:active .nav-rail__icon {
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1c1b1f) 12%, var(--md-sys-color-secondary-container, #e8def8));
+  font-variation-settings: "FILL" 1, "wght" 300, "opsz" 24;
+}
+
+.nav-rail__destination--active:active .nav-rail__label {
+  font-variation-settings: "GRAD" -50;
+}
+
+/* ---- 有子菜单的项 hover 时保持加粗 ---- */
+.nav-rail__destination--has-children:hover .nav-rail__icon {
+  font-variation-settings: "FILL" 0, "wght" 600, "opsz" 24;
+}
+
+.nav-rail__destination--has-children:hover .nav-rail__label {
+  font-variation-settings: "GRAD" 50;
+}
+
+.nav-rail__destination--active.nav-rail__destination--has-children:hover .nav-rail__icon {
+  font-variation-settings: "FILL" 1, "wght" 600, "opsz" 24;
+}
+
+/* ======== 标签 (参照 .label) ======== */
 .nav-rail__label {
+  font-family: var(--md-sys-typescale-label-medium-font, 'Google Sans Text', 'Roboto', sans-serif);
   font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.1px;
   line-height: 16px;
-  margin-top: 4px;
+  margin-bottom: 4px;
   text-align: center;
-  transition: color 0.2s cubic-bezier(0.2, 0, 0, 1);
+  font-variation-settings: "GRAD" 0, "opsz" 17;
+  transition: font-variation-settings 0.2s cubic-bezier(0.2, 0, 0, 1),
+              color 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
+/* 激活态标签强调加粗 (GRAD 125) */
 .nav-rail__destination--active .nav-rail__label {
-  color: var(--md-sys-color-on-surface, #1c1b1f);
-  font-weight: 600;
-}
-
-/* 有子菜单的项 hover 时图标和标签加粗 */
-.nav-rail__destination--has-children:hover .nav-rail__icon,
-.nav-rail__destination--has-children:hover .nav-rail__label {
-  font-weight: 700;
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+  font-variation-settings: "GRAD" 125, "opsz" 17;
 }
 
 /* ======== 下半部分（固定底部） ======== */
@@ -350,7 +394,7 @@ function onItemLeave() {
   gap: 4px;
 }
 
-/* ======== 底部操作按钮 ======== */
+/* ======== 底部操作按钮（保留简单 state layer，无 ripple） ======== */
 .nav-rail__action-btn {
   width: 48px;
   height: 48px;
@@ -368,11 +412,23 @@ function onItemLeave() {
   -webkit-tap-highlight-color: transparent;
 }
 
-.nav-rail__action-btn md-ripple {
-  --md-ripple-hover-color: var(--md-sys-color-on-surface-variant, #49454f);
-  --md-ripple-pressed-color: var(--md-sys-color-on-surface-variant, #49454f);
-  --md-ripple-hover-opacity: 0.08;
-  --md-ripple-pressed-opacity: 0.12;
+.nav-rail__action-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background-color: var(--md-sys-color-on-surface-variant, #49454f);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.nav-rail__action-btn:hover::before {
+  opacity: 0.08;
+}
+
+.nav-rail__action-btn:active::before {
+  opacity: 0.12;
 }
 
 .nav-rail__action-btn svg {
@@ -382,7 +438,7 @@ function onItemLeave() {
   z-index: 1;
 }
 
-.nav-rail__action-btn .material-icons-round {
+.nav-rail__action-btn .material-symbols-rounded {
   font-size: 24px;
   position: relative;
   z-index: 1;
@@ -391,40 +447,37 @@ function onItemLeave() {
 /* ======== 暗色主题 ======== */
 @media (prefers-color-scheme: dark) {
   .nav-rail {
-    background-color: var(--md-sys-color-surface, #1c1b1f);
+    background-color: var(--md-sys-color-surface-2, #1d1b20);
   }
 
   .nav-rail__fab {
-    background-color: var(--md-sys-color-primary-container, #4f378b);
-    color: var(--md-sys-color-on-primary-container, #eaddff);
-    box-shadow: var(--md-sys-elevation-1, 0 1px 3px 1px rgba(0,0,0,0.3));
-  }
-
-  .nav-rail__fab md-ripple {
-    --md-ripple-hover-color: var(--md-sys-color-on-primary-container, #eaddff);
-    --md-ripple-pressed-color: var(--md-sys-color-on-primary-container, #eaddff);
+    background-color: var(--md-sys-color-tertiary-container, #633b48);
   }
 
   .nav-rail__fab:hover {
-    box-shadow: var(--md-sys-elevation-2, 0 2px 6px 2px rgba(0,0,0,0.3));
+    color: var(--md-sys-color-on-tertiary-container, #ffd8e4);
   }
 
   .nav-rail__destination {
     color: var(--md-sys-color-on-surface-variant, #cac4d0);
   }
 
-  .nav-rail__indicator-pill {
+  .nav-rail__destination:hover,
+  .nav-rail__destination:focus {
+    color: var(--md-sys-color-on-surface, #e6e1e5);
+  }
+
+  .nav-rail__icon::before {
     background-color: var(--md-sys-color-secondary-container, #4a4458);
   }
 
-  .nav-rail__destination:not(.nav-rail__destination--active) .nav-rail__md-ripple {
-    --md-ripple-hover-color: var(--md-sys-color-on-surface-variant, #cac4d0);
-    --md-ripple-pressed-color: var(--md-sys-color-on-surface-variant, #cac4d0);
+  /* 暗色 hover state layer */
+  .nav-rail__destination:not(.nav-rail__destination--active):hover .nav-rail__icon {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent);
   }
 
-  .nav-rail__destination--active .nav-rail__md-ripple {
-    --md-ripple-hover-color: var(--md-sys-color-on-secondary-container, #e8def8);
-    --md-ripple-pressed-color: var(--md-sys-color-on-secondary-container, #e8def8);
+  .nav-rail__destination--active:hover .nav-rail__icon {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #e6e1e5) 8%, var(--md-sys-color-secondary-container, #4a4458));
   }
 
   .nav-rail__destination--active .nav-rail__icon {
@@ -432,16 +485,24 @@ function onItemLeave() {
   }
 
   .nav-rail__destination--active .nav-rail__label {
-    color: var(--md-sys-color-on-surface, #e6e1e5);
+    color: var(--md-sys-color-on-secondary-container, #e8def8);
+  }
+
+  /* 暗色 pressed state layer */
+  .nav-rail__destination:not(.nav-rail__destination--active):active .nav-rail__icon {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 12%, transparent);
+  }
+
+  .nav-rail__destination--active:active .nav-rail__icon {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #e6e1e5) 12%, var(--md-sys-color-secondary-container, #4a4458));
   }
 
   .nav-rail__action-btn {
     color: var(--md-sys-color-on-surface-variant, #cac4d0);
   }
 
-  .nav-rail__action-btn md-ripple {
-    --md-ripple-hover-color: var(--md-sys-color-on-surface-variant, #cac4d0);
-    --md-ripple-pressed-color: var(--md-sys-color-on-surface-variant, #cac4d0);
+  .nav-rail__action-btn::before {
+    background-color: var(--md-sys-color-on-surface-variant, #cac4d0);
   }
 }
 </style>

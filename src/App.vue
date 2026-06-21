@@ -6,9 +6,6 @@ import NavigationRail from '@/components/NavigationRail.vue'
 const route = useRoute()
 const router = useRouter()
 
-// 首次渲染完成标记——mounted 后才启用子面板药丸 transition，避免初始化时播放动画
-const subPanelTransitionsReady = ref(false)
-
 const navItems = [
   { id: 'home', label: '首页', icon: 'home', activeIcon: 'home', route: '/' },
   { id: 'about', label: '关于', icon: 'person_outline', activeIcon: 'person', route: '/about' },
@@ -72,10 +69,12 @@ function updateScreenWidth() {
   subPanelInlineOpen.value = isWideScreen.value && !!activeSubItems.value
 }
 
+// 首次渲染完成标记
+const subPanelTransitionsReady = ref(false)
+
 onMounted(() => {
   updateScreenWidth()
   window.addEventListener('resize', updateScreenWidth)
-  // 下一帧启用子面板药丸 transition
   requestAnimationFrame(() => {
     subPanelTransitionsReady.value = true
   })
@@ -175,30 +174,24 @@ const bodyMarginLeft = computed(() => {
       @item-leave="onRailItemLeave"
     />
 
-    <!-- 宽屏 (≥1240px)：inline 二级面板，与 Rail 同色背景，无圆角 + 右侧阴影 -->
+    <!-- 宽屏 (≥1240px)：inline 二级面板 -->
     <aside
       v-if="subPanelInlineOpen && activeSubItems"
       class="sub-panel sub-panel--inline"
     >
       <nav class="sub-panel__items">
-        <div
+        <a
           v-for="child in activeSubItems"
           :key="child.id"
           class="sub-panel__item"
-          :class="{ 'sub-panel__item--active': activeSubItemId === child.id }"
-          @click="navigateToSubItem(child)"
+          :class="{
+            'sub-panel__item--active': activeSubItemId === child.id,
+            'sub-panel__item--animate': subPanelTransitionsReady,
+          }"
+          @click.prevent="navigateToSubItem(child)"
         >
-          <!-- 药丸背景（独立动画层） -->
-          <div
-            class="sub-panel__item-pill"
-            :class="{
-              'sub-panel__item-pill--active': activeSubItemId === child.id,
-              'sub-panel__item-pill--animate': subPanelTransitionsReady,
-            }"
-          ></div>
-          <md-ripple class="sub-panel__md-ripple"></md-ripple>
           <span class="sub-panel__item-label">{{ child.label }}</span>
-        </div>
+        </a>
       </nav>
     </aside>
 
@@ -211,24 +204,18 @@ const bodyMarginLeft = computed(() => {
         @mouseleave="onHoverPanelLeave"
       >
         <nav class="sub-panel__items">
-          <div
+          <a
             v-for="child in hoveredSubItems"
             :key="child.id"
             class="sub-panel__item"
-            :class="{ 'sub-panel__item--active': activeSubItemId === child.id }"
-            @click="navigateToSubItem(child)"
+            :class="{
+              'sub-panel__item--active': activeSubItemId === child.id,
+              'sub-panel__item--animate': subPanelTransitionsReady,
+            }"
+            @click.prevent="navigateToSubItem(child)"
           >
-            <!-- 药丸背景（独立动画层） -->
-            <div
-              class="sub-panel__item-pill"
-              :class="{
-                'sub-panel__item-pill--active': activeSubItemId === child.id,
-                'sub-panel__item-pill--animate': subPanelTransitionsReady,
-              }"
-            ></div>
-            <md-ripple class="sub-panel__md-ripple"></md-ripple>
             <span class="sub-panel__item-label">{{ child.label }}</span>
-          </div>
+          </a>
         </nav>
       </aside>
     </Teleport>
@@ -243,7 +230,7 @@ const bodyMarginLeft = computed(() => {
           :title="drawerOpen ? 'Close' : 'Menu'"
           @click="toggleDrawer"
         >
-          <span class="material-icons-round">{{ drawerOpen ? 'close' : 'menu' }}</span>
+          <span class="material-symbols-rounded">{{ drawerOpen ? 'close' : 'menu' }}</span>
         </button>
         <span class="mobile-top-bar__title">Kernel's Blog</span>
         <div class="mobile-top-bar__actions">
@@ -265,7 +252,7 @@ const bodyMarginLeft = computed(() => {
             aria-label="Toggle theme"
             title="Toggle theme"
           >
-            <span class="material-icons-round">palette</span>
+            <span class="material-symbols-rounded">palette</span>
           </button>
         </div>
       </header>
@@ -300,7 +287,7 @@ const bodyMarginLeft = computed(() => {
             :class="{ 'nav-drawer__item--active': activeNavId === item.id }"
             @click="navigateTo(item)"
           >
-            <span class="material-icons-round nav-drawer__icon">
+            <span class="material-symbols-rounded nav-drawer__icon">
               {{ activeNavId === item.id ? (item.activeIcon || item.icon) : item.icon }}
             </span>
             <span class="nav-drawer__label">{{ item.label }}</span>
@@ -327,7 +314,7 @@ const bodyMarginLeft = computed(() => {
       <md-menu id="theme-menu" anchor="theme-btn" has-overflow positioning="fixed">
         <div class="theme-panel">
         <div class="theme-panel__header">
-          <span class="material-icons-round theme-panel__header-icon">palette</span>
+          <span class="material-symbols-rounded theme-panel__header-icon">palette</span>
           <span class="theme-panel__header-title">Theme Controls</span>
         </div>
 
@@ -387,13 +374,13 @@ const bodyMarginLeft = computed(() => {
           <label class="theme-panel__label">Color Scheme</label>
           <div class="theme-panel__mode-buttons">
             <button class="theme-mode-btn" data-mode="dark" aria-label="dark color scheme" title="Dark">
-              <span class="material-icons-round">dark_mode</span>
+              <span class="material-symbols-rounded">dark_mode</span>
             </button>
             <button class="theme-mode-btn" data-mode="system" aria-label="auto color scheme" title="Auto">
-              <span class="material-icons-round">brightness_medium</span>
+              <span class="material-symbols-rounded">brightness_medium</span>
             </button>
             <button class="theme-mode-btn" data-mode="light" aria-label="light color scheme" title="Light">
-              <span class="material-icons-round">light_mode</span>
+              <span class="material-symbols-rounded">light_mode</span>
             </button>
           </div>
         </div>
@@ -476,7 +463,7 @@ const bodyMarginLeft = computed(() => {
   opacity: 0.12;
 }
 
-.mobile-top-bar__menu-btn .material-icons-round {
+.mobile-top-bar__menu-btn .material-symbols-rounded {
   font-size: 24px;
   position: relative;
   z-index: 1;
@@ -539,7 +526,7 @@ const bodyMarginLeft = computed(() => {
   z-index: 1;
 }
 
-.mobile-top-bar__icon-btn .material-icons-round {
+.mobile-top-bar__icon-btn .material-symbols-rounded {
   font-size: 24px;
   position: relative;
   z-index: 1;
@@ -612,7 +599,6 @@ const bodyMarginLeft = computed(() => {
   -webkit-tap-highlight-color: transparent;
   outline: none;
   color: var(--md-sys-color-on-surface-variant, #49454f);
-  transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1), color 0.2s;
   position: relative;
 }
 
@@ -645,21 +631,30 @@ const bodyMarginLeft = computed(() => {
 }
 
 .nav-drawer__icon {
+  font-family: 'Material Symbols Rounded';
   font-size: 24px;
+  font-variation-settings: "FILL" 0, "wght" 400, "opsz" 24;
+  transition: font-variation-settings 0.2s cubic-bezier(0.2, 0, 0, 1);
   position: relative;
   z-index: 1;
+}
+
+.nav-drawer__item--active .nav-drawer__icon {
+  font-variation-settings: "FILL" 1, "wght" 400, "opsz" 24;
 }
 
 .nav-drawer__label {
   font-size: 14px;
   font-weight: 500;
   letter-spacing: 0.1px;
+  font-variation-settings: "GRAD" 0;
+  transition: font-variation-settings 0.2s cubic-bezier(0.2, 0, 0, 1);
   position: relative;
   z-index: 1;
 }
 
 .nav-drawer__item--active .nav-drawer__label {
-  font-weight: 600;
+  font-variation-settings: "GRAD" 125;
 }
 
 .nav-drawer__footer {
@@ -813,7 +808,7 @@ const bodyMarginLeft = computed(() => {
   color: var(--md-sys-color-on-secondary-container, #1d192b);
 }
 
-.theme-mode-btn .material-icons-round {
+.theme-mode-btn .material-symbols-rounded {
   font-size: 20px;
 }
 
@@ -824,7 +819,7 @@ const bodyMarginLeft = computed(() => {
   top: 0;
   bottom: 0;
   width: 256px;
-  background-color: var(--md-sys-color-surface, #fffbfe);
+  background-color: var(--md-sys-color-surface-2, #f3edf7);
   z-index: 99;
   display: flex;
   flex-direction: column;
@@ -832,7 +827,7 @@ const bodyMarginLeft = computed(() => {
   overflow-x: hidden;
 }
 
-/* 宽屏 inline 面板：无圆角，与 Rail 同色视觉一体，右侧柔和阴影 */
+/* 宽屏 inline 面板：与 Rail 同色视觉一体，右侧柔和阴影 */
 .sub-panel--inline {
   box-shadow: 1px 0 2px 0 rgba(0, 0, 0, 0.08), 2px 0 6px 0 rgba(0, 0, 0, 0.04);
 }
@@ -862,6 +857,7 @@ const bodyMarginLeft = computed(() => {
   gap: 0;
 }
 
+/* ======== 子面板项（m3.material.io 风格，无 ripple） ======== */
 .sub-panel__item {
   display: flex;
   align-items: center;
@@ -869,54 +865,80 @@ const bodyMarginLeft = computed(() => {
   border-radius: 24px;
   padding: 0 20px;
   cursor: pointer;
+  text-decoration: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   outline: none;
   color: var(--md-sys-color-on-surface-variant, #49454f);
-  transition: color 0.2s;
   position: relative;
   overflow: hidden;
 }
 
-/* 药丸背景（独立动画层）——子面板项 */
-.sub-panel__item-pill {
+/* Indicator 药丸 — ::before 伪元素 */
+.sub-panel__item::before {
+  content: '';
   position: absolute;
   inset: 0;
   border-radius: 24px;
+  opacity: 0;
+  transform: scaleX(0.32);
   background-color: var(--md-sys-color-secondary-container, #e8def8);
-  transform: scaleX(0);
-  transform-origin: center;
-  /* 初始无 transition，通过 pill--animate 类启用 */
+  z-index: 0;
+  /* 默认无 transition */
 }
 
-/* 激活态：药丸展开 */
-.sub-panel__item-pill--active {
+/* 激活态 indicator */
+.sub-panel__item--active::before {
+  opacity: 1;
   transform: scaleX(1);
 }
 
-/* mounted 后启用 transition，避免首次渲染播放动画 */
-.sub-panel__item-pill--animate {
-  transition: transform 300ms cubic-bezier(0.2, 0, 0, 1);
+/* mounted 后启用 transition */
+.sub-panel__item--animate::before {
+  transition: transform 0.2s linear, opacity 0.2s linear;
 }
 
+/* 激活态文字颜色 */
 .sub-panel__item--active {
   color: var(--md-sys-color-on-secondary-container, #1d192b);
 }
 
-/* md-ripple 颜色 - 未选中项 */
-.sub-panel__item:not(.sub-panel__item--active) .sub-panel__md-ripple {
-  --md-ripple-hover-color: var(--md-sys-color-on-surface-variant, #49454f);
-  --md-ripple-pressed-color: var(--md-sys-color-on-surface-variant, #49454f);
-  --md-ripple-hover-opacity: 0.08;
-  --md-ripple-pressed-opacity: 0.12;
+/* Hover state layer */
+.sub-panel__item:not(.sub-panel__item--active):hover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent);
+  z-index: 1;
 }
 
-/* md-ripple 颜色 - 选中项 */
-.sub-panel__item--active .sub-panel__md-ripple {
-  --md-ripple-hover-color: var(--md-sys-color-on-secondary-container, #1d192b);
-  --md-ripple-pressed-color: var(--md-sys-color-on-secondary-container, #1d192b);
-  --md-ripple-hover-opacity: 0.08;
-  --md-ripple-pressed-opacity: 0.12;
+.sub-panel__item--active:hover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1c1b1f) 8%, var(--md-sys-color-secondary-container, #e8def8));
+  z-index: 1;
+}
+
+/* Pressed state layer */
+.sub-panel__item:not(.sub-panel__item--active):active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 12%, transparent);
+  z-index: 1;
+}
+
+.sub-panel__item--active:active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1c1b1f) 12%, var(--md-sys-color-secondary-container, #e8def8));
+  z-index: 1;
 }
 
 .sub-panel__item-label {
@@ -924,12 +946,25 @@ const bodyMarginLeft = computed(() => {
   font-weight: 500;
   letter-spacing: 0.1px;
   position: relative;
-  z-index: 1;
+  z-index: 2;
   white-space: nowrap;
+  font-variation-settings: "GRAD" 0;
+  transition: font-variation-settings 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
+/* 激活态标签强调加粗 */
 .sub-panel__item--active .sub-panel__item-label {
-  font-weight: 600;
+  font-variation-settings: "GRAD" 125;
+}
+
+/* Hover 标签 GRAD 50 */
+.sub-panel__item:not(.sub-panel__item--active):hover .sub-panel__item-label {
+  font-variation-settings: "GRAD" 50;
+}
+
+/* Pressed 标签 GRAD -50 */
+.sub-panel__item:active .sub-panel__item-label {
+  font-variation-settings: "GRAD" -50;
 }
 
 /* ======== 响应式 ======== */
@@ -948,6 +983,37 @@ const bodyMarginLeft = computed(() => {
 
   .mobile-top-bar {
     display: flex;
+  }
+}
+
+/* ======== 暗色主题 ======== */
+@media (prefers-color-scheme: dark) {
+  .sub-panel {
+    background-color: var(--md-sys-color-surface-2, #1d1b20);
+  }
+
+  .sub-panel__item::before {
+    background-color: var(--md-sys-color-secondary-container, #4a4458);
+  }
+
+  .sub-panel__item--active {
+    color: var(--md-sys-color-on-secondary-container, #e8def8);
+  }
+
+  .sub-panel__item:not(.sub-panel__item--active):hover::after {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent);
+  }
+
+  .sub-panel__item--active:hover::after {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #e6e1e5) 8%, var(--md-sys-color-secondary-container, #4a4458));
+  }
+
+  .sub-panel__item:not(.sub-panel__item--active):active::after {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 12%, transparent);
+  }
+
+  .sub-panel__item--active:active::after {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #e6e1e5) 12%, var(--md-sys-color-secondary-container, #4a4458));
   }
 }
 </style>

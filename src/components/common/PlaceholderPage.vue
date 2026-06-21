@@ -1,7 +1,7 @@
 <template>
   <div class="placeholder-page">
     <div class="placeholder-card">
-      <span class="material-icons-round placeholder-card__icon">{{ icon }}</span>
+      <span class="material-symbols-rounded placeholder-card__icon">{{ icon }}</span>
       <h1 class="placeholder-card__title">{{ title }}</h1>
       <p class="placeholder-card__desc">{{ description }}</p>
     </div>
