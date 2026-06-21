@@ -906,14 +906,20 @@ const bodyMarginLeft = computed(() => {
   background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent));
 }
 
-/* Active 项 hover 无 state layer（与 m3 一致，仅有 font-variation 变化） */
+/* Active 项 hover state layer（m3 实测：background-image 不遮盖 ::before indicator） */
+.sub-panel__item--active:hover {
+  background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent));
+}
 
 /* Inactive 项 pressed state layer */
 .sub-panel__item:not(.sub-panel__item--active):active {
   background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 12%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 12%, transparent));
 }
 
-/* Active 项 pressed 无 state layer（与 m3 一致） */
+/* Active 项 pressed state layer */
+.sub-panel__item--active:active {
+  background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 12%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 12%, transparent));
+}
 
 .sub-panel__item-label {
   font-size: 14px;
@@ -931,8 +937,13 @@ const bodyMarginLeft = computed(() => {
   font-variation-settings: "GRAD" 125;
 }
 
-/* Hover 标签 GRAD 50 */
+/* Hover 标签 GRAD 50（所有项） */
 .sub-panel__item:not(.sub-panel__item--active):hover .sub-panel__item-label {
+  font-variation-settings: "GRAD" 50;
+}
+
+/* Active 项 hover 标签 GRAD 50 */
+.sub-panel__item--active:hover .sub-panel__item-label {
   font-variation-settings: "GRAD" 50;
 }
 
@@ -978,9 +989,17 @@ const bodyMarginLeft = computed(() => {
   background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent));
 }
 
-/* 暗色 active hover/pressed 无 state layer（与 m3 一致） */
+/* 暗色 active hover state layer */
+:global([data-theme="dark"]) .sub-panel__item--active:hover {
+  background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent));
+}
 
 :global([data-theme="dark"]) .sub-panel__item:not(.sub-panel__item--active):active {
+  background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 12%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 12%, transparent));
+}
+
+/* 暗色 active pressed state layer */
+:global([data-theme="dark"]) .sub-panel__item--active:active {
   background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 12%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 12%, transparent));
 }
 

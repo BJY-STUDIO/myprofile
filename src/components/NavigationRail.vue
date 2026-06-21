@@ -301,12 +301,13 @@ function onItemLeave() {
   font-variation-settings: "GRAD" 50;
 }
 
-/* 选中项 hover：图标 FILL 1 + wght 600（m3 无 state layer 背景色） */
+/* 选中项 hover：图标 FILL 1 + wght 600 + 灰色 state layer（m3 实测：background-image 不遮盖 ::before indicator） */
 .nav-rail__destination--active:hover .nav-rail__icon {
+  background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent));
   font-variation-settings: "FILL" 1, "wght" 600, "opsz" 24;
 }
 
-/* 选中项 hover：标签 GRAD 50 (已在 active 是 125，hover 时无特殊覆盖) */
+/* 选中项 hover：标签 GRAD 50 */
 
 /* ---- Active 状态 ---- */
 .nav-rail__destination--active .nav-rail__icon {
@@ -325,8 +326,9 @@ function onItemLeave() {
   font-variation-settings: "GRAD" -50;
 }
 
-/* 选中项 pressed：FILL 1 + wght 300（m3 无额外 state layer） */
+/* 选中项 pressed：FILL 1 + wght 300 + 12% state layer（与 m3 一致） */
 .nav-rail__destination--active:active .nav-rail__icon {
+  background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 12%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 12%, transparent));
   font-variation-settings: "FILL" 1, "wght" 300, "opsz" 24;
 }
 
@@ -470,7 +472,10 @@ function onItemLeave() {
   background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent));
 }
 
-/* 暗色模式 active hover 无 state layer（与 m3 一致） */
+/* 暗色模式 active hover 有灰色 state layer（与 m3 一致） */
+:global([data-theme="dark"]) .nav-rail__destination--active:hover .nav-rail__icon {
+  background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent));
+}
 
 :global([data-theme="dark"]) .nav-rail__destination--active .nav-rail__icon {
   color: var(--md-sys-color-on-secondary-container, #e8def8);
@@ -484,7 +489,10 @@ function onItemLeave() {
   background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 12%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 12%, transparent));
 }
 
-/* 暗色模式 active pressed 无 state layer（与 m3 一致） */
+/* 暗色模式 active pressed + 12% state layer */
+:global([data-theme="dark"]) .nav-rail__destination--active:active .nav-rail__icon {
+  background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 12%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 12%, transparent));
+}
 
 :global([data-theme="dark"]) .nav-rail__action-btn {
   color: var(--md-sys-color-on-surface-variant, #cac4d0);
