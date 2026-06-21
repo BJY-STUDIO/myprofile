@@ -3,19 +3,13 @@
  * Navigation Rail 组件
  * 严格遵循 Material Design 3 规范
  *
- * M3 规范要点：
- * - 宽度 80dp，固定左侧
- * - 每个目标项高度 72dp
- * - Indicator（药丸）：56x32dp，full round (16dp radius)
- * - State layer 在 indicator 内部，不在整个 item 上
- * - 选中态：secondary-container 药丸 + on-secondary-container 图标
- * - 未选中态：透明背景 + on-surface-variant 图标
- * - Hover: state layer 8% / Focus: 12% / Pressed: 12%
- * - 选中项 hover state layer 颜色用 on-secondary-container
- * - 未选中项 hover state layer 颜色用 on-surface-variant
- * - Ripple: 使用 md-ripple 官方组件，bounded 到 indicator 形状
+ * Indicator 药丸动画：
+ * - 激活：药丸从中心线向两端展开 (scaleX 0→1)
+ * - 失活：药丸从两端向中心线收缩 (scaleX 1→0)
+ * - transform-origin: center，实现双向对称缩放
+ * - 首次渲染不播放动画（mounted 后才启用 transition）
  */
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 const props = defineProps({
@@ -41,6 +35,15 @@ const activeId = computed(() => {
     return false
   })
   return matched ? matched.id : props.items[0]?.id
+})
+
+// 首次渲染完成标记——mounted 之后才启用药丸 transition，避免初始化时播放动画
+const transitionsReady = ref(false)
+onMounted(() => {
+  // 下一帧再启用，确保初始渲染已完成
+  requestAnimationFrame(() => {
+    transitionsReady.value = true
+  })
 })
 
 function navigate(item) {
@@ -95,8 +98,16 @@ function onItemLeave() {
         @mouseenter="onItemHover(item.id)"
         @mouseleave="onItemLeave"
       >
-        <!-- Indicator 容器 -->
+        <!-- Indicator 容器（透明背景） -->
         <div class="nav-rail__indicator">
+          <!-- 药丸背景（独立动画层） -->
+          <div
+            class="nav-rail__indicator-pill"
+            :class="{
+              'nav-rail__indicator-pill--active': activeId === item.id,
+              'nav-rail__indicator-pill--animate': transitionsReady,
+            }"
+          ></div>
           <!-- md-ripple bounded 到 indicator 形状 -->
           <md-ripple class="nav-rail__md-ripple"></md-ripple>
           <!-- 图标 -->
@@ -202,7 +213,6 @@ function onItemLeave() {
   box-shadow: var(--md-sys-elevation-1, 0 1px 2px 0 rgba(0,0,0,0.3), 0 1px 3px 1px rgba(0,0,0,0.15));
 }
 
-/* FAB 内 md-ripple 颜色 */
 .nav-rail__fab md-ripple {
   --md-ripple-hover-color: var(--md-sys-color-on-primary-container, #21005d);
   --md-ripple-pressed-color: var(--md-sys-color-on-primary-container, #21005d);
@@ -232,7 +242,7 @@ function onItemLeave() {
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
-/* ======== Indicator（药丸容器） ======== */
+/* ======== Indicator（药丸容器，透明背景） ======== */
 .nav-rail__indicator {
   width: 56px;
   height: 32px;
@@ -242,15 +252,31 @@ function onItemLeave() {
   justify-content: center;
   position: relative;
   overflow: hidden;
-  transition: background-color 0.3s cubic-bezier(0.2, 0, 0, 1);
 }
 
-/* 选中态 - indicator 药丸背景 */
-.nav-rail__destination--active .nav-rail__indicator {
+/* ======== 药丸背景（独立动画层） ======== */
+.nav-rail__indicator-pill {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
   background-color: var(--md-sys-color-secondary-container, #e8def8);
+  transform: scaleX(0);
+  transform-origin: center;
+  /* 初始无 transition，通过 pill--animate 类启用 */
 }
 
-/* md-ripple 在 indicator 内 - 未选中项 */
+/* 激活态：药丸展开 */
+.nav-rail__indicator-pill--active {
+  transform: scaleX(1);
+}
+
+/* mounted 后启用 transition，避免首次渲染播放动画 */
+.nav-rail__indicator-pill--animate {
+  transition: transform 300ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* ======== md-ripple 颜色 ======== */
+/* 未选中项 */
 .nav-rail__destination:not(.nav-rail__destination--active) .nav-rail__md-ripple {
   --md-ripple-hover-color: var(--md-sys-color-on-surface-variant, #49454f);
   --md-ripple-pressed-color: var(--md-sys-color-on-surface-variant, #49454f);
@@ -258,7 +284,7 @@ function onItemLeave() {
   --md-ripple-pressed-opacity: 0.12;
 }
 
-/* md-ripple 在 indicator 内 - 选中项 */
+/* 选中项 */
 .nav-rail__destination--active .nav-rail__md-ripple {
   --md-ripple-hover-color: var(--md-sys-color-on-secondary-container, #1d192b);
   --md-ripple-pressed-color: var(--md-sys-color-on-secondary-container, #1d192b);
@@ -275,7 +301,6 @@ function onItemLeave() {
   transition: color 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
-/* 选中态图标颜色 */
 .nav-rail__destination--active .nav-rail__icon {
   color: var(--md-sys-color-on-secondary-container, #1d192b);
 }
@@ -388,7 +413,7 @@ function onItemLeave() {
     color: var(--md-sys-color-on-surface-variant, #cac4d0);
   }
 
-  .nav-rail__destination--active .nav-rail__indicator {
+  .nav-rail__indicator-pill {
     background-color: var(--md-sys-color-secondary-container, #4a4458);
   }
 

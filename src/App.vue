@@ -6,6 +6,9 @@ import NavigationRail from '@/components/NavigationRail.vue'
 const route = useRoute()
 const router = useRouter()
 
+// 首次渲染完成标记——mounted 后才启用子面板药丸 transition，避免初始化时播放动画
+const subPanelTransitionsReady = ref(false)
+
 const navItems = [
   { id: 'home', label: '首页', icon: 'home', activeIcon: 'home', route: '/' },
   { id: 'about', label: '关于', icon: 'person_outline', activeIcon: 'person', route: '/about' },
@@ -72,6 +75,10 @@ function updateScreenWidth() {
 onMounted(() => {
   updateScreenWidth()
   window.addEventListener('resize', updateScreenWidth)
+  // 下一帧启用子面板药丸 transition
+  requestAnimationFrame(() => {
+    subPanelTransitionsReady.value = true
+  })
 })
 onUnmounted(() => {
   window.removeEventListener('resize', updateScreenWidth)
@@ -181,6 +188,14 @@ const bodyMarginLeft = computed(() => {
           :class="{ 'sub-panel__item--active': activeSubItemId === child.id }"
           @click="navigateToSubItem(child)"
         >
+          <!-- 药丸背景（独立动画层） -->
+          <div
+            class="sub-panel__item-pill"
+            :class="{
+              'sub-panel__item-pill--active': activeSubItemId === child.id,
+              'sub-panel__item-pill--animate': subPanelTransitionsReady,
+            }"
+          ></div>
           <md-ripple class="sub-panel__md-ripple"></md-ripple>
           <span class="sub-panel__item-label">{{ child.label }}</span>
         </div>
@@ -203,6 +218,14 @@ const bodyMarginLeft = computed(() => {
             :class="{ 'sub-panel__item--active': activeSubItemId === child.id }"
             @click="navigateToSubItem(child)"
           >
+            <!-- 药丸背景（独立动画层） -->
+            <div
+              class="sub-panel__item-pill"
+              :class="{
+                'sub-panel__item-pill--active': activeSubItemId === child.id,
+                'sub-panel__item-pill--animate': subPanelTransitionsReady,
+              }"
+            ></div>
             <md-ripple class="sub-panel__md-ripple"></md-ripple>
             <span class="sub-panel__item-label">{{ child.label }}</span>
           </div>
@@ -850,13 +873,33 @@ const bodyMarginLeft = computed(() => {
   -webkit-tap-highlight-color: transparent;
   outline: none;
   color: var(--md-sys-color-on-surface-variant, #49454f);
-  transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1), color 0.2s;
+  transition: color 0.2s;
   position: relative;
   overflow: hidden;
 }
 
-.sub-panel__item--active {
+/* 药丸背景（独立动画层）——子面板项 */
+.sub-panel__item-pill {
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
   background-color: var(--md-sys-color-secondary-container, #e8def8);
+  transform: scaleX(0);
+  transform-origin: center;
+  /* 初始无 transition，通过 pill--animate 类启用 */
+}
+
+/* 激活态：药丸展开 */
+.sub-panel__item-pill--active {
+  transform: scaleX(1);
+}
+
+/* mounted 后启用 transition，避免首次渲染播放动画 */
+.sub-panel__item-pill--animate {
+  transition: transform 300ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.sub-panel__item--active {
   color: var(--md-sys-color-on-secondary-container, #1d192b);
 }
 
