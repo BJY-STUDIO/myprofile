@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import NavigationRail from '@/components/NavigationRail.vue'
 
@@ -43,32 +43,116 @@ const activeSubItems = computed(() => {
   return activeItem?.children || null
 })
 
+// 当前活跃一级菜单项的完整数据
+const activeNavItem = computed(() => {
+  return navItems.find(item => item.id === activeNavId.value)
+})
+
 const activeSubItemId = computed(() => {
   if (!activeSubItems.value) return null
-  // 完全匹配当前路径
   const exact = activeSubItems.value.find(child => route.path === child.route)
   if (exact) return exact.id
-  // 前缀匹配
   const prefix = activeSubItems.value.find(
     child => route.path.startsWith(child.route + '/') || (child.route !== '/' && route.path.startsWith(child.route))
   )
   return prefix ? prefix.id : activeSubItems.value[0]?.id
 })
 
-const subPanelOpen = ref(false)
+// 响应式：宽屏自动展开 inline，窄屏通过 hover 浮层
+const isWideScreen = ref(true)
+const subPanelInlineOpen = ref(false)
+const hoveredNavId = ref(null) // 当前鼠标悬停的一级菜单 id
 
-// 当活跃的一级导航变化时，自动展开/收起二级面板
-watch(activeNavId, (newId) => {
-  const item = navItems.find(i => i.id === newId)
-  subPanelOpen.value = !!item?.children
-}, { immediate: true })
+function updateScreenWidth() {
+  isWideScreen.value = window.innerWidth >= 1240
+  // 宽屏下：当前选中项有 children 则自动展开 inline
+  subPanelInlineOpen.value = isWideScreen.value && !!activeSubItems.value
+}
 
-function toggleSubPanel() {
-  subPanelOpen.value = !subPanelOpen.value
+onMounted(() => {
+  updateScreenWidth()
+  window.addEventListener('resize', updateScreenWidth)
+})
+onUnmounted(() => {
+  window.removeEventListener('resize', updateScreenWidth)
+})
+
+watch(activeNavId, () => {
+  if (isWideScreen.value) {
+    subPanelInlineOpen.value = !!activeSubItems.value
+  }
+})
+
+watch(isWideScreen, (wide) => {
+  subPanelInlineOpen.value = wide && !!activeSubItems.value
+})
+
+// 计算当前要显示的 hover 浮层 children（仅窄屏桌面端）
+const hoveredSubItems = computed(() => {
+  if (isWideScreen.value) return null // 宽屏用 inline
+  if (!hoveredNavId.value) return null
+  const item = navItems.find(i => i.id === hoveredNavId.value)
+  return item?.children || null
+})
+
+const hoverLeaveTimer = ref(null)
+
+function onRailItemHover(itemId) {
+  if (hoverLeaveTimer.value) {
+    clearTimeout(hoverLeaveTimer.value)
+    hoverLeaveTimer.value = null
+  }
+  hoveredNavId.value = itemId
+}
+
+function onRailItemLeave() {
+  hoverLeaveTimer.value = setTimeout(() => {
+    hoveredNavId.value = null
+  }, 150)
+}
+
+function onHoverPanelEnter() {
+  if (hoverLeaveTimer.value) {
+    clearTimeout(hoverLeaveTimer.value)
+    hoverLeaveTimer.value = null
+  }
+}
+
+function onHoverPanelLeave() {
+  hoveredNavId.value = null
+}
+
+// 二级菜单涟漪
+const subRipples = ref([])
+
+function handleSubRipple(event, childId) {
+  const target = event.currentTarget
+  const rect = target.getBoundingClientRect()
+  const x = event.clientX - rect.left
+  const y = event.clientY - rect.top
+  // bounded ripple: 尺寸为组件对角线长度，clip 到组件形状
+  const size = Math.sqrt(rect.width * rect.width + rect.height * rect.height) * 2
+
+  const id = Date.now() + Math.random()
+  subRipples.value.push({
+    id,
+    childId,
+    x: x - size / 2,
+    y: y - size / 2,
+    size,
+    active: activeSubItemId.value === childId,
+  })
+
+  nextTick(() => {
+    setTimeout(() => {
+      subRipples.value = subRipples.value.filter((r) => r.id !== id)
+    }, 500)
+  })
 }
 
 function navigateToSubItem(child) {
   if (child.route) router.push(child.route)
+  hoveredNavId.value = null
 }
 
 function navigateTo(item) {
@@ -91,11 +175,11 @@ function closeDrawer() {
   drawerOpen.value = false
 }
 
-// 桌面端内容区左边距（根据 Rail + 二级面板状态动态计算）
+// 桌面端内容区左边距
 const bodyMarginLeft = computed(() => {
-  if (typeof window !== 'undefined' && window.innerWidth <= 840) return '0px'
-  let margin = 80 // Rail
-  if (activeSubItems.value && subPanelOpen.value) margin += 256 // 二级面板展开
+  if (!isWideScreen.value) return '80px'
+  let margin = 80
+  if (activeSubItems.value && subPanelInlineOpen.value) margin += 256
   return margin + 'px'
 })
 </script>
@@ -108,37 +192,76 @@ const bodyMarginLeft = computed(() => {
       :items="navItems"
       :fab="fabConfig"
       @fab-click="onFabClick"
+      @item-hover="onRailItemHover"
+      @item-leave="onRailItemLeave"
     />
 
-    <!-- 桌面端：二级子菜单面板（与 Rail 同色背景，视觉一体） -->
+    <!-- 宽屏 (≥1240px)：inline 二级面板，与 Rail 同色背景，视觉一体 -->
     <aside
-      v-if="activeSubItems"
-      class="sub-panel"
-      :class="{ 'sub-panel--open': subPanelOpen }"
+      v-if="subPanelInlineOpen && activeSubItems"
+      class="sub-panel sub-panel--inline"
     >
-      <div class="sub-panel__header">
-        <span class="sub-panel__title">{{ navItems.find(i => i.id === activeNavId)?.label }}</span>
-        <button
-          class="sub-panel__toggle-btn"
-          :aria-label="subPanelOpen ? '收起菜单' : '展开菜单'"
-          :title="subPanelOpen ? '收起' : '展开'"
-          @click="toggleSubPanel"
-        >
-          <span class="material-icons-round">{{ subPanelOpen ? 'chevron_left' : 'chevron_right' }}</span>
-        </button>
-      </div>
-      <nav v-if="subPanelOpen" class="sub-panel__items">
+      <nav class="sub-panel__items">
         <div
           v-for="child in activeSubItems"
           :key="child.id"
           class="sub-panel__item"
           :class="{ 'sub-panel__item--active': activeSubItemId === child.id }"
           @click="navigateToSubItem(child)"
+          @mousedown="handleSubRipple($event, child.id)"
         >
+          <!-- Bounded ripple -->
+          <div
+            v-for="ripple in subRipples.filter(r => r.childId === child.id)"
+            :key="ripple.id"
+            class="sub-panel__ripple"
+            :class="{ 'sub-panel__ripple--active': activeSubItemId === child.id }"
+            :style="{
+              left: ripple.x + 'px',
+              top: ripple.y + 'px',
+              width: ripple.size + 'px',
+              height: ripple.size + 'px',
+            }"
+          ></div>
           <span class="sub-panel__item-label">{{ child.label }}</span>
         </div>
       </nav>
     </aside>
+
+    <!-- 中等屏幕 (840-1240px)：hover 浮层面板 -->
+    <Teleport to="body">
+      <aside
+        v-if="hoveredSubItems && !isWideScreen"
+        class="sub-panel sub-panel--hover"
+        @mouseenter="onHoverPanelEnter"
+        @mouseleave="onHoverPanelLeave"
+      >
+        <nav class="sub-panel__items">
+          <div
+            v-for="child in hoveredSubItems"
+            :key="child.id"
+            class="sub-panel__item"
+            :class="{ 'sub-panel__item--active': activeSubItemId === child.id }"
+            @click="navigateToSubItem(child)"
+            @mousedown="handleSubRipple($event, child.id)"
+          >
+            <div
+              v-for="ripple in subRipples.filter(r => r.childId === child.id)"
+              :key="ripple.id"
+              class="sub-panel__ripple"
+              :class="{ 'sub-panel__ripple--active': activeSubItemId === child.id }"
+              :style="{
+                left: ripple.x + 'px',
+                top: ripple.y + 'px',
+                width: ripple.size + 'px',
+                height: ripple.size + 'px',
+              }"
+            ></div>
+            <span class="sub-panel__item-label">{{ child.label }}</span>
+          </div>
+        </nav>
+      </aside>
+    </Teleport>
 
     <!-- 右侧主区域 -->
     <div class="app-layout__body" :style="{ marginLeft: bodyMarginLeft }">
@@ -724,7 +847,7 @@ const bodyMarginLeft = computed(() => {
   font-size: 20px;
 }
 
-/* ======== 二级子菜单面板（桌面端，Rail 与面板同色视觉一体） ======== */
+/* ======== 二级子菜单面板 ======== */
 .sub-panel {
   position: fixed;
   left: 80px;
@@ -735,89 +858,35 @@ const bodyMarginLeft = computed(() => {
   z-index: 99;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+/* 宽屏 inline 面板：与 Rail 同色，无分隔 */
+.sub-panel--inline {
+  /* 无圆角、无阴影，与 Rail 视觉一体 */
+}
+
+/* 中等屏幕 hover 浮层面板：有圆角和阴影 */
+.sub-panel--hover {
   border-radius: 0 16px 16px 0;
-  overflow: hidden;
-  transition: width 0.3s cubic-bezier(0.2, 0, 0, 1),
-              box-shadow 0.3s cubic-bezier(0.2, 0, 0, 1);
+  box-shadow: var(--md-sys-elevation-2, 0 1px 2px 0 rgba(0,0,0,0.3), 0 2px 6px 2px rgba(0,0,0,0.15));
+  animation: sub-panel-fade-in 0.15s ease-out;
 }
 
-.sub-panel--open {
-  box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.06);
-}
-
-.sub-panel:not(.sub-panel--open) {
-  width: 56px;
-}
-
-.sub-panel__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 12px 12px;
-  min-height: 64px;
-  box-sizing: border-box;
-}
-
-.sub-panel__title {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  letter-spacing: 0.1px;
-  white-space: nowrap;
-  overflow: hidden;
-  transition: opacity 0.2s;
-}
-
-.sub-panel:not(.sub-panel--open) .sub-panel__title {
-  opacity: 0;
-  width: 0;
-}
-
-.sub-panel__toggle-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 16px;
-  border: none;
-  background: none;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-  flex-shrink: 0;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.sub-panel__toggle-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 16px;
-  background-color: var(--md-sys-color-on-surface-variant, #49454f);
-  opacity: 0;
-  transition: opacity 0.2s;
-  pointer-events: none;
-}
-
-.sub-panel__toggle-btn:hover::before {
-  opacity: 0.08;
-}
-
-.sub-panel__toggle-btn:active::before {
-  opacity: 0.12;
-}
-
-.sub-panel__toggle-btn .material-icons-round {
-  font-size: 20px;
-  position: relative;
-  z-index: 1;
+@keyframes sub-panel-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .sub-panel__items {
   flex: 1;
-  padding: 4px 12px;
+  padding: 12px 12px;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -837,8 +906,10 @@ const bodyMarginLeft = computed(() => {
   color: var(--md-sys-color-on-surface-variant, #49454f);
   transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1), color 0.2s;
   position: relative;
+  overflow: hidden;
 }
 
+/* Sub-panel state layer */
 .sub-panel__item::before {
   content: '';
   position: absolute;
@@ -867,12 +938,42 @@ const bodyMarginLeft = computed(() => {
   background-color: var(--md-sys-color-on-secondary-container, #1d192b);
 }
 
+/* Sub-panel bounded ripple */
+.sub-panel__ripple {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+  transform: scale(0);
+  animation: sub-ripple 0.5s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+.sub-panel__ripple:not(.sub-panel__ripple--active) {
+  background-color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.sub-panel__ripple--active {
+  background-color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+@keyframes sub-ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.12;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
 .sub-panel__item-label {
   font-size: 14px;
   font-weight: 500;
   letter-spacing: 0.1px;
   position: relative;
-  z-index: 1;
+  z-index: 2;
   white-space: nowrap;
 }
 

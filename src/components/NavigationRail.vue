@@ -30,7 +30,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['fab-click'])
+const emit = defineEmits(['fab-click', 'item-hover', 'item-leave'])
 
 const route = useRoute()
 const router = useRouter()
@@ -47,6 +47,15 @@ function navigate(item) {
   if (item.route) router.push(item.route)
 }
 
+// ======== Hover 事件 ========
+function onItemHover(itemId) {
+  emit('item-hover', itemId)
+}
+
+function onItemLeave() {
+  emit('item-leave')
+}
+
 // ======== Ripple 逻辑 ========
 const ripples = ref([])
 
@@ -57,7 +66,7 @@ function handleRipple(event, itemId) {
   const rect = indicator.getBoundingClientRect()
   const x = event.clientX - rect.left
   const y = event.clientY - rect.top
-  const size = Math.max(rect.width, rect.height) * 2
+  const size = Math.sqrt(rect.width * rect.width + rect.height * rect.height) * 2
 
   const id = Date.now() + Math.random()
   ripples.value.push({
@@ -99,14 +108,20 @@ function handleRipple(event, itemId) {
         v-for="item in items"
         :key="item.id"
         class="nav-rail__destination"
-        :class="{ 'nav-rail__destination--active': activeId === item.id }"
+        :class="{
+          'nav-rail__destination--active': activeId === item.id,
+          'nav-rail__destination--has-children': item.children,
+        }"
         role="tab"
         :aria-selected="activeId === item.id"
+        :aria-expanded="item.children ? activeId === item.id : undefined"
         :aria-label="item.label"
         tabindex="0"
         @click="navigate(item); handleRipple($event, item.id)"
         @keydown.enter="navigate(item)"
         @keydown.space.prevent="navigate(item)"
+        @mouseenter="onItemHover(item.id)"
+        @mouseleave="onItemLeave"
       >
         <!-- Indicator 容器 -->
         <div class="nav-rail__indicator">
@@ -353,7 +368,7 @@ function handleRipple(event, itemId) {
     opacity: 0.12;
   }
   100% {
-    transform: scale(1.8);
+    transform: scale(1);
     opacity: 0;
   }
 }
@@ -386,6 +401,12 @@ function handleRipple(event, itemId) {
 .nav-rail__destination--active .nav-rail__label {
   color: var(--md-sys-color-on-surface, #1c1b1f);
   font-weight: 600;
+}
+
+/* 有子菜单的项 hover 时图标和标签加粗 */
+.nav-rail__destination--has-children:hover .nav-rail__icon,
+.nav-rail__destination--has-children:hover .nav-rail__label {
+  font-weight: 700;
 }
 
 /* ======== 下半部分（固定底部） ======== */
