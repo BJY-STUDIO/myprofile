@@ -176,7 +176,6 @@ function handleRipple(event, itemId) {
   top: 0;
   z-index: 100;
   background-color: var(--md-sys-color-surface, #fffbfe);
-  border-right: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   padding: 0;
   overflow: visible;
 }

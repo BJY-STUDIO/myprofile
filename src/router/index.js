@@ -20,8 +20,18 @@ const routes = [
     component: () => import('@/views/BlogView.vue'),
   },
   {
+    path: '/blog/:category',
+    name: 'blog-category',
+    component: () => import('@/views/BlogView.vue'),
+  },
+  {
     path: '/projects',
     name: 'projects',
+    component: () => import('@/views/ProjectsView.vue'),
+  },
+  {
+    path: '/projects/:category',
+    name: 'projects-category',
     component: () => import('@/views/ProjectsView.vue'),
   },
   {

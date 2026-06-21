@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import NavigationRail from '@/components/NavigationRail.vue'
 
@@ -9,8 +9,22 @@ const router = useRouter()
 const navItems = [
   { id: 'home', label: '首页', icon: 'home', activeIcon: 'home', route: '/' },
   { id: 'about', label: '关于', icon: 'person_outline', activeIcon: 'person', route: '/about' },
-  { id: 'blog', label: '博客', icon: 'description', activeIcon: 'description', route: '/blog' },
-  { id: 'projects', label: '项目', icon: 'code', activeIcon: 'code', route: '/projects' },
+  {
+    id: 'blog', label: '博客', icon: 'description', activeIcon: 'description', route: '/blog',
+    children: [
+      { id: 'blog-overview', label: '全部文章', route: '/blog' },
+      { id: 'blog-tech', label: '技术', route: '/blog/tech' },
+      { id: 'blog-life', label: '生活', route: '/blog/life' },
+    ],
+  },
+  {
+    id: 'projects', label: '项目', icon: 'code', activeIcon: 'code', route: '/projects',
+    children: [
+      { id: 'projects-overview', label: '全部项目', route: '/projects' },
+      { id: 'projects-web', label: 'Web 应用', route: '/projects/web' },
+      { id: 'projects-tools', label: '工具', route: '/projects/tools' },
+    ],
+  },
   { id: 'contact', label: '联系', icon: 'mail_outline', activeIcon: 'mail', route: '/contact' },
 ]
 
@@ -22,6 +36,40 @@ const activeNavId = computed(() => {
   )
   return matched ? matched.id : navItems[0].id
 })
+
+// ======== 二级子菜单面板 ========
+const activeSubItems = computed(() => {
+  const activeItem = navItems.find(item => item.id === activeNavId.value)
+  return activeItem?.children || null
+})
+
+const activeSubItemId = computed(() => {
+  if (!activeSubItems.value) return null
+  // 完全匹配当前路径
+  const exact = activeSubItems.value.find(child => route.path === child.route)
+  if (exact) return exact.id
+  // 前缀匹配
+  const prefix = activeSubItems.value.find(
+    child => route.path.startsWith(child.route + '/') || (child.route !== '/' && route.path.startsWith(child.route))
+  )
+  return prefix ? prefix.id : activeSubItems.value[0]?.id
+})
+
+const subPanelOpen = ref(false)
+
+// 当活跃的一级导航变化时，自动展开/收起二级面板
+watch(activeNavId, (newId) => {
+  const item = navItems.find(i => i.id === newId)
+  subPanelOpen.value = !!item?.children
+}, { immediate: true })
+
+function toggleSubPanel() {
+  subPanelOpen.value = !subPanelOpen.value
+}
+
+function navigateToSubItem(child) {
+  if (child.route) router.push(child.route)
+}
 
 function navigateTo(item) {
   if (item.route) router.push(item.route)
@@ -42,6 +90,14 @@ function toggleDrawer() {
 function closeDrawer() {
   drawerOpen.value = false
 }
+
+// 桌面端内容区左边距（根据 Rail + 二级面板状态动态计算）
+const bodyMarginLeft = computed(() => {
+  if (typeof window !== 'undefined' && window.innerWidth <= 840) return '0px'
+  let margin = 80 // Rail
+  if (activeSubItems.value && subPanelOpen.value) margin += 256 // 二级面板展开
+  return margin + 'px'
+})
 </script>
 
 <template>
@@ -54,17 +110,47 @@ function closeDrawer() {
       @fab-click="onFabClick"
     />
 
+    <!-- 桌面端：二级子菜单面板（与 Rail 同色背景，视觉一体） -->
+    <aside
+      v-if="activeSubItems"
+      class="sub-panel"
+      :class="{ 'sub-panel--open': subPanelOpen }"
+    >
+      <div class="sub-panel__header">
+        <span class="sub-panel__title">{{ navItems.find(i => i.id === activeNavId)?.label }}</span>
+        <button
+          class="sub-panel__toggle-btn"
+          :aria-label="subPanelOpen ? '收起菜单' : '展开菜单'"
+          :title="subPanelOpen ? '收起' : '展开'"
+          @click="toggleSubPanel"
+        >
+          <span class="material-icons-round">{{ subPanelOpen ? 'chevron_left' : 'chevron_right' }}</span>
+        </button>
+      </div>
+      <nav v-if="subPanelOpen" class="sub-panel__items">
+        <div
+          v-for="child in activeSubItems"
+          :key="child.id"
+          class="sub-panel__item"
+          :class="{ 'sub-panel__item--active': activeSubItemId === child.id }"
+          @click="navigateToSubItem(child)"
+        >
+          <span class="sub-panel__item-label">{{ child.label }}</span>
+        </div>
+      </nav>
+    </aside>
+
     <!-- 右侧主区域 -->
-    <div class="app-layout__body">
+    <div class="app-layout__body" :style="{ marginLeft: bodyMarginLeft }">
       <!-- 移动端：顶部 App Bar -->
       <header class="mobile-top-bar">
         <button
           class="mobile-top-bar__menu-btn"
-          aria-label="Open navigation menu"
-          title="Menu"
+          :aria-label="drawerOpen ? 'Close navigation menu' : 'Open navigation menu'"
+          :title="drawerOpen ? 'Close' : 'Menu'"
           @click="toggleDrawer"
         >
-          <span class="material-icons-round">menu</span>
+          <span class="material-icons-round">{{ drawerOpen ? 'close' : 'menu' }}</span>
         </button>
         <span class="mobile-top-bar__title">Kernel's Blog</span>
         <div class="mobile-top-bar__actions">
@@ -113,7 +199,6 @@ function closeDrawer() {
         <div class="nav-drawer__header">
           <span class="nav-drawer__title">Kernel's Blog</span>
         </div>
-        <md-divider></md-divider>
         <nav class="nav-drawer__items">
           <div
             v-for="item in navItems"
@@ -128,7 +213,6 @@ function closeDrawer() {
             <span class="nav-drawer__label">{{ item.label }}</span>
           </div>
         </nav>
-        <md-divider></md-divider>
         <div class="nav-drawer__footer">
           <a
             class="nav-drawer__footer-link"
@@ -235,10 +319,10 @@ function closeDrawer() {
 
 .app-layout__body {
   flex: 1;
-  margin-left: 80px;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  transition: margin-left 0.3s cubic-bezier(0.2, 0, 0, 1);
 }
 
 /* ======== 主内容区 ======== */
@@ -259,7 +343,6 @@ function closeDrawer() {
   z-index: 50;
   height: 64px;
   background-color: var(--md-sys-color-surface, #fffbfe);
-  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   align-items: center;
   padding: 0 4px 0 4px;
   gap: 4px;
@@ -641,14 +724,174 @@ function closeDrawer() {
   font-size: 20px;
 }
 
+/* ======== 二级子菜单面板（桌面端，Rail 与面板同色视觉一体） ======== */
+.sub-panel {
+  position: fixed;
+  left: 80px;
+  top: 0;
+  bottom: 0;
+  width: 256px;
+  background-color: var(--md-sys-color-surface, #fffbfe);
+  z-index: 99;
+  display: flex;
+  flex-direction: column;
+  border-radius: 0 16px 16px 0;
+  overflow: hidden;
+  transition: width 0.3s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.sub-panel--open {
+  box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.06);
+}
+
+.sub-panel:not(.sub-panel--open) {
+  width: 56px;
+}
+
+.sub-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 12px 12px;
+  min-height: 64px;
+  box-sizing: border-box;
+}
+
+.sub-panel__title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  letter-spacing: 0.1px;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: opacity 0.2s;
+}
+
+.sub-panel:not(.sub-panel--open) .sub-panel__title {
+  opacity: 0;
+  width: 0;
+}
+
+.sub-panel__toggle-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  border: none;
+  background: none;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sub-panel__toggle-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  background-color: var(--md-sys-color-on-surface-variant, #49454f);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.sub-panel__toggle-btn:hover::before {
+  opacity: 0.08;
+}
+
+.sub-panel__toggle-btn:active::before {
+  opacity: 0.12;
+}
+
+.sub-panel__toggle-btn .material-icons-round {
+  font-size: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.sub-panel__items {
+  flex: 1;
+  padding: 4px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+}
+
+.sub-panel__item {
+  display: flex;
+  align-items: center;
+  height: 48px;
+  border-radius: 24px;
+  padding: 0 20px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1), color 0.2s;
+  position: relative;
+}
+
+.sub-panel__item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background-color: var(--md-sys-color-on-surface-variant, #49454f);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.sub-panel__item:hover::before {
+  opacity: 0.08;
+}
+
+.sub-panel__item:active::before {
+  opacity: 0.12;
+}
+
+.sub-panel__item--active {
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+.sub-panel__item--active::before {
+  background-color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+.sub-panel__item-label {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+}
+
+.sub-panel__item--active .sub-panel__item-label {
+  font-weight: 600;
+}
+
 /* ======== 响应式 ======== */
 @media (max-width: 840px) {
   .app-layout__rail {
     display: none !important;
   }
 
+  .sub-panel {
+    display: none !important;
+  }
+
   .app-layout__body {
-    margin-left: 0;
+    margin-left: 0 !important;
   }
 
   .mobile-top-bar {
