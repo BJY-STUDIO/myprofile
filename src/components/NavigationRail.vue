@@ -13,9 +13,9 @@
  * - Hover: state layer 8% / Focus: 12% / Pressed: 12%
  * - 选中项 hover state layer 颜色用 on-secondary-container
  * - 未选中项 hover state layer 颜色用 on-surface-variant
- * - Ripple: 从点击位置扩散，0.4s 动画
+ * - Ripple: 使用 md-ripple 官方组件，bounded 到 indicator 形状
  */
-import { computed, ref, nextTick } from 'vue'
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 const props = defineProps({
@@ -55,35 +55,6 @@ function onItemHover(itemId) {
 function onItemLeave() {
   emit('item-leave')
 }
-
-// ======== Ripple 逻辑 ========
-const ripples = ref([])
-
-function handleRipple(event, itemId) {
-  const indicator = event.currentTarget.querySelector('.nav-rail__indicator')
-  if (!indicator) return
-
-  const rect = indicator.getBoundingClientRect()
-  const x = event.clientX - rect.left
-  const y = event.clientY - rect.top
-  const size = Math.sqrt(rect.width * rect.width + rect.height * rect.height) * 2
-
-  const id = Date.now() + Math.random()
-  ripples.value.push({
-    id,
-    itemId,
-    x: x - size / 2,
-    y: y - size / 2,
-    size,
-    active: activeId.value === itemId,
-  })
-
-  nextTick(() => {
-    setTimeout(() => {
-      ripples.value = ripples.value.filter((r) => r.id !== id)
-    }, 400)
-  })
-}
 </script>
 
 <template>
@@ -97,6 +68,7 @@ function handleRipple(event, itemId) {
           :aria-label="fab.label"
           @click="emit('fab-click')"
         >
+          <md-ripple></md-ripple>
           <span class="material-icons-round">{{ fab.icon }}</span>
         </button>
       </div>
@@ -117,7 +89,7 @@ function handleRipple(event, itemId) {
         :aria-expanded="item.children ? activeId === item.id : undefined"
         :aria-label="item.label"
         tabindex="0"
-        @click="navigate(item); handleRipple($event, item.id)"
+        @click="navigate(item)"
         @keydown.enter="navigate(item)"
         @keydown.space.prevent="navigate(item)"
         @mouseenter="onItemHover(item.id)"
@@ -125,21 +97,8 @@ function handleRipple(event, itemId) {
       >
         <!-- Indicator 容器 -->
         <div class="nav-rail__indicator">
-          <!-- State Layer（严格在 indicator 内部） -->
-          <div class="nav-rail__state-layer"></div>
-          <!-- Vue 驱动的 Ripple -->
-          <div
-            v-for="ripple in ripples.filter(r => r.itemId === item.id)"
-            :key="ripple.id"
-            class="nav-rail__ripple"
-            :class="{ 'nav-rail__ripple--active': ripple.active }"
-            :style="{
-              left: ripple.x + 'px',
-              top: ripple.y + 'px',
-              width: ripple.size + 'px',
-              height: ripple.size + 'px',
-            }"
-          ></div>
+          <!-- md-ripple bounded 到 indicator 形状 -->
+          <md-ripple class="nav-rail__md-ripple"></md-ripple>
           <!-- 图标 -->
           <span class="nav-rail__icon material-icons-round">
             {{ activeId === item.id ? (item.activeIcon || item.icon) : item.icon }}
@@ -161,6 +120,7 @@ function handleRipple(event, itemId) {
           aria-label="GitHub repository"
           title="GitHub repository"
         >
+          <md-ripple></md-ripple>
           <svg viewBox="0 0 16 16" fill="currentColor">
             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
           </svg>
@@ -171,6 +131,7 @@ function handleRipple(event, itemId) {
           aria-label="Toggle theme"
           title="Toggle theme"
         >
+          <md-ripple></md-ripple>
           <span class="material-icons-round">palette</span>
         </button>
       </div>
@@ -233,36 +194,20 @@ function handleRipple(event, itemId) {
   box-shadow: var(--md-sys-elevation-1, 0 1px 2px 0 rgba(0,0,0,0.3), 0 1px 3px 1px rgba(0,0,0,0.15));
 }
 
-/* FAB State Layer */
-.nav-rail__fab::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 16px;
-  background-color: var(--md-sys-color-on-primary-container, #21005d);
-  opacity: 0;
-  transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
-  pointer-events: none;
-}
-
-.nav-rail__fab:hover::before {
-  opacity: 0.08;
-}
-
-.nav-rail__fab:focus-visible::before {
-  opacity: 0.12;
-}
-
-.nav-rail__fab:active::before {
-  opacity: 0.12;
-}
-
 .nav-rail__fab:hover {
   box-shadow: var(--md-sys-elevation-2, 0 1px 2px 0 rgba(0,0,0,0.3), 0 2px 6px 2px rgba(0,0,0,0.15));
 }
 
 .nav-rail__fab:active {
   box-shadow: var(--md-sys-elevation-1, 0 1px 2px 0 rgba(0,0,0,0.3), 0 1px 3px 1px rgba(0,0,0,0.15));
+}
+
+/* FAB 内 md-ripple 颜色 */
+.nav-rail__fab md-ripple {
+  --md-ripple-hover-color: var(--md-sys-color-on-primary-container, #21005d);
+  --md-ripple-pressed-color: var(--md-sys-color-on-primary-container, #21005d);
+  --md-ripple-hover-opacity: 0.08;
+  --md-ripple-pressed-opacity: 0.12;
 }
 
 .nav-rail__fab .material-icons-round {
@@ -305,72 +250,20 @@ function handleRipple(event, itemId) {
   background-color: var(--md-sys-color-secondary-container, #e8def8);
 }
 
-/* ======== State Layer（在 indicator 内部） ======== */
-.nav-rail__state-layer {
-  position: absolute;
-  inset: 0;
-  border-radius: 16px;
-  opacity: 0;
-  transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
-  pointer-events: none;
-  z-index: 1;
+/* md-ripple 在 indicator 内 - 未选中项 */
+.nav-rail__destination:not(.nav-rail__destination--active) .nav-rail__md-ripple {
+  --md-ripple-hover-color: var(--md-sys-color-on-surface-variant, #49454f);
+  --md-ripple-pressed-color: var(--md-sys-color-on-surface-variant, #49454f);
+  --md-ripple-hover-opacity: 0.08;
+  --md-ripple-pressed-opacity: 0.12;
 }
 
-/* 未选中项 state layer 颜色 */
-.nav-rail__destination:not(.nav-rail__destination--active) .nav-rail__state-layer {
-  background-color: var(--md-sys-color-on-surface-variant, #49454f);
-}
-
-/* 选中项 state layer 颜色 */
-.nav-rail__destination--active .nav-rail__state-layer {
-  background-color: var(--md-sys-color-on-secondary-container, #1d192b);
-}
-
-/* Hover - 8% */
-.nav-rail__destination:hover .nav-rail__state-layer {
-  opacity: 0.08;
-}
-
-/* Focus - 12% */
-.nav-rail__destination:focus-visible .nav-rail__state-layer {
-  opacity: 0.12;
-}
-
-/* Pressed - 12% */
-.nav-rail__destination:active .nav-rail__state-layer {
-  opacity: 0.12;
-}
-
-/* ======== Ripple（Vue 驱动，从点击位置扩散） ======== */
-.nav-rail__ripple {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0;
-  pointer-events: none;
-  z-index: 1;
-  transform: scale(0);
-  animation: m3-ripple 0.4s cubic-bezier(0.2, 0, 0, 1) forwards;
-}
-
-/* 未选中项 ripple 颜色 */
-.nav-rail__ripple:not(.nav-rail__ripple--active) {
-  background-color: var(--md-sys-color-on-surface-variant, #49454f);
-}
-
-/* 选中项 ripple 颜色 */
-.nav-rail__ripple--active {
-  background-color: var(--md-sys-color-on-secondary-container, #1d192b);
-}
-
-@keyframes m3-ripple {
-  0% {
-    transform: scale(0);
-    opacity: 0.12;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 0;
-  }
+/* md-ripple 在 indicator 内 - 选中项 */
+.nav-rail__destination--active .nav-rail__md-ripple {
+  --md-ripple-hover-color: var(--md-sys-color-on-secondary-container, #1d192b);
+  --md-ripple-pressed-color: var(--md-sys-color-on-secondary-container, #1d192b);
+  --md-ripple-hover-opacity: 0.08;
+  --md-ripple-pressed-opacity: 0.12;
 }
 
 /* ======== 图标 ======== */
@@ -448,30 +341,13 @@ function handleRipple(event, itemId) {
   overflow: hidden;
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
-  transition: color 0.2s;
 }
 
-.nav-rail__action-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 24px;
-  background-color: var(--md-sys-color-on-surface-variant, #49454f);
-  opacity: 0;
-  transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
-  pointer-events: none;
-}
-
-.nav-rail__action-btn:hover::before {
-  opacity: 0.08;
-}
-
-.nav-rail__action-btn:focus-visible::before {
-  opacity: 0.12;
-}
-
-.nav-rail__action-btn:active::before {
-  opacity: 0.12;
+.nav-rail__action-btn md-ripple {
+  --md-ripple-hover-color: var(--md-sys-color-on-surface-variant, #49454f);
+  --md-ripple-pressed-color: var(--md-sys-color-on-surface-variant, #49454f);
+  --md-ripple-hover-opacity: 0.08;
+  --md-ripple-pressed-opacity: 0.12;
 }
 
 .nav-rail__action-btn svg {
@@ -499,8 +375,9 @@ function handleRipple(event, itemId) {
     box-shadow: var(--md-sys-elevation-1, 0 1px 3px 1px rgba(0,0,0,0.3));
   }
 
-  .nav-rail__fab::before {
-    background-color: var(--md-sys-color-on-primary-container, #eaddff);
+  .nav-rail__fab md-ripple {
+    --md-ripple-hover-color: var(--md-sys-color-on-primary-container, #eaddff);
+    --md-ripple-pressed-color: var(--md-sys-color-on-primary-container, #eaddff);
   }
 
   .nav-rail__fab:hover {
@@ -515,12 +392,14 @@ function handleRipple(event, itemId) {
     background-color: var(--md-sys-color-secondary-container, #4a4458);
   }
 
-  .nav-rail__destination:not(.nav-rail__destination--active) .nav-rail__state-layer {
-    background-color: var(--md-sys-color-on-surface-variant, #cac4d0);
+  .nav-rail__destination:not(.nav-rail__destination--active) .nav-rail__md-ripple {
+    --md-ripple-hover-color: var(--md-sys-color-on-surface-variant, #cac4d0);
+    --md-ripple-pressed-color: var(--md-sys-color-on-surface-variant, #cac4d0);
   }
 
-  .nav-rail__destination--active .nav-rail__state-layer {
-    background-color: var(--md-sys-color-on-secondary-container, #e8def8);
+  .nav-rail__destination--active .nav-rail__md-ripple {
+    --md-ripple-hover-color: var(--md-sys-color-on-secondary-container, #e8def8);
+    --md-ripple-pressed-color: var(--md-sys-color-on-secondary-container, #e8def8);
   }
 
   .nav-rail__destination--active .nav-rail__icon {
@@ -531,21 +410,13 @@ function handleRipple(event, itemId) {
     color: var(--md-sys-color-on-surface, #e6e1e5);
   }
 
-  .nav-rail__ripple:not(.nav-rail__ripple--active) {
-    background-color: var(--md-sys-color-on-surface-variant, #cac4d0);
-  }
-
-  .nav-rail__ripple--active {
-    background-color: var(--md-sys-color-on-secondary-container, #e8def8);
-  }
-
-  /* 底部按钮暗色 */
   .nav-rail__action-btn {
     color: var(--md-sys-color-on-surface-variant, #cac4d0);
   }
 
-  .nav-rail__action-btn::before {
-    background-color: var(--md-sys-color-on-surface-variant, #cac4d0);
+  .nav-rail__action-btn md-ripple {
+    --md-ripple-hover-color: var(--md-sys-color-on-surface-variant, #cac4d0);
+    --md-ripple-pressed-color: var(--md-sys-color-on-surface-variant, #cac4d0);
   }
 }
 </style>

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import NavigationRail from '@/components/NavigationRail.vue'
 
@@ -122,34 +122,6 @@ function onHoverPanelLeave() {
   hoveredNavId.value = null
 }
 
-// 二级菜单涟漪
-const subRipples = ref([])
-
-function handleSubRipple(event, childId) {
-  const target = event.currentTarget
-  const rect = target.getBoundingClientRect()
-  const x = event.clientX - rect.left
-  const y = event.clientY - rect.top
-  // bounded ripple: 尺寸为组件对角线长度，clip 到组件形状
-  const size = Math.sqrt(rect.width * rect.width + rect.height * rect.height) * 2
-
-  const id = Date.now() + Math.random()
-  subRipples.value.push({
-    id,
-    childId,
-    x: x - size / 2,
-    y: y - size / 2,
-    size,
-    active: activeSubItemId.value === childId,
-  })
-
-  nextTick(() => {
-    setTimeout(() => {
-      subRipples.value = subRipples.value.filter((r) => r.id !== id)
-    }, 500)
-  })
-}
-
 function navigateToSubItem(child) {
   if (child.route) router.push(child.route)
   hoveredNavId.value = null
@@ -196,7 +168,7 @@ const bodyMarginLeft = computed(() => {
       @item-leave="onRailItemLeave"
     />
 
-    <!-- 宽屏 (≥1240px)：inline 二级面板，与 Rail 同色背景，视觉一体 -->
+    <!-- 宽屏 (≥1240px)：inline 二级面板，与 Rail 同色背景，无圆角 + 右侧阴影 -->
     <aside
       v-if="subPanelInlineOpen && activeSubItems"
       class="sub-panel sub-panel--inline"
@@ -208,21 +180,8 @@ const bodyMarginLeft = computed(() => {
           class="sub-panel__item"
           :class="{ 'sub-panel__item--active': activeSubItemId === child.id }"
           @click="navigateToSubItem(child)"
-          @mousedown="handleSubRipple($event, child.id)"
         >
-          <!-- Bounded ripple -->
-          <div
-            v-for="ripple in subRipples.filter(r => r.childId === child.id)"
-            :key="ripple.id"
-            class="sub-panel__ripple"
-            :class="{ 'sub-panel__ripple--active': activeSubItemId === child.id }"
-            :style="{
-              left: ripple.x + 'px',
-              top: ripple.y + 'px',
-              width: ripple.size + 'px',
-              height: ripple.size + 'px',
-            }"
-          ></div>
+          <md-ripple class="sub-panel__md-ripple"></md-ripple>
           <span class="sub-panel__item-label">{{ child.label }}</span>
         </div>
       </nav>
@@ -243,20 +202,8 @@ const bodyMarginLeft = computed(() => {
             class="sub-panel__item"
             :class="{ 'sub-panel__item--active': activeSubItemId === child.id }"
             @click="navigateToSubItem(child)"
-            @mousedown="handleSubRipple($event, child.id)"
           >
-            <div
-              v-for="ripple in subRipples.filter(r => r.childId === child.id)"
-              :key="ripple.id"
-              class="sub-panel__ripple"
-              :class="{ 'sub-panel__ripple--active': activeSubItemId === child.id }"
-              :style="{
-                left: ripple.x + 'px',
-                top: ripple.y + 'px',
-                width: ripple.size + 'px',
-                height: ripple.size + 'px',
-              }"
-            ></div>
+            <md-ripple class="sub-panel__md-ripple"></md-ripple>
             <span class="sub-panel__item-label">{{ child.label }}</span>
           </div>
         </nav>
@@ -858,25 +805,25 @@ const bodyMarginLeft = computed(() => {
   z-index: 99;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
-/* 宽屏 inline 面板：与 Rail 同色，无分隔 */
+/* 宽屏 inline 面板：无圆角，与 Rail 同色视觉一体，右侧柔和阴影 */
 .sub-panel--inline {
-  /* 无圆角、无阴影，与 Rail 视觉一体 */
+  box-shadow: 1px 0 2px 0 rgba(0, 0, 0, 0.08), 2px 0 6px 0 rgba(0, 0, 0, 0.04);
 }
 
-/* 中等屏幕 hover 浮层面板：有圆角和阴影 */
+/* 中等屏幕 hover 浮层面板：右侧柔和阴影 */
 .sub-panel--hover {
-  border-radius: 0 16px 16px 0;
-  box-shadow: var(--md-sys-elevation-2, 0 1px 2px 0 rgba(0,0,0,0.3), 0 2px 6px 2px rgba(0,0,0,0.15));
+  box-shadow: 1px 0 2px 0 rgba(0, 0, 0, 0.12), 2px 0 8px 2px rgba(0, 0, 0, 0.06);
   animation: sub-panel-fade-in 0.15s ease-out;
 }
 
 @keyframes sub-panel-fade-in {
   from {
     opacity: 0;
-    transform: translateX(-8px);
+    transform: translateX(-4px);
   }
   to {
     opacity: 1;
@@ -886,11 +833,10 @@ const bodyMarginLeft = computed(() => {
 
 .sub-panel__items {
   flex: 1;
-  padding: 12px 12px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 0;
-  overflow-y: auto;
 }
 
 .sub-panel__item {
@@ -909,63 +855,25 @@ const bodyMarginLeft = computed(() => {
   overflow: hidden;
 }
 
-/* Sub-panel state layer */
-.sub-panel__item::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 24px;
-  background-color: var(--md-sys-color-on-surface-variant, #49454f);
-  opacity: 0;
-  transition: opacity 0.2s;
-  pointer-events: none;
-}
-
-.sub-panel__item:hover::before {
-  opacity: 0.08;
-}
-
-.sub-panel__item:active::before {
-  opacity: 0.12;
-}
-
 .sub-panel__item--active {
   background-color: var(--md-sys-color-secondary-container, #e8def8);
   color: var(--md-sys-color-on-secondary-container, #1d192b);
 }
 
-.sub-panel__item--active::before {
-  background-color: var(--md-sys-color-on-secondary-container, #1d192b);
+/* md-ripple 颜色 - 未选中项 */
+.sub-panel__item:not(.sub-panel__item--active) .sub-panel__md-ripple {
+  --md-ripple-hover-color: var(--md-sys-color-on-surface-variant, #49454f);
+  --md-ripple-pressed-color: var(--md-sys-color-on-surface-variant, #49454f);
+  --md-ripple-hover-opacity: 0.08;
+  --md-ripple-pressed-opacity: 0.12;
 }
 
-/* Sub-panel bounded ripple */
-.sub-panel__ripple {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0;
-  pointer-events: none;
-  z-index: 1;
-  transform: scale(0);
-  animation: sub-ripple 0.5s cubic-bezier(0.2, 0, 0, 1) forwards;
-}
-
-.sub-panel__ripple:not(.sub-panel__ripple--active) {
-  background-color: var(--md-sys-color-on-surface-variant, #49454f);
-}
-
-.sub-panel__ripple--active {
-  background-color: var(--md-sys-color-on-secondary-container, #1d192b);
-}
-
-@keyframes sub-ripple {
-  0% {
-    transform: scale(0);
-    opacity: 0.12;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 0;
-  }
+/* md-ripple 颜色 - 选中项 */
+.sub-panel__item--active .sub-panel__md-ripple {
+  --md-ripple-hover-color: var(--md-sys-color-on-secondary-container, #1d192b);
+  --md-ripple-pressed-color: var(--md-sys-color-on-secondary-container, #1d192b);
+  --md-ripple-hover-opacity: 0.08;
+  --md-ripple-pressed-opacity: 0.12;
 }
 
 .sub-panel__item-label {
@@ -973,7 +881,7 @@ const bodyMarginLeft = computed(() => {
   font-weight: 500;
   letter-spacing: 0.1px;
   position: relative;
-  z-index: 2;
+  z-index: 1;
   white-space: nowrap;
 }
 
