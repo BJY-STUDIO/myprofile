@@ -69,8 +69,12 @@ function updateScreenWidth() {
   subPanelInlineOpen.value = isWideScreen.value && !!activeSubItems.value
 }
 
-// 首次渲染完成标记
+// 首次渲染完成标记（控制 --animate class）
 const subPanelTransitionsReady = ref(false)
+
+// 首项 indicator 延迟激活标记（控制 --active class 在新面板出现时的延迟添加）
+// 目的：让 indicator 先渲染在 scaleX(0.32) 初始位，然后过渡到 scaleX(1)
+const subPanelActiveReady = ref(true)
 
 onMounted(() => {
   updateScreenWidth()
@@ -83,19 +87,27 @@ onUnmounted(() => {
   window.removeEventListener('resize', updateScreenWidth)
 })
 
+// 当子面板内容变化时（切到不同父级菜单），延迟添加 active class
+// 使 indicator 能从 scaleX(0.32) 过渡到 scaleX(1)（从中间向两端展开）
+watch(activeSubItems, (newItems, oldItems) => {
+  // 子项列表发生变化 = 切到了不同的父级菜单
+  if (newItems !== oldItems && newItems) {
+    subPanelActiveReady.value = false
+    subPanelTransitionsReady.value = false
+    // 先让 DOM 渲染出 indicator 的初始状态（scaleX(0.32), opacity: 0）
+    // 再启用 transition + active，触发 scaleX(0.32)→1 的展开动画
+    requestAnimationFrame(() => {
+      subPanelTransitionsReady.value = true
+      requestAnimationFrame(() => {
+        subPanelActiveReady.value = true
+      })
+    })
+  }
+})
+
 watch(activeNavId, () => {
   if (isWideScreen.value) {
     subPanelInlineOpen.value = !!activeSubItems.value
-  }
-  // 父级菜单切换时，子面板内容会变化，短暂禁用 indicator 过渡
-  // 防止新活跃项的药丸从 scaleX(0.32)→1 播放动画（m3 上是瞬间出现的）
-  if (activeSubItems.value) {
-    subPanelTransitionsReady.value = false
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        subPanelTransitionsReady.value = true
-      })
-    })
   }
 })
 
@@ -113,19 +125,22 @@ const hoveredSubItems = computed(() => {
 
 const hoverLeaveTimer = ref(null)
 
+// hover 浮层面版的 indicator 同样需要延迟激活
+const hoverPanelActiveReady = ref(true)
+
 function onRailItemHover(itemId) {
   if (hoverLeaveTimer.value) {
     clearTimeout(hoverLeaveTimer.value)
     hoverLeaveTimer.value = null
   }
-  // 如果切换到不同的有子菜单的项，短暂禁用 indicator 过渡
+  // 如果切换到不同的有子菜单的项，延迟添加 active 以触发展开动画
   const prevItem = navItems.find(i => i.id === hoveredNavId.value)
   const nextItem = navItems.find(i => i.id === itemId)
   if (hoveredNavId.value !== itemId && prevItem?.children && nextItem?.children) {
-    subPanelTransitionsReady.value = false
+    hoverPanelActiveReady.value = false
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        subPanelTransitionsReady.value = true
+        hoverPanelActiveReady.value = true
       })
     })
   }
@@ -206,7 +221,7 @@ const bodyMarginLeft = computed(() => {
           :key="child.id"
           class="sub-panel__item"
           :class="{
-            'sub-panel__item--active': activeSubItemId === child.id,
+            'sub-panel__item--active': subPanelActiveReady && activeSubItemId === child.id,
             'sub-panel__item--animate': subPanelTransitionsReady,
           }"
           @click.prevent="navigateToSubItem(child)"
@@ -230,7 +245,7 @@ const bodyMarginLeft = computed(() => {
             :key="child.id"
             class="sub-panel__item"
             :class="{
-              'sub-panel__item--active': activeSubItemId === child.id,
+              'sub-panel__item--active': hoverPanelActiveReady && activeSubItemId === child.id,
               'sub-panel__item--animate': subPanelTransitionsReady,
             }"
             @click.prevent="navigateToSubItem(child)"
