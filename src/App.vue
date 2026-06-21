@@ -695,6 +695,8 @@ const bodyMarginLeft = computed(() => {
 
 .nav-drawer__footer {
   padding: 12px 16px 16px;
+  border-top: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  margin-top: auto;
 }
 
 .nav-drawer__footer-link {
@@ -1089,6 +1091,10 @@ const bodyMarginLeft = computed(() => {
 
 :global([data-theme="dark"]) .nav-drawer__item::before {
   background-color: var(--md-sys-color-on-secondary-container, #e8def8);
+}
+
+:global([data-theme="dark"]) .nav-drawer__footer {
+  border-top-color: var(--md-sys-color-outline-variant, #49454f);
 }
 
 :global([data-theme="dark"]) .nav-drawer__footer-link {
