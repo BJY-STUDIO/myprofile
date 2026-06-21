@@ -925,16 +925,9 @@ const bodyMarginLeft = computed(() => {
   /* 默认无 transition，由 --animate 控制 */
 }
 
-/* mounted 后启用 transition —— 离开动画：shrink + fade 同步 0.2s */
+/* mounted 后启用 transition（严格复刻 m3：0.2s linear 同步） */
 .sub-panel__item--animate::before {
   transition-duration: 0.2s;
-  transition-property: transform, opacity;
-  transition-timing-function: linear;
-}
-
-/* mounted + active：进入动画 —— opacity 近乎瞬间(0.05s)使 pill 可见，transform 0.2s 展开清晰可见 */
-.sub-panel__item--animate.sub-panel__item--active::before {
-  transition-duration: 0.2s, 0.05s;
   transition-property: transform, opacity;
   transition-timing-function: linear;
 }

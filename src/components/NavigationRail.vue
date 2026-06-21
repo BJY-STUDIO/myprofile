@@ -22,7 +22,7 @@
  * Indicator (::before 伪元素)：
  *   默认:   opacity:0, scaleX(0.32)
  *   active: opacity:1, scaleX(1)
- *   transition: transform 0.2s linear, opacity 0.2s linear
+ *   transition: transform 0.2s linear, opacity 0.2s linear（与 m3 严格一致）
  *
  * font-variation-settings transition: 0.2s cubic-bezier(0.2, 0, 0, 1) ≈ 200ms
  */
@@ -273,16 +273,9 @@ function onItemLeave() {
   /* 默认无 transition，由 --animate-indicator 控制 */
 }
 
-/* mounted 后启用 indicator transition —— 离开动画：shrink + fade 同步 0.2s */
+/* mounted 后启用 indicator transition（严格复刻 m3：0.2s linear 同步） */
 .nav-rail__destination--animate-indicator .nav-rail__icon::before {
   transition-duration: 0.2s;
-  transition-property: transform, opacity;
-  transition-timing-function: linear;
-}
-
-/* mounted + active：进入动画 —— opacity 近乎瞬间(0.05s)使 pill 可见，transform 0.2s 展开清晰可见 */
-.nav-rail__destination--animate-indicator.nav-rail__destination--active .nav-rail__icon::before {
-  transition-duration: 0.2s, 0.05s;
   transition-property: transform, opacity;
   transition-timing-function: linear;
 }
