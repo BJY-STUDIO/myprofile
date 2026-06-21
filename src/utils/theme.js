@@ -96,6 +96,7 @@ function generateLightTokens(hue, chroma) {
     '--md-sys-color-surface-container-high': rgbToHex(...hslToRgb(hue, c * 18, 91)),
     '--md-sys-color-surface-container-highest': rgbToHex(...hslToRgb(hue, c * 20, 88)),
 
+    '--md-sys-color-surface-2': rgbToHex(...hslToRgb(hue, c * 16, 94)),
     '--md-sys-color-surface-dim': rgbToHex(...hslToRgb(hue, c * 18, 86)),
     '--md-sys-color-bright': rgbToHex(...hslToRgb(hue, c * 22, 99)),
 
@@ -140,6 +141,7 @@ function generateDarkTokens(hue, chroma) {
     '--md-sys-color-surface-container-high': rgbToHex(...hslToRgb(hue, c * 16, 17)),
     '--md-sys-color-surface-container-highest': rgbToHex(...hslToRgb(hue, c * 18, 21)),
 
+    '--md-sys-color-surface-2': rgbToHex(...hslToRgb(hue, c * 14, 13)),
     '--md-sys-color-surface-dim': rgbToHex(...hslToRgb(hue, c * 14, 8)),
     '--md-sys-color-bright': rgbToHex(...hslToRgb(hue, c * 14, 23)),
 

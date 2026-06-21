@@ -441,65 +441,61 @@ function onItemLeave() {
   z-index: 1;
 }
 
-/* ======== 暗色主题 ======== */
-@media (prefers-color-scheme: dark) {
-  .nav-rail {
-    background-color: var(--md-sys-color-surface-2, #1d1b20);
-  }
+/* ======== 暗色主题（通过 data-theme 属性切换） ======== */
+:global([data-theme="dark"]) .nav-rail {
+  background-color: var(--md-sys-color-surface-2, #1d1b20);
+}
 
-  .nav-rail__fab {
-    background-color: var(--md-sys-color-tertiary-container, #633b48);
-  }
+:global([data-theme="dark"]) .nav-rail__fab {
+  background-color: var(--md-sys-color-tertiary-container, #633b48);
+}
 
-  .nav-rail__fab:hover {
-    color: var(--md-sys-color-on-tertiary-container, #ffd8e4);
-  }
+:global([data-theme="dark"]) .nav-rail__fab:hover {
+  color: var(--md-sys-color-on-tertiary-container, #ffd8e4);
+}
 
-  .nav-rail__destination {
-    color: var(--md-sys-color-on-surface-variant, #cac4d0);
-  }
+:global([data-theme="dark"]) .nav-rail__destination {
+  color: var(--md-sys-color-on-surface-variant, #cac4d0);
+}
 
-  .nav-rail__destination:hover,
-  .nav-rail__destination:focus {
-    color: var(--md-sys-color-on-surface, #e6e1e5);
-  }
+:global([data-theme="dark"]) .nav-rail__destination:hover,
+:global([data-theme="dark"]) .nav-rail__destination:focus {
+  color: var(--md-sys-color-on-surface, #e6e1e5);
+}
 
-  .nav-rail__icon::before {
-    background-color: var(--md-sys-color-secondary-container, #4a4458);
-  }
+:global([data-theme="dark"]) .nav-rail__icon::before {
+  background-color: var(--md-sys-color-secondary-container, #4a4458);
+}
 
-  /* 暗色 hover state layer */
-  .nav-rail__destination:not(.nav-rail__destination--active):hover .nav-rail__icon {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent);
-  }
+:global([data-theme="dark"]) .nav-rail__destination:not(.nav-rail__destination--active):hover .nav-rail__icon {
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent);
+}
 
-  .nav-rail__destination--active:hover .nav-rail__icon {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #e6e1e5) 8%, var(--md-sys-color-secondary-container, #4a4458));
-  }
+:global([data-theme="dark"]) .nav-rail__destination--active:hover .nav-rail__icon {
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #e6e1e5) 8%, var(--md-sys-color-secondary-container, #4a4458));
+}
 
-  .nav-rail__destination--active .nav-rail__icon {
-    color: var(--md-sys-color-on-secondary-container, #e8def8);
-  }
+:global([data-theme="dark"]) .nav-rail__destination--active .nav-rail__icon {
+  color: var(--md-sys-color-on-secondary-container, #e8def8);
+}
 
-  .nav-rail__destination--active .nav-rail__label {
-    color: var(--md-sys-color-on-secondary-container, #e8def8);
-  }
+:global([data-theme="dark"]) .nav-rail__destination--active .nav-rail__label {
+  color: var(--md-sys-color-on-secondary-container, #e8def8);
+}
 
-  /* 暗色 pressed state layer */
-  .nav-rail__destination:not(.nav-rail__destination--active):active .nav-rail__icon {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 12%, transparent);
-  }
+:global([data-theme="dark"]) .nav-rail__destination:not(.nav-rail__destination--active):active .nav-rail__icon {
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 12%, transparent);
+}
 
-  .nav-rail__destination--active:active .nav-rail__icon {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #e6e1e5) 12%, var(--md-sys-color-secondary-container, #4a4458));
-  }
+:global([data-theme="dark"]) .nav-rail__destination--active:active .nav-rail__icon {
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #e6e1e5) 12%, var(--md-sys-color-secondary-container, #4a4458));
+}
 
-  .nav-rail__action-btn {
-    color: var(--md-sys-color-on-surface-variant, #cac4d0);
-  }
+:global([data-theme="dark"]) .nav-rail__action-btn {
+  color: var(--md-sys-color-on-surface-variant, #cac4d0);
+}
 
-  .nav-rail__action-btn::before {
-    background-color: var(--md-sys-color-on-surface-variant, #cac4d0);
-  }
+:global([data-theme="dark"]) .nav-rail__action-btn::before {
+  background-color: var(--md-sys-color-on-surface-variant, #cac4d0);
 }
 </style>
