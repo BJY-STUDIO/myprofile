@@ -867,6 +867,7 @@ const bodyMarginLeft = computed(() => {
   color: var(--md-sys-color-on-surface-variant, #49454f);
   position: relative;
   overflow: hidden;
+  transition: background-image 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
 /* Indicator 药丸 — ::before 伪元素（严格复刻 m3.material.io） */
@@ -900,26 +901,16 @@ const bodyMarginLeft = computed(() => {
   color: var(--md-sys-color-on-secondary-container, #1d192b);
 }
 
-/* Hover state layer（inactive 项） */
-.sub-panel__item:not(.sub-panel__item--active):hover::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 24px;
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent);
-  z-index: 1;
+/* Inactive 项 hover state layer（用 background-image 不遮盖 ::before indicator，与 m3 一致） */
+.sub-panel__item:not(.sub-panel__item--active):hover {
+  background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent));
 }
 
 /* Active 项 hover 无 state layer（与 m3 一致，仅有 font-variation 变化） */
 
-/* Pressed state layer（inactive 项） */
-.sub-panel__item:not(.sub-panel__item--active):active::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 24px;
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 12%, transparent);
-  z-index: 1;
+/* Inactive 项 pressed state layer */
+.sub-panel__item:not(.sub-panel__item--active):active {
+  background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 12%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 12%, transparent));
 }
 
 /* Active 项 pressed 无 state layer（与 m3 一致） */
@@ -983,14 +974,14 @@ const bodyMarginLeft = computed(() => {
   color: var(--md-sys-color-on-secondary-container, #e8def8);
 }
 
-:global([data-theme="dark"]) .sub-panel__item:not(.sub-panel__item--active):hover::after {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent);
+:global([data-theme="dark"]) .sub-panel__item:not(.sub-panel__item--active):hover {
+  background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent));
 }
 
 /* 暗色 active hover/pressed 无 state layer（与 m3 一致） */
 
-:global([data-theme="dark"]) .sub-panel__item:not(.sub-panel__item--active):active::after {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 12%, transparent);
+:global([data-theme="dark"]) .sub-panel__item:not(.sub-panel__item--active):active {
+  background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 12%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 12%, transparent));
 }
 
 /* 暗色主题 - 移动端 Top Bar 和 Drawer */
