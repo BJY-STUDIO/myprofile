@@ -274,14 +274,23 @@ function onItemLeave() {
 }
 
 /* mounted 后启用 indicator transition，避免首次渲染播放动画 */
+/* 收缩方向（离开 active）：opacity 0.15s 快退 + transform 0.2s linear，
+   让消失节奏干脆，不拖泥带水 */
 .nav-rail__destination--animate-indicator .nav-rail__icon::before {
-  transition-duration: 0.2s;
-  transition-property: transform, opacity;
-  transition-timing-function: linear;
+  transition: transform 0.2s linear, opacity 0.15s linear;
 }
 
 /* 激活态 indicator */
-.nav-rail__destination--active .nav-rail__icon::before {
+/* 展开方向（进入 active）：opacity 0.08s 极快渐现 + transform 0.2s M3缓出，
+   先让颜色到位再撑开，视觉上"出现→展开"分明 */
+.nav-rail__destination--animate-indicator.nav-rail__destination--active .nav-rail__icon::before {
+  opacity: 1;
+  transform: scaleX(1);
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), opacity 0.08s linear;
+}
+
+/* 未启用动画时（首次渲染前）直接设定终态，不播放动画 */
+.nav-rail__destination:not(.nav-rail__destination--animate-indicator).nav-rail__destination--active .nav-rail__icon::before {
   opacity: 1;
   transform: scaleX(1);
 }

@@ -923,15 +923,22 @@ const bodyMarginLeft = computed(() => {
   /* 默认无 transition */
 }
 
-/* 激活态 indicator */
-.sub-panel__item--active::before {
+/* 激活态 indicator — 展开方向：opacity 极快渐现 + transform M3缓出 */
+.sub-panel__item--animate.sub-panel__item--active::before {
   opacity: 1;
   transform: scaleX(1);
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), opacity 0.08s linear;
 }
 
-/* mounted 后启用 transition */
-.sub-panel__item--animate::before {
-  transition: transform 0.2s linear, opacity 0.2s linear;
+/* 非激活态但在动画就绪后 — 收缩方向 */
+.sub-panel__item--animate:not(.sub-panel__item--active)::before {
+  transition: transform 0.2s linear, opacity 0.15s linear;
+}
+
+/* 未启用动画时直接设终态 */
+.sub-panel__item--active:not(.sub-panel__item--animate)::before {
+  opacity: 1;
+  transform: scaleX(1);
 }
 
 /* 激活态文字颜色 */
