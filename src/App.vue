@@ -850,13 +850,14 @@ const bodyMarginLeft = computed(() => {
   font-size: 20px;
 }
 
-/* ======== 二级子菜单面板 ======== */
+/* ======== 二级子菜单面板（参照 m3.material.io 右侧子面板） ======== */
 .sub-panel {
   position: fixed;
   left: 80px;
-  top: 0;
-  bottom: 0;
+  top: 12px;
+  bottom: 12px;
   width: 256px;
+  border-radius: 16px;
   background-color: var(--md-sys-color-surface-2, #f3edf7);
   z-index: 99;
   display: flex;
@@ -865,15 +866,15 @@ const bodyMarginLeft = computed(() => {
   overflow-x: hidden;
 }
 
-/* 宽屏 inline 面板：与 Rail 同色视觉一体，右侧柔和阴影 */
+/* 宽屏 inline 面板：圆角 + 柔和阴影 */
 .sub-panel--inline {
-  box-shadow: 1px 0 2px 0 rgba(0, 0, 0, 0.08), 2px 0 6px 0 rgba(0, 0, 0, 0.04);
+  box-shadow: var(--md-sys-elevation-1, 0 1px 2px 0 rgba(0,0,0,0.3), 0 1px 3px 1px rgba(0,0,0,0.15));
 }
 
-/* 中等屏幕 hover 浮层面板：右侧柔和阴影 */
+/* 中等屏幕 hover 浮层面板：圆角 + 阴影 + 浮于 Rail 之上 */
 .sub-panel--hover {
-  box-shadow: 1px 0 2px 0 rgba(0, 0, 0, 0.12), 2px 0 8px 2px rgba(0, 0, 0, 0.06);
-  animation: sub-panel-fade-in 0.15s ease-out;
+  box-shadow: var(--md-sys-elevation-2, 0 1px 2px 0 rgba(0,0,0,0.3), 0 2px 6px 2px rgba(0,0,0,0.15));
+  animation: sub-panel-fade-in 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
 @keyframes sub-panel-fade-in {
@@ -889,7 +890,7 @@ const bodyMarginLeft = computed(() => {
 
 .sub-panel__items {
   flex: 1;
-  padding: 12px;
+  padding: 8px 12px 12px;
   display: flex;
   flex-direction: column;
   gap: 0;
