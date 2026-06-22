@@ -201,23 +201,39 @@ function gradient(id) {
 
 /* ================================================================
    mio-header（对照 m3: header.split-asset）
-   grid 1fr 1fr, gap 8px
-   左 primary-container（独立圆角卡片） + 右 split-asset-image（独立圆角卡片）
+   grid repeat(2, minmax(0, 1fr)), gap 8px
+   响应式断点: 1294px / 600px（与m3源码一致）
+   左 primary-container + 右 split-asset-image
    ================================================================ */
 .mio-header {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   margin-bottom: 0;
 }
 
 .primary-container {
   display: flex;
-  flex-direction: row;
+  margin: 0;
   padding: 56px;
   border-radius: 24px;
-  background: rgb(248, 241, 246);
+  background: var(--md-sys-color-surface-container-low, #f8f1f6);
+  background-repeat: no-repeat;
+  background-position: 0 50%;
+  background-size: cover;
   min-height: 544px;
+}
+
+.primary-container,
+.split-asset-image {
+  min-height: 544px;
+}
+
+@media screen and (max-width: 1294px) {
+  .primary-container,
+  .split-asset-image {
+    min-height: unset;
+  }
 }
 
 .primary-container .wrapper {
@@ -248,12 +264,25 @@ function gradient(id) {
   display: flex;
   position: relative;
   justify-content: center;
+  border: 1px solid var(--md-sys-color-surface-variant, #e8e0e8);
   border-radius: 24px;
+  background-repeat: no-repeat;
+  background-size: cover;
   overflow: hidden;
-  min-height: 544px;
+}
+
+@media screen and (max-width: 1294px) {
+  .split-asset-image {
+    padding-bottom: 50%;
+    grid-column: span 2;
+  }
 }
 
 .split-asset-image__foreground {
+  display: flex;
+  position: absolute;
+  align-self: stretch;
+  justify-content: center;
   width: 100%;
   height: 100%;
   background: linear-gradient(
@@ -262,19 +291,24 @@ function gradient(id) {
     var(--md-sys-color-secondary-container, #e8def8) 50%,
     var(--md-sys-color-tertiary-container, #ffd8e4) 100%
   );
+  background-repeat: no-repeat;
+  background-position: 50% 50%;
+  background-size: contain;
 }
 
-@media screen and (max-width: 1024px) {
-  .mio-header {
-    grid-template-columns: 1fr 1fr;
-  }
+/* h1 字体响应式（对照 m3 源码变量系统） */
+/* >1294px: hero 96px/475/96px（已在上方设置） */
+/* 601px-1294px: display-l 57px/475/64px */
+/* ≤600px: display-m 45px/475/52px */
+@media screen and (min-width: 601px) and (max-width: 1294px) {
   .primary-container .wrapper .title h1 {
-    font-size: 48px;
-    line-height: 56px;
+    font-size: 57px;
+    font-weight: 475;
+    line-height: 64px;
   }
   .primary-container .wrapper .title .description {
-    font-size: 18px;
-    line-height: 28px;
+    font-size: 22px;
+    line-height: 30px;
   }
 }
 
@@ -283,20 +317,17 @@ function gradient(id) {
     grid-template-columns: 1fr;
   }
   .primary-container {
-    min-height: unset;
-    padding: 32px 24px;
+    padding: 32px;
   }
   .primary-container .wrapper .title h1 {
-    font-size: 36px;
-    line-height: 44px;
+    font-size: 45px;
+    font-weight: 475;
+    line-height: 52px;
   }
   .primary-container .wrapper .title .description {
     font-size: 16px;
+    font-weight: 400;
     line-height: 24px;
-  }
-  .split-asset-image {
-    min-height: unset;
-    padding-bottom: 50%;
   }
   .split-asset-image__foreground {
     position: absolute;
@@ -385,7 +416,7 @@ function gradient(id) {
 }
 
 /* 移动端隐藏 TOC */
-@media screen and (max-width: 1024px) {
+@media screen and (max-width: 1294px) {
   .toc {
     display: none;
   }
@@ -448,7 +479,7 @@ function gradient(id) {
   margin: 32px 0 0;
 }
 
-@media screen and (max-width: 1024px) {
+@media screen and (max-width: 1294px) {
   .card-set {
     grid-template-columns: 1fr;
   }
@@ -586,7 +617,7 @@ function gradient(id) {
   min-height: 298px;
 }
 
-@media screen and (max-width: 1024px) {
+@media screen and (max-width: 1294px) {
   .feature-card.thumbnail {
     display: inline-flex;
     flex-direction: column-reverse;
