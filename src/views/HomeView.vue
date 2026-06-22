@@ -196,8 +196,6 @@ function gradient(id) {
   display: flex;
   flex-direction: column;
   width: 100%;
-  padding: 8px;
-  box-sizing: border-box;
 }
 
 /* ================================================================
@@ -354,7 +352,7 @@ function gradient(id) {
    156px宽, margin 112px 24px 0, sticky top
    ================================================================ */
 .toc {
-  flex: 0 1 auto;
+  flex: 0 0 156px;
   width: 156px;
   margin: 112px 24px 0;
 }
@@ -451,10 +449,6 @@ function gradient(id) {
    ================================================================ */
 .section {
   margin: 72px 0 96px;
-}
-
-.section:first-child {
-  margin-top: 0;
 }
 
 /* ================================================================
