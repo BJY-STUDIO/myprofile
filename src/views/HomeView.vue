@@ -1,12 +1,20 @@
 <template>
   <div class="home-view">
-    <!-- Hero 区域 -->
-    <section class="hero">
-      <div class="hero__content">
-        <h1 class="hero__title">Kernel's Blog</h1>
-        <p class="hero__subtitle">探索技术，记录生活</p>
+    <!-- Hero 区域（对照 m3 mio-header split-asset 布局） -->
+    <header class="mio-header">
+      <div class="primary-container">
+        <div class="wrapper">
+          <span class="date">2026 年 6 月</span>
+          <div class="title">
+            <h1>Kernel's Blog</h1>
+          </div>
+          <div class="description">探索技术，记录生活。一个遵循 Material Design 3 规范的个人博客。</div>
+        </div>
       </div>
-    </section>
+      <div class="split-asset-image">
+        <div class="split-asset-image__foreground"></div>
+      </div>
+    </header>
 
     <!-- 最近文章 -->
     <section class="section">
@@ -120,32 +128,148 @@ const featuredProjects = ref([
 
 <style scoped>
 .home-view {
-  max-width: 960px;
+  max-width: 1200px;
   width: 100%;
 }
 
-/* ======== Hero ======== */
-.hero {
-  padding: 48px 0 40px;
+/* ======== mio-header（严格对照 m3 源码） ======== */
+/* m3 官方: CSS Grid 两列布局，左侧 primary-container 放文字，右侧 split-asset-image 放图片
+ * 移动端（≤1294px）自动变为单列堆叠 */
+
+.mio-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 24px;
+  margin-bottom: 56px;
 }
 
-.hero__title {
-  font-size: 40px;
-  font-weight: 400;
-  color: var(--md-sys-color-on-surface, #1c1b1f);
-  line-height: 48px;
-  margin-bottom: 8px;
+@media screen and (max-width: 1294px) {
+  .mio-header {
+    grid-template-columns: 1fr;
+    margin-bottom: 40px;
+  }
 }
 
-.hero__subtitle {
-  font-size: 18px;
+/* ======== primary-container（对照 m3 .primary-container） ======== */
+.primary-container {
+  display: flex;
+  margin: 0;
+  padding: 56px;
+  border-radius: 24px;
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  background-repeat: no-repeat;
+  background-position: 0 50%;
+  background-size: cover;
+  min-height: 544px;
+  grid-column: span 1;
+}
+
+@media screen and (max-width: 1294px) {
+  .primary-container {
+    min-height: unset;
+    grid-column: span 2;
+    padding: 40px 24px;
+  }
+}
+
+/* ======== wrapper（对照 m3 .wrapper） ======== */
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 840px;
+  margin: 0;
+}
+
+.wrapper .date {
+  margin-bottom: 16px;
+  font-size: 16px;
+  font-weight: 500;
   color: var(--md-sys-color-on-surface-variant, #49454f);
+  line-height: 24px;
+}
+
+.wrapper .title h1 {
+  font-size: 57px;
+  font-weight: 400;
+  line-height: 64px;
+  letter-spacing: -0.25px;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0 0 16px;
+}
+
+@media screen and (max-width: 1294px) {
+  .wrapper .title h1 {
+    font-size: 40px;
+    line-height: 48px;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .wrapper .title h1 {
+    font-size: 32px;
+    line-height: 40px;
+  }
+}
+
+.wrapper .description {
+  font-size: 18px;
+  font-weight: 400;
   line-height: 28px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+@media screen and (max-width: 600px) {
+  .wrapper .description {
+    font-size: 16px;
+    line-height: 24px;
+  }
+}
+
+/* ======== split-asset-image（对照 m3 .split-asset-image） ======== */
+.split-asset-image {
+  display: flex;
+  position: relative;
+  justify-content: center;
+  border: 1px solid var(--md-sys-color-surface-variant, #cac4d0);
+  border-radius: 24px;
+  background-repeat: no-repeat;
+  background-size: cover;
+  overflow: hidden;
+  min-height: 544px;
+  grid-column: span 1;
+}
+
+/* 占位渐变背景（临时，后续替换为真实图片） */
+.split-asset-image__foreground {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    135deg,
+    var(--md-sys-color-primary-container, #eaddff) 0%,
+    var(--md-sys-color-secondary-container, #e8def8) 50%,
+    var(--md-sys-color-tertiary-container, #ffd8e4) 100%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media screen and (max-width: 1294px) {
+  .split-asset-image {
+    min-height: unset;
+    padding-bottom: 50%;
+    grid-column: span 2;
+  }
+  .split-asset-image__foreground {
+    position: absolute;
+    inset: 0;
+  }
 }
 
 /* ======== Section ======== */
 .section {
-  margin-top: 40px;
+  margin: 40px 0;
 }
 
 .section__header {
@@ -296,6 +420,23 @@ const featuredProjects = ref([
 }
 
 /* ======== 暗色主题 ======== */
+:global([data-theme="dark"]) .primary-container {
+  background: var(--md-sys-color-surface-container-low, #1d1b20);
+}
+
+:global([data-theme="dark"]) .split-asset-image {
+  border-color: var(--md-sys-color-surface-variant, #49454f);
+}
+
+:global([data-theme="dark"]) .split-asset-image__foreground {
+  background: linear-gradient(
+    135deg,
+    var(--md-sys-color-primary-container, #21005d) 0%,
+    var(--md-sys-color-secondary-container, #4a4458) 50%,
+    var(--md-sys-color-tertiary-container, #633b48) 100%
+  );
+}
+
 :global([data-theme="dark"]) .card {
   background-color: var(--md-sys-color-surface-container, #211f26);
 }
