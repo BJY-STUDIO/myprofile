@@ -1,6 +1,7 @@
 <template>
   <div class="home-view">
-    <!-- Hero 区域（对照 m3 mio-header split-asset 布局） -->
+    <!-- Hero 区域（对照 m3 mio-header split-asset 布局）
+         header grid 里两个独立卡片：primary-container + split-asset-image -->
     <header class="mio-header">
       <div class="primary-container">
         <div class="wrapper">
@@ -20,37 +21,29 @@
     <section class="section">
       <div class="section-header">
         <span class="overline">BLOG</span>
-        <h2 class="title">最近文章</h2>
+        <h2 class="section-title">最近文章</h2>
       </div>
 
-      <!-- Feature card（横排：文字左 + 图片右） -->
-      <router-link
-        v-if="recentPosts.length"
-        :to="recentPosts[0].route"
-        class="card card--feature thumbnail"
-      >
-        <div class="content-container">
-          <span class="date">{{ recentPosts[0].date }}</span>
-          <span class="card-title">{{ recentPosts[0].title }}</span>
-          <span class="card-desc">{{ recentPosts[0].excerpt }}</span>
-        </div>
-        <div class="thumb-container" :style="{ background: thumbGradient(0) }"></div>
-      </router-link>
-
-      <!-- Regular cards（竖排：图片上 + 文字下） -->
-      <div class="card-set">
+      <!-- 每篇文章都是 mio-header 模式的双卡片 grid -->
+      <div class="article-grid">
         <router-link
-          v-for="post in recentPosts.slice(1)"
+          v-for="(post, index) in recentPosts"
           :key="post.id"
           :to="post.route"
-          class="card thumbnail"
+          class="article-card"
         >
-          <div class="content-container">
-            <span class="date">{{ post.date }}</span>
-            <span class="card-title">{{ post.title }}</span>
-            <span class="card-desc">{{ post.excerpt }}</span>
+          <!-- 左侧：文字卡片（对照 mio-header .primary-container） -->
+          <div class="article-card__text">
+            <div class="wrapper">
+              <span class="date">{{ post.date }}</span>
+              <span class="card-title">{{ post.title }}</span>
+              <span class="card-desc">{{ post.excerpt }}</span>
+            </div>
           </div>
-          <div class="thumb-container" :style="{ background: thumbGradient(post.id) }"></div>
+          <!-- 右侧：图片卡片（对照 mio-header .split-asset-image） -->
+          <div class="article-card__image" :style="{ background: thumbGradient(post.id) }">
+            <span class="material-symbols-rounded article-icon">article</span>
+          </div>
         </router-link>
       </div>
     </section>
@@ -59,23 +52,25 @@
     <section class="section">
       <div class="section-header">
         <span class="overline">PROJECTS</span>
-        <h2 class="title">精选项目</h2>
+        <h2 class="section-title">精选项目</h2>
       </div>
 
-      <div class="card-set">
+      <div class="article-grid">
         <router-link
           v-for="project in featuredProjects"
           :key="project.id"
           :to="project.route"
-          class="card thumbnail"
+          class="article-card"
         >
-          <div class="content-container">
-            <span class="date">{{ project.tags.join(' · ') }}</span>
-            <span class="card-title">{{ project.title }}</span>
-            <span class="card-desc">{{ project.excerpt }}</span>
+          <div class="article-card__text">
+            <div class="wrapper">
+              <span class="date">{{ project.tags.join(' · ') }}</span>
+              <span class="card-title">{{ project.title }}</span>
+              <span class="card-desc">{{ project.excerpt }}</span>
+            </div>
           </div>
-          <div class="thumb-container" :style="{ background: thumbGradient(project.id + 10) }">
-            <span class="material-symbols-rounded thumb-icon">{{ project.icon }}</span>
+          <div class="article-card__image" :style="{ background: thumbGradient(project.id + 10) }">
+            <span class="material-symbols-rounded article-icon">{{ project.icon }}</span>
           </div>
         </router-link>
       </div>
@@ -140,7 +135,6 @@ const featuredProjects = ref([
   },
 ])
 
-// 为占位卡片生成不同色调的渐变背景
 const gradients = [
   'linear-gradient(135deg, var(--md-sys-color-primary-container, #eaddff) 0%, var(--md-sys-color-secondary-container, #e8def8) 50%, var(--md-sys-color-tertiary-container, #ffd8e4) 100%)',
   'linear-gradient(135deg, var(--md-sys-color-secondary-container, #e8def8) 0%, var(--md-sys-color-tertiary-container, #ffd8e4) 50%, var(--md-sys-color-primary-container, #eaddff) 100%)',
@@ -161,23 +155,17 @@ function thumbGradient(id) {
 
 /* ================================================================
    mio-header（严格对照 m3 源码 split-asset 布局）
+   header grid: 1fr 1fr, gap 8px（m3 实测）
+   左 primary-container + 右 split-asset-image = 两个独立圆角卡片
    ================================================================ */
 
 .mio-header {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  column-gap: 24px;
+  gap: 8px;
   margin-bottom: 56px;
 }
 
-@media screen and (max-width: 1294px) {
-  .mio-header {
-    grid-template-columns: 1fr;
-    margin-bottom: 40px;
-  }
-}
-
-/* primary-container */
 .primary-container {
   display: flex;
   margin: 0;
@@ -185,81 +173,15 @@ function thumbGradient(id) {
   border-radius: 24px;
   background: var(--md-sys-color-surface-container-low, #f7f2fa);
   min-height: 544px;
-  grid-column: span 1;
 }
 
-@media screen and (max-width: 1294px) {
-  .primary-container {
-    min-height: unset;
-    grid-column: span 2;
-    padding: 40px 24px;
-  }
-}
-
-/* wrapper */
-.wrapper {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  max-width: 840px;
-  margin: 0;
-}
-
-.wrapper .date {
-  margin-bottom: 16px;
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  line-height: 24px;
-}
-
-.wrapper .title h1 {
-  font-size: 57px;
-  font-weight: 400;
-  line-height: 64px;
-  letter-spacing: -0.25px;
-  color: var(--md-sys-color-on-surface, #1c1b1f);
-  margin: 0 0 16px;
-}
-
-@media screen and (max-width: 1294px) {
-  .wrapper .title h1 {
-    font-size: 40px;
-    line-height: 48px;
-  }
-}
-
-@media screen and (max-width: 600px) {
-  .wrapper .title h1 {
-    font-size: 32px;
-    line-height: 40px;
-  }
-}
-
-.wrapper .description {
-  font-size: 18px;
-  font-weight: 400;
-  line-height: 28px;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-}
-
-@media screen and (max-width: 600px) {
-  .wrapper .description {
-    font-size: 16px;
-    line-height: 24px;
-  }
-}
-
-/* split-asset-image */
 .split-asset-image {
   display: flex;
   position: relative;
   justify-content: center;
-  border: 1px solid var(--md-sys-color-surface-variant, #cac4d0);
   border-radius: 24px;
   overflow: hidden;
   min-height: 544px;
-  grid-column: span 1;
 }
 
 .split-asset-image__foreground {
@@ -273,16 +195,33 @@ function thumbGradient(id) {
   );
 }
 
-@media screen and (max-width: 1294px) {
+@media screen and (max-width: 840px) {
+  .mio-header {
+    grid-template-columns: 1fr;
+    margin-bottom: 40px;
+  }
+  .primary-container {
+    min-height: unset;
+    padding: 32px 24px;
+  }
   .split-asset-image {
     min-height: unset;
     padding-bottom: 50%;
-    grid-column: span 2;
   }
   .split-asset-image__foreground {
     position: absolute;
     inset: 0;
   }
+}
+
+/* wrapper */
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 840px;
+  margin: 0;
+  gap: 8px;
 }
 
 /* ================================================================
@@ -307,45 +246,81 @@ function thumbGradient(id) {
   margin-bottom: 4px;
 }
 
-.section-header .title {
+.section-title {
   font-size: 32px;
   font-weight: 400;
   line-height: 40px;
-  letter-spacing: 0;
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0;
 }
 
 @media screen and (max-width: 600px) {
-  .section-header .title {
+  .section-title {
     font-size: 24px;
     line-height: 32px;
   }
 }
 
 /* ================================================================
-   Card — 通用（对照 m3 mio-card a.thumbnail）
-   m3 使用 <a.thumbnail> 作为卡片容器，border-radius 24px，
-   内部 content-container + thumb-container
+   Article Grid
    ================================================================ */
 
-.card.thumbnail {
-  position: relative;
-  border-radius: 24px;
-  background-color: var(--md-sys-color-surface-container, #f3edf7);
-  color: var(--md-sys-color-on-surface, #1c1b1f);
+.article-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ================================================================
+   Article Card — 每张卡片内部是 m3 mio-header 布局
+   grid 1fr 1fr, gap 8px
+   左 article-card__text（对照 primary-container）+ 右 article-card__image（对照 split-asset-image）
+   两个独立圆角卡片并排，不是包在一个大容器里
+   ================================================================ */
+
+.article-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
   text-decoration: none;
+  color: inherit;
+  position: relative;
+}
+
+/* 左侧文字卡片 — 对照 m3 .primary-container */
+.article-card__text {
+  display: flex;
+  border-radius: 24px;
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  padding: 32px;
+  min-height: 200px;
+  position: relative;
   overflow: hidden;
-  cursor: pointer;
-  transition: box-shadow 0.2s cubic-bezier(0.2, 0, 0, 1);
+  transition: background-color 0.2s;
 }
 
-.card.thumbnail:hover {
-  box-shadow: var(--md-sys-elevation-2, 0 1px 2px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.15));
+/* 右侧图片卡片 — 对照 m3 .split-asset-image */
+.article-card__image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 24px;
+  overflow: hidden;
+  min-height: 200px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
 }
 
-/* State layer（覆盖在整张卡片上） */
-.card.thumbnail::after {
+.article-icon {
+  font-size: 56px;
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  opacity: 0.4;
+}
+
+/* article-card hover state layer — 两侧各自独立 */
+.article-card__text::after,
+.article-card__image::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -354,51 +329,39 @@ function thumbGradient(id) {
   opacity: 0;
   transition: opacity 0.2s;
   pointer-events: none;
-  z-index: 2;
+  z-index: 1;
 }
 
-.card.thumbnail:hover::after {
+.article-card:hover .article-card__text::after,
+.article-card:hover .article-card__image::after {
   opacity: 0.08;
 }
 
-.card.thumbnail:active::after {
+.article-card:active .article-card__text::after,
+.article-card:active .article-card__image::after {
   opacity: 0.12;
 }
 
 /* ================================================================
-   content-container（对照 m3 .content-container）
-   m3: display grid, gap 8px, margin 24px (feature), padding (regular)
+   Article card 内部文字
+   对照 m3 .content-container: grid, gap 8px
    ================================================================ */
 
-.content-container {
-  display: grid;
-  gap: 8px;
-  position: relative;
-  z-index: 1;
-}
-
-.content-container .date {
+.article-card__text .wrapper .date {
   font-size: 16px;
   font-weight: 400;
   line-height: 24px;
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
-.content-container .card-title {
+.article-card__text .wrapper .card-title {
   font-size: 24px;
   font-weight: 500;
   line-height: 32px;
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
-@media screen and (max-width: 600px) {
-  .content-container .card-title {
-    font-size: 18px;
-    line-height: 24px;
-  }
-}
-
-.content-container .card-desc {
+.article-card__text .wrapper .card-desc {
   font-size: 16px;
   font-weight: 400;
   line-height: 24px;
@@ -409,101 +372,80 @@ function thumbGradient(id) {
   overflow: hidden;
 }
 
+/* ================================================================
+   Hero header 内部文字（更大字号）
+   ================================================================ */
+
+.mio-header .wrapper .date {
+  margin-bottom: 16px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  line-height: 24px;
+}
+
+.mio-header .wrapper .title h1 {
+  font-size: 57px;
+  font-weight: 400;
+  line-height: 64px;
+  letter-spacing: -0.25px;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0 0 16px;
+}
+
+.mio-header .wrapper .description {
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 28px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+@media screen and (max-width: 1294px) {
+  .mio-header .wrapper .title h1 {
+    font-size: 40px;
+    line-height: 48px;
+  }
+}
+
 @media screen and (max-width: 600px) {
-  .content-container .card-desc {
-    font-size: 14px;
-    line-height: 20px;
+  .mio-header .wrapper .title h1 {
+    font-size: 32px;
+    line-height: 40px;
+  }
+  .mio-header .wrapper .description {
+    font-size: 16px;
+    line-height: 24px;
   }
 }
 
 /* ================================================================
-   thumb-container（对照 m3 mio-thumbnail .thumb-container）
+   响应式：文章卡片在窄屏变为单列堆叠
    ================================================================ */
-
-.thumb-container {
-  border-radius: 24px;
-  background-size: cover;
-  background-position: center;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* 项目卡片中的覆盖图标 */
-.thumb-icon {
-  font-size: 64px;
-  color: var(--md-sys-color-on-primary-container, #21005d);
-  opacity: 0.5;
-  z-index: 1;
-}
-
-/* ================================================================
-   Feature card（对照 m3 mio-card.feature-block）
-   桌面端：grid 1fr 1fr 横排（文字左 + 图片右）
-   移动端：inline-flex column-reverse 竖排（图片上 + 文字下）
-   ================================================================ */
-
-.card--feature.thumbnail {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  margin-bottom: 24px;
-}
-
-.card--feature.thumbnail .content-container {
-  margin: 24px;
-  align-self: center;
-}
-
-.card--feature.thumbnail .thumb-container {
-  min-height: 298px;
-}
 
 @media screen and (max-width: 840px) {
-  .card--feature.thumbnail {
-    display: inline-flex;
-    flex-direction: column-reverse;
+  .article-card {
+    grid-template-columns: 1fr;
   }
 
-  .card--feature.thumbnail .content-container {
-    margin: 0;
+  .article-card__text {
+    min-height: unset;
     padding: 24px;
   }
 
-  .card--feature.thumbnail .thumb-container {
-    min-height: 200px;
-    border-radius: 24px 24px 0 0;
+  /* 移动端图片在上、文字在下（视觉顺序反转） */
+  .article-card__image {
+    order: -1;
+    min-height: 160px;
   }
-}
 
-/* ================================================================
-   Regular card（对照 m3 mio-card a.thumbnail column-reverse）
-   竖排：图片上 + 文字下
-   ================================================================ */
+  .article-card__text .wrapper .card-title {
+    font-size: 18px;
+    line-height: 24px;
+  }
 
-.card-set {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-}
-
-.card-set .card.thumbnail {
-  display: inline-flex;
-  flex-direction: column-reverse;
-}
-
-.card-set .card.thumbnail .content-container {
-  padding: 24px;
-}
-
-.card-set .card.thumbnail .thumb-container {
-  min-height: 200px;
-  border-radius: 24px 24px 0 0;
-}
-
-@media screen and (max-width: 840px) {
-  .card-set {
-    grid-template-columns: 1fr;
+  .article-card__text .wrapper .card-desc {
+    font-size: 14px;
+    line-height: 20px;
   }
 }
 
@@ -515,10 +457,6 @@ function thumbGradient(id) {
   background: var(--md-sys-color-surface-container-low, #1d1b20);
 }
 
-:global([data-theme="dark"]) .split-asset-image {
-  border-color: var(--md-sys-color-surface-variant, #49454f);
-}
-
 :global([data-theme="dark"]) .split-asset-image__foreground {
   background: linear-gradient(
     135deg,
@@ -528,15 +466,16 @@ function thumbGradient(id) {
   );
 }
 
-:global([data-theme="dark"]) .card.thumbnail {
-  background-color: var(--md-sys-color-surface-container, #211f26);
+:global([data-theme="dark"]) .article-card__text {
+  background: var(--md-sys-color-surface-container-low, #1d1b20);
 }
 
-:global([data-theme="dark"]) .card.thumbnail::after {
+:global([data-theme="dark"]) .article-card__text::after,
+:global([data-theme="dark"]) .article-card__image::after {
   background-color: var(--md-sys-color-on-surface, #e6e1e5);
 }
 
-:global([data-theme="dark"]) .thumb-icon {
+:global([data-theme="dark"]) .article-icon {
   color: var(--md-sys-color-on-primary-container, #eaddff);
 }
 </style>
