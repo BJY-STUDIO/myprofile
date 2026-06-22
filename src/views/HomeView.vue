@@ -235,6 +235,13 @@ function gradient(id) {
   .split-asset-image {
     min-height: unset;
   }
+  .primary-container {
+    grid-column: span 2;
+  }
+  .split-asset-image {
+    padding-bottom: 50%;
+    grid-column: span 2;
+  }
 }
 
 .primary-container .wrapper {
@@ -270,13 +277,6 @@ function gradient(id) {
   background-repeat: no-repeat;
   background-size: cover;
   overflow: hidden;
-}
-
-@media screen and (max-width: 1294px) {
-  .split-asset-image {
-    padding-bottom: 50%;
-    grid-column: span 2;
-  }
 }
 
 .split-asset-image__foreground {
