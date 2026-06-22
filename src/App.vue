@@ -38,6 +38,8 @@ const activeNavId = computed(() => {
 })
 
 // ======== 二级子菜单面板 ========
+const PERSISTENT_THRESHOLD = 1200 // 常驻模式的最小宽度
+
 const activeSubItems = computed(() => {
   const activeItem = navItems.find(item => item.id === activeNavId.value)
   return activeItem?.children || null
@@ -58,19 +60,22 @@ const activeSubItemId = computed(() => {
   return prefix ? prefix.id : activeSubItems.value[0]?.id
 })
 
-// 响应式：宽屏下子面板始终可用（active 项常驻 + hover 其他项临时切换）
-const isWideScreen = ref(true)
-const hoveredNavId = ref(null) // 当前鼠标悬停的一级菜单 id
+// 响应式断点
+const isWideScreen = ref(true)       // ≥840px：Rail 可见
+const isPersistentScreen = ref(false) // ≥1200px：常驻模式可用
+const hoveredNavId = ref(null)       // 当前鼠标悬停的一级菜单 id
+const isHoveringPanel = ref(false)   // 鼠标是否在子面板区域内
 
 function updateScreenWidth() {
-  isWideScreen.value = window.innerWidth >= 840
+  const w = window.innerWidth
+  isWideScreen.value = w >= 840
+  isPersistentScreen.value = w >= PERSISTENT_THRESHOLD
 }
 
 // 首次渲染完成标记（控制 --animate class）
 const subPanelTransitionsReady = ref(false)
 
 // 首项 indicator 延迟激活标记（控制 --active class 在新面板出现时的延迟添加）
-// 目的：让 indicator 先渲染在 scaleX(0.32) 初始位，然后过渡到 scaleX(1)
 const subPanelActiveReady = ref(true)
 
 onMounted(() => {
@@ -84,22 +89,47 @@ onUnmounted(() => {
   window.removeEventListener('resize', updateScreenWidth)
 })
 
+// 是否处于常驻模式：当前激活的一级菜单有子菜单 且 屏幕足够宽
+const isPersistentPanel = computed(() => {
+  return isPersistentScreen.value && !!activeSubItems.value
+})
+
 // 计算当前要显示在子面板中的子菜单项
-// 优先级：hover 项 > active 项（宽屏下，hover 任何有 children 的项会临时覆盖）
+// 优先级：hover 项 > active 项
 const displaySubItems = computed(() => {
   if (!isWideScreen.value) return null
-  // hover 优先
+  // hover 优先（悬停模式，浮动不压缩页面）
   if (hoveredNavId.value) {
     const hoverItem = navItems.find(i => i.id === hoveredNavId.value)
     if (hoverItem?.children) return hoverItem.children
   }
-  // 否则显示 active 项的子菜单
+  // 否则显示 active 项的子菜单（仅常驻模式下有意义）
   return activeSubItems.value
 })
 
-// 子面板是否显示
+// 子面板是否显示（hover 模式 或 常驻模式）
 const subPanelVisible = computed(() => {
-  return isWideScreen.value && !!displaySubItems.value
+  if (!isWideScreen.value) return false
+  // hover 触发：任何有 children 的项被悬停时都显示
+  if (hoveredNavId.value) {
+    const hoverItem = navItems.find(i => i.id === hoveredNavId.value)
+    if (hoverItem?.children) return true
+  }
+  // 常驻触发：active 有子菜单且屏幕够宽
+  return !!activeSubItems.value
+})
+
+// 当前是否为 hover 模式（非常驻）——用于 CSS 区分样式
+const isHoverMode = computed(() => {
+  if (!subPanelVisible.value) return false
+  // 如果是因为 hover 而显示的 → hover 模式
+  if (hoveredNavId.value) {
+    const hoverItem = navItems.find(i => i.id === hoveredNavId.value)
+    if (hoverItem?.children) return true
+  }
+  // 如果 active 就是当前显示的内容，但屏幕不够宽做常驻 → 也算 hover 模式
+  // （中等宽度下即使选中了有子菜单的项，也用悬浮效果）
+  return !isPersistentPanel.value
 })
 
 // 当子面板内容变化时（切到不同父级菜单），延迟添加 active class
@@ -144,16 +174,18 @@ function onRailItemLeave() {
   }
 }
 
-// 鼠标进入子面板时取消离开计时
+// 鼠标进入子面板时取消离开计时 + 标记 hover 状态
 function onSubPanelEnter() {
   if (hoverLeaveTimer.value) {
     clearTimeout(hoverLeaveTimer.value)
     hoverLeaveTimer.value = null
   }
+  isHoveringPanel.value = true
 }
 
 // 鼠标离开子面板
 function onSubPanelLeave() {
+  isHoveringPanel.value = false
   hoveredNavId.value = null
 }
 
@@ -183,10 +215,12 @@ function closeDrawer() {
 }
 
 // 桌面端内容区左边距
+// 只有常驻模式（persistent）才增加 240px 边距压缩内容区
+// hover 模式下子面板浮动覆盖，不改变布局
 const bodyMarginLeft = computed(() => {
   if (!isWideScreen.value) return '0px'
-  let margin = 80
-  if (subPanelVisible.value) margin += 240
+  const margin = 80 // Rail 宽度
+  if (isPersistentPanel.value) return (margin + 240) + 'px'
   return margin + 'px'
 })
 </script>
@@ -203,14 +237,20 @@ const bodyMarginLeft = computed(() => {
       @item-leave="onRailItemLeave"
     />
 
-    <!-- 宽屏 (≥840px)：二级子面板（参照 m3.material.io 右侧子面板） -->
-    <!-- active 项常驻 + hover 其他有子菜单项时临时切换 -->
-    <aside
-      v-if="subPanelVisible && displaySubItems"
-      class="sub-panel"
-      @mouseenter="onSubPanelEnter"
-      @mouseleave="onSubPanelLeave"
-    >
+    <!-- 宽屏 (≥840px)：二级子面板 -->
+    <!-- hover 模式：浮动不压缩页面 | persistent 模式：常驻压缩右侧 -->
+    <Transition name="sub-panel">
+      <aside
+        v-if="subPanelVisible && displaySubItems"
+        class="sub-panel"
+        :class="{
+          'sub-panel--hover-mode': isHoverMode,
+          'sub-panel--persistent-mode': !isHoverMode,
+          'sub-panel--hovered-within': isHoveringPanel
+        }"
+        @mouseenter="onSubPanelEnter"
+        @mouseleave="onSubPanelLeave"
+      >
       <nav class="sub-panel__items">
         <a
           v-for="child in displaySubItems"
@@ -226,6 +266,7 @@ const bodyMarginLeft = computed(() => {
         </a>
       </nav>
     </aside>
+    </Transition>
 
     <!-- 右侧主区域 -->
     <div class="app-layout__body" :style="{ marginLeft: bodyMarginLeft }">
@@ -835,13 +876,48 @@ const bodyMarginLeft = computed(() => {
   border-radius: 0 16px 16px 0;
   background-color: var(--md-sys-color-surface-2, #f3edf7);
   border-left: 1px solid var(--md-sys-color-surface-variant, #e7e0ec);
-  box-shadow: var(--md-sys-elevation-2, 0 1px 2px 0 rgba(0,0,0,0.3), 0 2px 6px 2px rgba(0,0,0,0.15));
   z-index: 99;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
-  transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.3s cubic-bezier(0.2, 0, 0, 1);
+  transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.3s cubic-bezier(0.2, 0, 0, 1),
+              opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* ====== Hover 模式（悬浮浮动，不压缩页面） ====== */
+/* 始终有阴影，表示浮于内容之上 */
+.sub-panel--hover-mode {
+  box-shadow: var(--md-sys-elevation-2, 0 1px 2px 0 rgba(0,0,0,0.3), 0 2px 6px 2px rgba(0,0,0,0.15));
+}
+
+/* ====== Persistent 模式（常驻，压缩页面） ====== */
+/* 默认无阴影：通过背景色区分菜单区域和右侧页面区域 */
+/* 只有鼠标进入子面板区域时才显示阴影 */
+.sub-panel--persistent-mode {
+  box-shadow: none;
+}
+
+.sub-panel--persistent-mode.sub-panel--hovered-within {
+  box-shadow: var(--md-sys-elevation-2, 0 1px 2px 0 rgba(0,0,0,0.3), 0 2px 6px 2px rgba(0,0,0,0.15));
+}
+
+/* ====== 子面板进入/离开动画（Vue Transition） ====== */
+/* hover 模式：从左侧滑入 + 淡入；离开时滑出 + 淡出 */
+.sub-panel-enter-active {
+  transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1), opacity 0.25s ease;
+}
+.sub-panel-leave-active {
+  transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1), opacity 0.2s ease;
+}
+.sub-panel-enter-from {
+  transform: translateX(-12px);
+  opacity: 0;
+}
+.sub-panel-leave-to {
+  transform: translateX(-12px);
+  opacity: 0;
 }
 
 .sub-panel__items {
