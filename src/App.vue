@@ -207,7 +207,8 @@ function onFabClick() {
 const drawerOpen = ref(false)
 const drawerSubMenu = ref(null) // 当前展开的子菜单父级 id，null 表示主菜单
 
-// 抽屉导航方向（已改用 fade 动画，不再需要方向判断）
+// 抽屉导航方向：'forward' 进入子菜单, 'back' 返回主菜单
+const drawerDirection = ref('forward')
 
 function toggleDrawer() {
   drawerOpen.value = !drawerOpen.value
@@ -224,11 +225,13 @@ function closeDrawer() {
 
 // 点击有子菜单的项 → 进入子菜单
 function openDrawerSubMenu(item) {
+  drawerDirection.value = 'forward'
   drawerSubMenu.value = item.id
 }
 
 // 从子菜单返回主菜单
 function backToDrawerMain() {
+  drawerDirection.value = 'back'
   drawerSubMenu.value = null
 }
 
@@ -381,10 +384,10 @@ const bodyMarginLeft = computed(() => {
           </button>
         </div>
 
-        <!-- 子菜单导航容器（带淡入淡出动画，对照 m3 @fadeInOut） -->
+        <!-- 子菜单导航容器（带淡入淡出+微位移动画，对照 m3 @fadeInOutSectionModal / @fadeInOutSubsectionModal） -->
         <div class="nav-drawer__content">
-          <Transition name="drawer-fade">
-            <!-- 主菜单列表 -->
+          <!-- 主菜单：离开时向左切出(fadeInOutSectionModal)，进入时从左切入 -->
+          <Transition :name="drawerDirection === 'forward' ? 'drawer-section' : 'drawer-section'">
             <div v-if="!drawerSubMenu" key="main" class="nav-drawer__page">
               <nav class="nav-drawer__items">
                 <a
@@ -400,8 +403,10 @@ const bodyMarginLeft = computed(() => {
                 </a>
               </nav>
             </div>
+          </Transition>
 
-            <!-- 子菜单列表 -->
+          <!-- 子菜单：进入时从右切入(fadeInOutSubsectionModal)，离开时向右切出 -->
+          <Transition :name="drawerDirection === 'forward' ? 'drawer-subsection' : 'drawer-subsection'">
             <div v-if="drawerSubMenu" key="sub" class="nav-drawer__page">
               <!-- 返回主菜单按钮（官方: arrow_back + "Main menu"） -->
               <div class="nav-drawer__back" role="button" aria-label="back to main menu" @click="backToDrawerMain">
@@ -761,24 +766,55 @@ const bodyMarginLeft = computed(() => {
   flex-direction: column;
 }
 
-/* ======== 子菜单淡入淡出动画（严格对照 m3 @fadeInOut） ======== */
-/* m3 源码: LEFT_NAV_CONTENT_CHANGE_FADE_OUT = 100ms cubic-bezier(.2,0,0,1)
-           LEFT_NAV_CONTENT_CHANGE_FADE_IN  = 200ms 200ms linear (delay 200ms + duration 200ms) */
+/* ======== 子菜单淡入淡出动画（严格对照 m3 源码） ======== */
+/* m3 定义了 3 个 Angular animation trigger:
+ *   1. fadeInOut               — 纯 opacity (桌面端 nav item 切换)
+ *   2. fadeInOutSectionModal   — opacity + translateX(-10px) (主菜单离开：向左切出)
+ *   3. fadeInOutSubsectionModal— opacity + translateX(10px)  (子菜单进入：从右切入)
+ *
+ * 时序参数:
+ *   FADE_OUT = 100ms cubic-bezier(.2,0,0,1)
+ *   FADE_IN  = 200ms delay + 200ms linear
+ */
 
-/* 淡出：旧菜单项离开 */
-.drawer-fade-leave-active {
-  transition: opacity 100ms cubic-bezier(0.2, 0, 0, 1);
+/* 主菜单离开：fadeInOutSectionModal — 向左 translateX(-10px) + fade out */
+.drawer-section-leave-active {
+  transition: opacity 100ms cubic-bezier(0.2, 0, 0, 1),
+              transform 100ms cubic-bezier(0.2, 0, 0, 1);
 }
-.drawer-fade-leave-to {
+.drawer-section-leave-to {
   opacity: 0;
+  transform: translateX(-10px);
 }
 
-/* 淡入：新菜单项进入 */
-.drawer-fade-enter-active {
-  transition: opacity 200ms linear 200ms; /* 200ms delay + 200ms duration, linear */
+/* 子菜单进入：fadeInOutSubsectionModal — 从右 translateX(10px) → 0 + fade in */
+.drawer-subsection-enter-active {
+  transition: opacity 200ms linear 200ms,
+              transform 200ms linear 200ms;
 }
-.drawer-fade-enter-from {
+.drawer-subsection-enter-from {
   opacity: 0;
+  transform: translateX(10px);
+}
+
+/* 返回时反向：子菜单离开 — 向右 translateX(10px) + fade out */
+.drawer-subsection-leave-active {
+  transition: opacity 100ms cubic-bezier(0.2, 0, 0, 1),
+              transform 100ms cubic-bezier(0.2, 0, 0, 1);
+}
+.drawer-subsection-leave-to {
+  opacity: 0;
+  transform: translateX(10px);
+}
+
+/* 返回时反向：主菜单进入 — 从左 translateX(-10px) → 0 + fade in */
+.drawer-section-enter-active {
+  transition: opacity 200ms linear 200ms,
+              transform 200ms linear 200ms;
+}
+.drawer-section-enter-from {
+  opacity: 0;
+  transform: translateX(-10px);
 }
 
 /* ======== 返回主菜单按钮（严格对照 m3 .main-menu） ======== */
