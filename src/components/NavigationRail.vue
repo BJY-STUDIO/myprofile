@@ -248,6 +248,7 @@ function onItemLeave() {
   align-items: center;
   justify-content: center;
   position: relative;
+  isolation: isolate;
   width: 56px;
   height: 32px;
   margin: 0 auto 4px;
@@ -255,9 +256,7 @@ function onItemLeave() {
   font-family: 'Material Symbols Rounded';
   font-size: 24px;
   font-variation-settings: "FILL" 0, "wght" 400, "opsz" 24;
-  transition: font-variation-settings 0.2s cubic-bezier(0.2, 0, 0, 1),
-              background-color 0.2s cubic-bezier(0.2, 0, 0, 1),
-              background-image 0.2s cubic-bezier(0.2, 0, 0, 1);
+  transition: font-variation-settings 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
 /* Indicator 药丸 — ::before 伪元素（严格复刻 m3.material.io） */
@@ -270,8 +269,21 @@ function onItemLeave() {
   transform: scaleX(0.32);
   border-radius: 100px;
   background-color: var(--md-sys-color-secondary-container, #e8def8);
-  z-index: -1;
+  z-index: 0;
   /* 默认无 transition，由 --animate-indicator 控制 */
+}
+
+/* State layer — ::after 伪元素（用 opacity 控制显隐，可动画，不遮挡 indicator） */
+.nav-rail__icon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  background-color: var(--md-sys-color-on-surface-variant, #49454f);
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
+  transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
 /* mounted 后启用 indicator transition（严格复刻 m3：0.2s linear 同步） */
@@ -290,10 +302,13 @@ function onItemLeave() {
 
 
 /* ---- Hover 交互 ---- */
-/* 未选中项 hover：图标加粗 + 8% state layer（用 background-image 不遮盖 ::before indicator） */
+/* 未选中项 hover：图标加粗 + 8% state layer */
 .nav-rail__destination:not(.nav-rail__destination--active):hover .nav-rail__icon {
-  background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent));
   font-variation-settings: "FILL" 0, "wght" 600, "opsz" 24;
+}
+
+.nav-rail__destination:not(.nav-rail__destination--active):hover .nav-rail__icon::after {
+  opacity: 0.08;
 }
 
 /* 未选中项 hover：标签 GRAD 50 */
@@ -301,10 +316,13 @@ function onItemLeave() {
   font-variation-settings: "GRAD" 50;
 }
 
-/* 选中项 hover：图标 FILL 1 + wght 600 + 灰色 state layer（m3 实测：background-image 不遮盖 ::before indicator） */
+/* 选中项 hover：图标 FILL 1 + wght 600 + 8% state layer */
 .nav-rail__destination--active:hover .nav-rail__icon {
-  background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent));
   font-variation-settings: "FILL" 1, "wght" 600, "opsz" 24;
+}
+
+.nav-rail__destination--active:hover .nav-rail__icon::after {
+  opacity: 0.08;
 }
 
 /* 选中项 hover：标签 GRAD 50 */
@@ -318,18 +336,24 @@ function onItemLeave() {
 /* ---- Pressed 交互 ---- */
 /* 未选中项 pressed：wght 300 + 12% state layer */
 .nav-rail__destination:not(.nav-rail__destination--active):active .nav-rail__icon {
-  background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 12%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 12%, transparent));
   font-variation-settings: "FILL" 0, "wght" 300, "opsz" 24;
+}
+
+.nav-rail__destination:not(.nav-rail__destination--active):active .nav-rail__icon::after {
+  opacity: 0.12;
 }
 
 .nav-rail__destination:not(.nav-rail__destination--active):active .nav-rail__label {
   font-variation-settings: "GRAD" -50;
 }
 
-/* 选中项 pressed：FILL 1 + wght 300 + 12% state layer（与 m3 一致） */
+/* 选中项 pressed：FILL 1 + wght 300 + 12% state layer */
 .nav-rail__destination--active:active .nav-rail__icon {
-  background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 12%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 12%, transparent));
   font-variation-settings: "FILL" 1, "wght" 300, "opsz" 24;
+}
+
+.nav-rail__destination--active:active .nav-rail__icon::after {
+  opacity: 0.12;
 }
 
 .nav-rail__destination--active:active .nav-rail__label {
@@ -468,13 +492,8 @@ function onItemLeave() {
   background-color: var(--md-sys-color-secondary-container, #4a4458);
 }
 
-:global([data-theme="dark"]) .nav-rail__destination:not(.nav-rail__destination--active):hover .nav-rail__icon {
-  background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent));
-}
-
-/* 暗色模式 active hover 有灰色 state layer（与 m3 一致） */
-:global([data-theme="dark"]) .nav-rail__destination--active:hover .nav-rail__icon {
-  background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent));
+:global([data-theme="dark"]) .nav-rail__icon::after {
+  background-color: var(--md-sys-color-on-surface-variant, #cac4d0);
 }
 
 :global([data-theme="dark"]) .nav-rail__destination--active .nav-rail__icon {
@@ -483,15 +502,6 @@ function onItemLeave() {
 
 :global([data-theme="dark"]) .nav-rail__destination--active .nav-rail__label {
   color: var(--md-sys-color-on-secondary-container, #e8def8);
-}
-
-:global([data-theme="dark"]) .nav-rail__destination:not(.nav-rail__destination--active):active .nav-rail__icon {
-  background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 12%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 12%, transparent));
-}
-
-/* 暗色模式 active pressed + 12% state layer */
-:global([data-theme="dark"]) .nav-rail__destination--active:active .nav-rail__icon {
-  background-image: linear-gradient(color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 12%, transparent), color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 12%, transparent));
 }
 
 :global([data-theme="dark"]) .nav-rail__action-btn {
