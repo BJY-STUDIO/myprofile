@@ -343,11 +343,10 @@ function gradient(id) {
 .content-container {
   display: flex;
   flex-direction: row-reverse;
-  margin-top: 72px;
+  justify-content: center;
   max-width: 1200px;
   width: 100%;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 0 auto;
 }
 
 /* ================================================================
@@ -355,9 +354,9 @@ function gradient(id) {
    156px宽, margin 112px 24px 0, sticky top
    ================================================================ */
 .toc {
-  flex-shrink: 0;
+  flex: 0 1 auto;
   width: 156px;
-  margin: 112px 24px 0 0;
+  margin: 112px 24px 0;
 }
 
 .toc nav {
@@ -383,12 +382,14 @@ function gradient(id) {
 }
 
 .toc__indicator {
-  height: 2px;
+  width: 156px;
+  height: 36px;
   border-radius: 18px;
   background: transparent;
   margin: 0;
   position: absolute;
   z-index: -1;
+  transition: transform 300ms cubic-bezier(0.2, 0, 0, 1), background-color 200ms cubic-bezier(0.2, 0, 0, 1);
 }
 
 .toc__list {
@@ -401,6 +402,12 @@ function gradient(id) {
   display: flex;
   padding: 8px 16px;
   border-radius: 18px;
+  cursor: pointer;
+  transition: background-color 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.toc__item:hover {
+  background: var(--md-sys-color-surface-variant, #e8e0e8);
 }
 
 .toc__item--active {
@@ -434,7 +441,7 @@ function gradient(id) {
    posts-container（对照 m3: article.posts-container）
    ================================================================ */
 .posts-container {
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
 }
 
