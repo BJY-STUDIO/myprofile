@@ -207,8 +207,7 @@ function onFabClick() {
 const drawerOpen = ref(false)
 const drawerSubMenu = ref(null) // 当前展开的子菜单父级 id，null 表示主菜单
 
-// 抽屉导航方向：'forward' 进入子菜单, 'back' 返回主菜单
-const drawerSlideDirection = ref('forward')
+// 抽屉导航方向（已改用 fade 动画，不再需要方向判断）
 
 function toggleDrawer() {
   drawerOpen.value = !drawerOpen.value
@@ -225,13 +224,11 @@ function closeDrawer() {
 
 // 点击有子菜单的项 → 进入子菜单
 function openDrawerSubMenu(item) {
-  drawerSlideDirection.value = 'forward'
   drawerSubMenu.value = item.id
 }
 
 // 从子菜单返回主菜单
 function backToDrawerMain() {
-  drawerSlideDirection.value = 'back'
   drawerSubMenu.value = null
 }
 
@@ -384,9 +381,9 @@ const bodyMarginLeft = computed(() => {
           </button>
         </div>
 
-        <!-- 子菜单导航容器（带滑动动画） -->
+        <!-- 子菜单导航容器（带淡入淡出动画，对照 m3 @fadeInOut） -->
         <div class="nav-drawer__content">
-          <Transition mode="out-in" :name="drawerSlideDirection === 'forward' ? 'drawer-slide-forward' : 'drawer-slide-back'">
+          <Transition name="drawer-fade">
             <!-- 主菜单列表 -->
             <div v-if="!drawerSubMenu" key="main" class="nav-drawer__page">
               <nav class="nav-drawer__items">
@@ -405,7 +402,7 @@ const bodyMarginLeft = computed(() => {
             </div>
 
             <!-- 子菜单列表 -->
-            <div v-else key="sub" class="nav-drawer__page">
+            <div v-if="drawerSubMenu" key="sub" class="nav-drawer__page">
               <!-- 返回主菜单按钮（官方: arrow_back + "Main menu"） -->
               <div class="nav-drawer__back" role="button" aria-label="back to main menu" @click="backToDrawerMain">
                 <span class="material-symbols-rounded nav-drawer__back-icon">arrow_back</span>
@@ -764,32 +761,23 @@ const bodyMarginLeft = computed(() => {
   flex-direction: column;
 }
 
-/* ======== 子菜单左右滑动动画 ======== */
-.drawer-slide-forward-enter-active,
-.drawer-slide-forward-leave-active,
-.drawer-slide-back-enter-active,
-.drawer-slide-back-leave-active {
-  transition: transform 0.18s cubic-bezier(0.2, 0, 0, 1),
-              opacity 0.15s ease;
-}
+/* ======== 子菜单淡入淡出动画（严格对照 m3 @fadeInOut） ======== */
+/* m3 源码: LEFT_NAV_CONTENT_CHANGE_FADE_OUT = 100ms cubic-bezier(.2,0,0,1)
+           LEFT_NAV_CONTENT_CHANGE_FADE_IN  = 200ms 200ms linear (delay 200ms + duration 200ms) */
 
-/* 进入子菜单：新页从右滑入，旧页向左滑出 */
-.drawer-slide-forward-enter-from {
-  transform: translateX(100%);
+/* 淡出：旧菜单项离开 */
+.drawer-fade-leave-active {
+  transition: opacity 100ms cubic-bezier(0.2, 0, 0, 1);
+}
+.drawer-fade-leave-to {
   opacity: 0;
 }
-.drawer-slide-forward-leave-to {
-  transform: translateX(-30%);
-  opacity: 0.5;
-}
 
-/* 返回主菜单：新页从左滑入，旧页向右滑出 */
-.drawer-slide-back-enter-from {
-  transform: translateX(-30%);
-  opacity: 0.5;
+/* 淡入：新菜单项进入 */
+.drawer-fade-enter-active {
+  transition: opacity 200ms linear 200ms; /* 200ms delay + 200ms duration, linear */
 }
-.drawer-slide-back-leave-to {
-  transform: translateX(100%);
+.drawer-fade-enter-from {
   opacity: 0;
 }
 
