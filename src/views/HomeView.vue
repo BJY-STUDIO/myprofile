@@ -511,14 +511,15 @@ function gradient(id) {
   text-decoration: none;
   overflow: hidden;
   cursor: pointer;
-  transition: box-shadow 0.2s cubic-bezier(0.2, 0, 0, 1);
+  transition: border-radius 0.3s cubic-bezier(0.2, 0, 0, 1), background-color 0.3s cubic-bezier(0.2, 0, 0, 1);
 }
 
-.thumbnail:hover {
-  box-shadow: var(--md-sys-elevation-2, 0 1px 2px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.15));
+.thumbnail:focus-visible {
+  outline: 1.6px solid var(--md-sys-color-on-surface, #1c1b1f);
+  outline-offset: 0.8px;
 }
 
-/* state layer（对照 m3: — hover/pressed overlay） */
+/* state layer（对照 m3: hover/pressed overlay, opacity 变化） */
 .thumbnail::after {
   content: '';
   position: absolute;
@@ -526,7 +527,7 @@ function gradient(id) {
   border-radius: 24px;
   background-color: var(--md-sys-color-on-surface, #1c1b1f);
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity 0.3s cubic-bezier(0.2, 0, 0, 1);
   pointer-events: none;
   z-index: 3;
 }
@@ -548,7 +549,8 @@ function gradient(id) {
   gap: 8px;
   margin: 24px;
   position: relative;
-  z-index: 1;
+  z-index: auto;
+  min-width: 0;
 }
 
 .thumbnail > .content-container .date {
@@ -557,11 +559,13 @@ function gradient(id) {
   line-height: 24px;
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0 0 8px;
+  display: block;
 }
 
 .thumbnail > .content-container .mio-title-row {
   display: flex;
   gap: 5px;
+  align-items: flex-start;
 }
 
 .thumbnail > .content-container .title {
@@ -569,6 +573,7 @@ function gradient(id) {
   font-weight: 475;
   line-height: 32px;
   color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0;
 }
 
 .thumbnail > .content-container .description {
@@ -576,10 +581,13 @@ function gradient(id) {
   font-weight: 400;
   line-height: 24px;
   color: var(--md-sys-color-on-surface, #1c1b1f);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  margin: 0;
+}
+
+/* regular-card 的 description 无截断（m3 中 regular-card description 也是无 clamp） */
+.regular-card.thumbnail > .content-container .description {
+  display: block;
+  overflow: visible;
 }
 
 /* ================================================================
@@ -595,7 +603,6 @@ function gradient(id) {
   align-items: center;
   justify-content: center;
   position: relative;
-  z-index: 1;
 }
 
 .thumb-icon {
@@ -619,6 +626,7 @@ function gradient(id) {
 
 .feature-card.thumbnail > .content-container {
   align-self: center;
+  max-width: 442px;
 }
 
 .feature-card.thumbnail > .thumb-container {
@@ -632,7 +640,12 @@ function gradient(id) {
   }
   .feature-card.thumbnail > .thumb-container {
     min-height: 200px;
-    border-radius: 24px 24px 0 0;
+    border-radius: 24px;
+  }
+  .feature-card.thumbnail > .content-container {
+    max-width: none;
+    width: calc(100% - 32px);
+    margin: 16px;
   }
 }
 
@@ -648,11 +661,26 @@ function gradient(id) {
 
 .regular-card.thumbnail > .content-container {
   align-self: start;
+  max-width: 438px;
+  width: calc(100% - 48px);
 }
 
 .regular-card.thumbnail > .thumb-container {
-  min-height: 200px;
-  border-radius: 24px 24px 0 0;
+  flex: 1 1 auto;
+  min-height: 298px;
+  border-radius: 24px;
+}
+
+/* 移动端 regular-card content 适配 */
+@media screen and (max-width: 600px) {
+  .regular-card.thumbnail > .content-container {
+    max-width: none;
+    width: calc(100% - 32px);
+    margin: 16px;
+  }
+  .regular-card.thumbnail > .thumb-container {
+    min-height: 200px;
+  }
 }
 
 /* ================================================================
@@ -677,6 +705,10 @@ function gradient(id) {
 
 :global([data-theme="dark"]) .thumbnail::after {
   background-color: var(--md-sys-color-on-surface, #e6e1e5);
+}
+
+:global([data-theme="dark"]) .thumbnail:focus-visible {
+  outline-color: var(--md-sys-color-on-surface, #e6e1e5);
 }
 
 :global([data-theme="dark"]) .thumb-icon {
