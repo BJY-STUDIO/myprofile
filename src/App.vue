@@ -852,7 +852,7 @@ const bodyMarginLeft = computed(() => {
   gap: 0;
 }
 
-/* ======== 子面板项（m3.material.io 风格，无 ripple，无 hover state layer） ======== */
+/* ======== 子面板项（m3.material.io 风格，无 ripple） ======== */
 .sub-panel__item {
   display: flex;
   align-items: center;
@@ -882,6 +882,19 @@ const bodyMarginLeft = computed(() => {
   /* 默认无 transition，由 --animate 控制 */
 }
 
+/* State layer — ::after（灰色，与一级菜单一致，hover/pressed 态） */
+.sub-panel__item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background-color: var(--md-sys-color-on-surface-variant, #49454f);
+  opacity: 0;
+  z-index: 0;
+  pointer-events: none;
+  transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
 /* mounted 后启用 transition（严格复刻 m3：0.2s linear 同步） */
 .sub-panel__item--animate::before {
   transition-duration: 0.2s;
@@ -898,6 +911,26 @@ const bodyMarginLeft = computed(() => {
 /* 激活态文字颜色 */
 .sub-panel__item--active {
   color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+/* Inactive 项 hover state layer（灰色 8%） */
+.sub-panel__item:not(.sub-panel__item--active):hover::after {
+  opacity: 0.08;
+}
+
+/* Active 项 hover state layer */
+.sub-panel__item--active:hover::after {
+  opacity: 0.08;
+}
+
+/* Inactive 项 pressed state layer */
+.sub-panel__item:not(.sub-panel__item--active):active::after {
+  opacity: 0.12;
+}
+
+/* Active 项 pressed state layer */
+.sub-panel__item--active:active::after {
+  opacity: 0.12;
 }
 
 .sub-panel__item-label {
@@ -958,6 +991,10 @@ const bodyMarginLeft = computed(() => {
 
 :global([data-theme="dark"]) .sub-panel__item::before {
   background-color: var(--md-sys-color-secondary-container, #4a4458);
+}
+
+:global([data-theme="dark"]) .sub-panel__item::after {
+  background-color: var(--md-sys-color-on-surface-variant, #cac4d0);
 }
 
 :global([data-theme="dark"]) .sub-panel__item--active {
