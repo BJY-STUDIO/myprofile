@@ -1,15 +1,13 @@
 <template>
-  <div class="home-view">
-    <!-- Hero 区域（对照 m3 mio-header split-asset 布局）
-         header grid 里两个独立卡片：primary-container + split-asset-image -->
+  <div class="editorial">
+    <!-- ======== mio-header（对照 m3: header.split-asset, grid 1fr 1fr, gap 8px） ======== -->
     <header class="mio-header">
       <div class="primary-container">
         <div class="wrapper">
-          <span class="date">2026 年 6 月</span>
           <div class="title">
             <h1>Kernel's Blog</h1>
+            <div class="description">探索技术，记录生活。一个遵循 Material Design 3 规范的个人博客。</div>
           </div>
-          <div class="description">探索技术，记录生活。一个遵循 Material Design 3 规范的个人博客。</div>
         </div>
       </div>
       <div class="split-asset-image">
@@ -17,121 +15,164 @@
       </div>
     </header>
 
-    <!-- 最近文章 -->
-    <section class="section">
-      <div class="section-header">
-        <span class="overline">BLOG</span>
-        <h2 class="section-title">最近文章</h2>
-      </div>
+    <!-- ======== content-container（对照 m3: flex row-reverse, TOC右 + posts左） ======== -->
+    <div class="content-container">
+      <!-- TOC 目录（对照 m3: mio-toc > nav, sticky, 156px宽） -->
+      <aside class="toc">
+        <nav>
+          <div class="toc__overline">On this page</div>
+          <h2 class="toc__title">Kernel's Blog</h2>
+          <div class="toc__indicator"></div>
+          <ul class="toc__list">
+            <li
+              v-for="(section, i) in sections"
+              :key="i"
+              class="toc__item"
+              :class="{ 'toc__item--active': activeSection === i }"
+            >
+              <a
+                :href="'#section-' + i"
+                class="toc__link"
+                @click.prevent="scrollToSection(i)"
+              >{{ section.label }}</a>
+            </li>
+          </ul>
+        </nav>
+      </aside>
 
-      <!-- 每篇文章都是 mio-header 模式的双卡片 grid -->
-      <div class="article-grid">
-        <router-link
-          v-for="(post, index) in recentPosts"
-          :key="post.id"
-          :to="post.route"
-          class="article-card"
+      <!-- posts-container（对照 m3: article.posts-container, 996px宽） -->
+      <article class="posts-container">
+        <!-- 每个 section（对照 m3: div.section, margin 72px/96px top/bottom） -->
+        <div
+          v-for="(section, si) in sections"
+          :key="si"
+          :id="'section-' + si"
+          class="section"
         >
-          <!-- 左侧：文字卡片（对照 mio-header .primary-container） -->
-          <div class="article-card__text">
-            <div class="wrapper">
-              <span class="date">{{ post.date }}</span>
-              <span class="card-title">{{ post.title }}</span>
-              <span class="card-desc">{{ post.excerpt }}</span>
-            </div>
+          <!-- section-header（对照 m3: div.section-header, margin 24px） -->
+          <div class="section-header">
+            <h2 :class="si === 0 ? '' : 'sub-heading'">{{ section.label }}</h2>
           </div>
-          <!-- 右侧：图片卡片（对照 mio-header .split-asset-image） -->
-          <div class="article-card__image" :style="{ background: thumbGradient(post.id) }">
-            <span class="material-symbols-rounded article-icon">article</span>
-          </div>
-        </router-link>
-      </div>
-    </section>
 
-    <!-- 精选项目 -->
-    <section class="section">
-      <div class="section-header">
-        <span class="overline">PROJECTS</span>
-        <h2 class="section-title">精选项目</h2>
-      </div>
+          <!-- card-set（对照 m3: mio-card-set, grid, gap 8px） -->
+          <div class="card-set">
+            <!-- feature-block 长卡（对照 m3: mio-card.feature-block > a.thumbnail, grid 1fr 1fr） -->
+            <a
+              v-if="section.feature"
+              :href="section.feature.route"
+              class="feature-card thumbnail"
+            >
+              <div class="content-container">
+                <span class="date">{{ section.feature.date }}</span>
+                <span class="mio-title-row">
+                  <span class="title">{{ section.feature.title }}</span>
+                </span>
+                <span class="description">{{ section.feature.excerpt }}</span>
+              </div>
+              <div class="thumb-container" :style="{ background: gradient(section.feature.id) }">
+                <span class="material-symbols-rounded thumb-icon">{{ section.feature.icon || 'article' }}</span>
+              </div>
+            </a>
 
-      <div class="article-grid">
-        <router-link
-          v-for="project in featuredProjects"
-          :key="project.id"
-          :to="project.route"
-          class="article-card"
-        >
-          <div class="article-card__text">
-            <div class="wrapper">
-              <span class="date">{{ project.tags.join(' · ') }}</span>
-              <span class="card-title">{{ project.title }}</span>
-              <span class="card-desc">{{ project.excerpt }}</span>
-            </div>
+            <!-- 中卡片（对照 m3: mio-card > a.thumbnail, inline-flex column-reverse） -->
+            <a
+              v-for="post in section.items"
+              :key="post.id"
+              :href="post.route"
+              class="regular-card thumbnail"
+            >
+              <div class="content-container">
+                <span v-if="post.date" class="date">{{ post.date }}</span>
+                <span class="mio-title-row">
+                  <span class="title">{{ post.title }}</span>
+                </span>
+                <span v-if="post.excerpt" class="description">{{ post.excerpt }}</span>
+              </div>
+              <div class="thumb-container" :style="{ background: gradient(post.id + 10) }">
+                <span class="material-symbols-rounded thumb-icon">{{ post.icon || 'article' }}</span>
+              </div>
+            </a>
           </div>
-          <div class="article-card__image" :style="{ background: thumbGradient(project.id + 10) }">
-            <span class="material-symbols-rounded article-icon">{{ project.icon }}</span>
-          </div>
-        </router-link>
-      </div>
-    </section>
+        </div>
+      </article>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 
-const recentPosts = ref([
-  {
-    id: 1,
-    title: 'Vue 3 Composition API 实战指南',
-    excerpt: '深入理解 setup 语法、响应式原理与组合式函数的设计模式。',
-    category: '技术',
-    date: '2026-06-18',
-    route: '/blog/tech',
-  },
-  {
-    id: 2,
-    title: 'Material Design 3 主题系统解析',
-    excerpt: '从 HCT 色彩空间到动态配色，了解 Google 最新设计语言的色彩体系。',
-    category: '技术',
-    date: '2026-06-12',
-    route: '/blog/tech',
-  },
-  {
-    id: 3,
-    title: '我的 2026 上半年阅读清单',
-    excerpt: '分享上半年读过的几本好书，涵盖技术、设计和思维方式。',
-    category: '生活',
-    date: '2026-06-05',
-    route: '/blog/life',
-  },
-])
+const activeSection = ref(0)
 
-const featuredProjects = ref([
+function scrollToSection(i) {
+  activeSection.value = i
+  const el = document.getElementById('section-' + i)
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+const sections = ref([
   {
-    id: 1,
-    title: "Kernel's Blog",
-    icon: 'web',
-    excerpt: '基于 Vue 3 + Material Web 的个人博客站点，严格遵循 M3 规范。',
-    tags: ['Vue 3', 'Material Web', 'Vite'],
-    route: '/projects/web',
+    label: 'Featured',
+    feature: {
+      id: 1,
+      title: 'Vue 3 Composition API 实战指南',
+      excerpt: '深入理解 setup 语法、响应式原理与组合式函数的设计模式。',
+      date: '2026-06-18',
+      icon: 'code',
+      route: '/blog/tech',
+    },
+    items: [
+      {
+        id: 2,
+        title: 'Material Design 3 主题系统解析',
+        excerpt: '从 HCT 色彩空间到动态配色，了解 Google 最新设计语言的色彩体系。',
+        date: '2026-06-12',
+        icon: 'palette',
+        route: '/blog/tech',
+      },
+      {
+        id: 3,
+        title: '我的 2026 上半年阅读清单',
+        excerpt: '分享上半年读过的几本好书，涵盖技术、设计和思维方式。',
+        date: '2026-06-05',
+        icon: 'menu_book',
+        route: '/blog/life',
+      },
+    ],
   },
   {
-    id: 2,
-    title: '数据可视化工具集',
-    icon: 'analytics',
-    excerpt: '面向电信行业的数据抓取、清洗与可视化展示工具。',
-    tags: ['Python', 'ECharts', 'Pandas'],
-    route: '/projects/tools',
+    label: 'Projects',
+    items: [
+      {
+        id: 4,
+        title: "Kernel's Blog",
+        excerpt: '基于 Vue 3 + Material Web 的个人博客站点，严格遵循 M3 规范。',
+        date: 'Vue 3 · Material Web · Vite',
+        icon: 'web',
+        route: '/projects/web',
+      },
+      {
+        id: 5,
+        title: '数据可视化工具集',
+        excerpt: '面向电信行业的数据抓取、清洗与可视化展示工具。',
+        date: 'Python · ECharts · Pandas',
+        icon: 'analytics',
+        route: '/projects/tools',
+      },
+    ],
   },
   {
-    id: 3,
-    title: '考核题库管理平台',
-    icon: 'school',
-    excerpt: '客户经理培训考核系统，支持题目录入、组卷与成绩统计。',
-    tags: ['Vue 3', 'Node.js', 'MongoDB'],
-    route: '/projects/web',
+    label: '2026',
+    items: [
+      {
+        id: 6,
+        title: '考核题库管理平台',
+        excerpt: '客户经理培训考核系统，支持题目录入、组卷与成绩统计。',
+        date: '2026-03-15',
+        icon: 'school',
+        route: '/projects/web',
+      },
+    ],
   },
 ])
 
@@ -142,37 +183,64 @@ const gradients = [
   'linear-gradient(135deg, var(--md-sys-color-primary-container, #eaddff) 30%, var(--md-sys-color-surface-container-high, #ece6f0) 100%)',
 ]
 
-function thumbGradient(id) {
+function gradient(id) {
   return gradients[id % gradients.length]
 }
 </script>
 
 <style scoped>
-.home-view {
+/* ================================================================
+   editorial（对照 m3: main.editorial, flex column）
+   ================================================================ */
+.editorial {
+  display: flex;
+  flex-direction: column;
   max-width: 1200px;
   width: 100%;
 }
 
 /* ================================================================
-   mio-header（严格对照 m3 源码 split-asset 布局）
-   header grid: 1fr 1fr, gap 8px（m3 实测）
-   左 primary-container + 右 split-asset-image = 两个独立圆角卡片
+   mio-header（对照 m3: header.split-asset）
+   grid 1fr 1fr, gap 8px
+   左 primary-container（独立圆角卡片） + 右 split-asset-image（独立圆角卡片）
    ================================================================ */
-
 .mio-header {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  margin-bottom: 56px;
+  margin-bottom: 0;
 }
 
 .primary-container {
   display: flex;
-  margin: 0;
   padding: 56px;
   border-radius: 24px;
   background: var(--md-sys-color-surface-container-low, #f7f2fa);
   min-height: 544px;
+}
+
+.primary-container .wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 840px;
+  margin: 0;
+}
+
+.primary-container .wrapper .title h1 {
+  font-size: 57px;
+  font-weight: 400;
+  line-height: 64px;
+  letter-spacing: -0.25px;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0 0 16px;
+}
+
+.primary-container .wrapper .title .description {
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 28px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
 .split-asset-image {
@@ -198,11 +266,14 @@ function thumbGradient(id) {
 @media screen and (max-width: 840px) {
   .mio-header {
     grid-template-columns: 1fr;
-    margin-bottom: 40px;
   }
   .primary-container {
     min-height: unset;
     padding: 32px 24px;
+  }
+  .primary-container .wrapper .title h1 {
+    font-size: 40px;
+    line-height: 48px;
   }
   .split-asset-image {
     min-height: unset;
@@ -214,113 +285,185 @@ function thumbGradient(id) {
   }
 }
 
-/* wrapper */
-.wrapper {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  max-width: 840px;
-  margin: 0;
-  gap: 8px;
+@media screen and (max-width: 600px) {
+  .primary-container .wrapper .title h1 {
+    font-size: 32px;
+    line-height: 40px;
+  }
+  .primary-container .wrapper .title .description {
+    font-size: 16px;
+    line-height: 24px;
+  }
 }
 
 /* ================================================================
-   Section（对照 m3 .section + .section-header）
+   content-container（对照 m3: div.content-container）
+   flex row-reverse: TOC 在右, posts 在左
    ================================================================ */
-
-.section {
-  margin: 56px 0;
+.content-container {
+  display: flex;
+  flex-direction: row-reverse;
+  margin-top: 72px;
 }
 
-.section-header {
-  margin-bottom: 24px;
+/* ================================================================
+   TOC（对照 m3: mio-toc > nav）
+   156px宽, margin 112px 24px 0, sticky top
+   ================================================================ */
+.toc {
+  flex-shrink: 0;
+  width: 156px;
+  margin: 112px 24px 0 0;
 }
 
-.section-header .overline {
-  display: block;
+.toc nav {
+  position: sticky;
+  top: 24px;
+}
+
+.toc__overline {
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   color: var(--md-sys-color-on-surface-variant, #49454f);
-  margin-bottom: 4px;
+  margin: 0 16px 8px;
 }
 
-.section-title {
-  font-size: 32px;
+.toc__title {
+  font-size: 24px;
   font-weight: 400;
-  line-height: 40px;
+  line-height: 32px;
   color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0 16px 8px;
+}
+
+.toc__indicator {
+  height: 2px;
+  border-radius: 18px;
+  background: var(--md-sys-color-primary, #6750a4);
+  margin: 0 16px 8px;
+}
+
+.toc__list {
+  list-style: none;
+  padding: 0;
   margin: 0;
 }
 
-@media screen and (max-width: 600px) {
-  .section-title {
-    font-size: 24px;
-    line-height: 32px;
+.toc__item {
+  display: flex;
+  padding: 8px 16px;
+  border-radius: 18px;
+}
+
+.toc__item--active {
+  background: var(--md-sys-color-secondary-container, #e8def8);
+}
+
+.toc__link {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  text-decoration: none;
+  border-radius: 4px;
+}
+
+.toc__item--active .toc__link {
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+/* 移动端隐藏 TOC */
+@media screen and (max-width: 840px) {
+  .toc {
+    display: none;
+  }
+  .content-container {
+    flex-direction: column;
   }
 }
 
 /* ================================================================
-   Article Grid
+   posts-container（对照 m3: article.posts-container）
    ================================================================ */
-
-.article-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.posts-container {
+  flex: 1;
+  min-width: 0;
 }
 
 /* ================================================================
-   Article Card — 每张卡片内部是 m3 mio-header 布局
-   grid 1fr 1fr, gap 8px
-   左 article-card__text（对照 primary-container）+ 右 article-card__image（对照 split-asset-image）
-   两个独立圆角卡片并排，不是包在一个大容器里
+   section（对照 m3: div.section）
+   margin: 72px 0 96px (first), 96px 0 (others)
    ================================================================ */
+.section {
+  margin: 72px 0 96px;
+}
 
-.article-card {
+.section:first-child {
+  margin-top: 0;
+}
+
+/* ================================================================
+   section-header（对照 m3: div.section-header, margin 24px）
+   ================================================================ */
+.section-header {
+  margin: 0 24px;
+}
+
+.section-header h2 {
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 40px;
+  letter-spacing: 0;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0 0 8px;
+}
+
+.section-header h2.sub-heading {
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 28px;
+  margin-top: 48px;
+}
+
+/* ================================================================
+   card-set（对照 m3: mio-card-set, grid, gap 8px, margin 32px 0 0）
+   ================================================================ */
+.card-set {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
+  margin: 32px 0 0;
+}
+
+@media screen and (max-width: 840px) {
+  .card-set {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ================================================================
+   卡片通用 — thumbnail 容器（对照 m3: a.thumbnail）
+   border-radius 24px, bg surface-container, overflow hidden, position relative
+   ================================================================ */
+.thumbnail {
+  position: relative;
+  border-radius: 24px;
+  background-color: var(--md-sys-color-surface-container, #f3edf7);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
   text-decoration: none;
-  color: inherit;
-  position: relative;
-}
-
-/* 左侧文字卡片 — 对照 m3 .primary-container */
-.article-card__text {
-  display: flex;
-  border-radius: 24px;
-  background: var(--md-sys-color-surface-container-low, #f7f2fa);
-  padding: 32px;
-  min-height: 200px;
-  position: relative;
   overflow: hidden;
-  transition: background-color 0.2s;
+  cursor: pointer;
+  transition: box-shadow 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
-/* 右侧图片卡片 — 对照 m3 .split-asset-image */
-.article-card__image {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 24px;
-  overflow: hidden;
-  min-height: 200px;
-  background-size: cover;
-  background-position: center;
-  position: relative;
+.thumbnail:hover {
+  box-shadow: var(--md-sys-elevation-2, 0 1px 2px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.15));
 }
 
-.article-icon {
-  font-size: 56px;
-  color: var(--md-sys-color-on-primary-container, #21005d);
-  opacity: 0.4;
-}
-
-/* article-card hover state layer — 两侧各自独立 */
-.article-card__text::after,
-.article-card__image::after {
+/* state layer（对照 m3: — hover/pressed overlay） */
+.thumbnail::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -329,39 +472,50 @@ function thumbGradient(id) {
   opacity: 0;
   transition: opacity 0.2s;
   pointer-events: none;
-  z-index: 1;
+  z-index: 3;
 }
 
-.article-card:hover .article-card__text::after,
-.article-card:hover .article-card__image::after {
+.thumbnail:hover::after {
   opacity: 0.08;
 }
 
-.article-card:active .article-card__text::after,
-.article-card:active .article-card__image::after {
+.thumbnail:active::after {
   opacity: 0.12;
 }
 
 /* ================================================================
-   Article card 内部文字
-   对照 m3 .content-container: grid, gap 8px
+   content-container（卡片内部，对照 m3: div.content-container）
+   grid, gap 8px, margin 24px, position relative
    ================================================================ */
+.thumbnail > .content-container {
+  display: grid;
+  gap: 8px;
+  margin: 24px;
+  position: relative;
+  z-index: 1;
+}
 
-.article-card__text .wrapper .date {
+.thumbnail > .content-container .date {
   font-size: 16px;
   font-weight: 400;
   line-height: 24px;
   color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin-bottom: 8px;
 }
 
-.article-card__text .wrapper .card-title {
+.thumbnail > .content-container .mio-title-row {
+  display: flex;
+  gap: 5px;
+}
+
+.thumbnail > .content-container .title {
   font-size: 24px;
   font-weight: 500;
   line-height: 32px;
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
-.article-card__text .wrapper .card-desc {
+.thumbnail > .content-container .description {
   font-size: 16px;
   font-weight: 400;
   line-height: 24px;
@@ -373,86 +527,74 @@ function thumbGradient(id) {
 }
 
 /* ================================================================
-   Hero header 内部文字（更大字号）
+   thumb-container（对照 m3: mio-thumbnail > .thumb-container）
+   border-radius 24px, background-size cover, position relative, overflow hidden
    ================================================================ */
-
-.mio-header .wrapper .date {
-  margin-bottom: 16px;
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  line-height: 24px;
+.thumb-container {
+  border-radius: 24px;
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
-.mio-header .wrapper .title h1 {
-  font-size: 57px;
-  font-weight: 400;
-  line-height: 64px;
-  letter-spacing: -0.25px;
-  color: var(--md-sys-color-on-surface, #1c1b1f);
-  margin: 0 0 16px;
+.thumb-icon {
+  font-size: 56px;
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  opacity: 0.4;
+  z-index: 1;
 }
 
-.mio-header .wrapper .description {
-  font-size: 18px;
-  font-weight: 400;
-  line-height: 28px;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
+/* ================================================================
+   feature-block 长卡（对照 m3: mio-card.feature-block > a.thumbnail）
+   grid 1fr 1fr, 左 content-container + 右 thumb-container
+   移动端: inline-flex column-reverse
+   ================================================================ */
+.feature-card.thumbnail {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
 }
 
-@media screen and (max-width: 1294px) {
-  .mio-header .wrapper .title h1 {
-    font-size: 40px;
-    line-height: 48px;
+.feature-card.thumbnail > .content-container {
+  align-self: center;
+}
+
+.feature-card.thumbnail > .thumb-container {
+  min-height: 298px;
+}
+
+@media screen and (max-width: 840px) {
+  .feature-card.thumbnail {
+    display: inline-flex;
+    flex-direction: column-reverse;
   }
-}
-
-@media screen and (max-width: 600px) {
-  .mio-header .wrapper .title h1 {
-    font-size: 32px;
-    line-height: 40px;
-  }
-  .mio-header .wrapper .description {
-    font-size: 16px;
-    line-height: 24px;
+  .feature-card.thumbnail > .thumb-container {
+    min-height: 200px;
+    border-radius: 24px 24px 0 0;
   }
 }
 
 /* ================================================================
-   响应式：文章卡片在窄屏变为单列堆叠
+   regular-card 中卡（对照 m3: mio-card > a.thumbnail）
+   inline-flex column-reverse: 图片上 + 文字下
    ================================================================ */
+.regular-card.thumbnail {
+  display: inline-flex;
+  flex-direction: column-reverse;
+}
 
-@media screen and (max-width: 840px) {
-  .article-card {
-    grid-template-columns: 1fr;
-  }
-
-  .article-card__text {
-    min-height: unset;
-    padding: 24px;
-  }
-
-  /* 移动端图片在上、文字在下（视觉顺序反转） */
-  .article-card__image {
-    order: -1;
-    min-height: 160px;
-  }
-
-  .article-card__text .wrapper .card-title {
-    font-size: 18px;
-    line-height: 24px;
-  }
-
-  .article-card__text .wrapper .card-desc {
-    font-size: 14px;
-    line-height: 20px;
-  }
+.regular-card.thumbnail > .thumb-container {
+  min-height: 200px;
+  border-radius: 24px 24px 0 0;
 }
 
 /* ================================================================
    暗色主题
    ================================================================ */
-
 :global([data-theme="dark"]) .primary-container {
   background: var(--md-sys-color-surface-container-low, #1d1b20);
 }
@@ -466,16 +608,23 @@ function thumbGradient(id) {
   );
 }
 
-:global([data-theme="dark"]) .article-card__text {
-  background: var(--md-sys-color-surface-container-low, #1d1b20);
+:global([data-theme="dark"]) .thumbnail {
+  background-color: var(--md-sys-color-surface-container, #211f26);
 }
 
-:global([data-theme="dark"]) .article-card__text::after,
-:global([data-theme="dark"]) .article-card__image::after {
+:global([data-theme="dark"]) .thumbnail::after {
   background-color: var(--md-sys-color-on-surface, #e6e1e5);
 }
 
-:global([data-theme="dark"]) .article-icon {
+:global([data-theme="dark"]) .thumb-icon {
   color: var(--md-sys-color-on-primary-container, #eaddff);
+}
+
+:global([data-theme="dark"]) .toc__item--active {
+  background: var(--md-sys-color-secondary-container, #4a4458);
+}
+
+:global([data-theme="dark"]) .toc__item--active .toc__link {
+  color: var(--md-sys-color-on-secondary-container, #e8def8);
 }
 </style>
