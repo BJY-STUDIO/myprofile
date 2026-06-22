@@ -869,21 +869,30 @@ const bodyMarginLeft = computed(() => {
   overflow: hidden;
 }
 
-/* Indicator 药丸 + State layer — 统一用 ::before（不再有额外的 ::after） */
-/* inactive hover: ::before 提供 state layer 效果（opacity 0.08）
-   active: ::before 完全展开 (opacity 1, scaleX 1) 即 indicator 药丸
-   active hover: ::before 保持完全展开，无需额外层 */
+/* Indicator 药丸 — ::before（紫色，只在 active 态可见，有 scaleX 动画） */
 .sub-panel__item::before {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: 100px;
-  background-color: var(--md-sys-color-secondary-container, #e8def8);
   opacity: 0;
-  transform: scaleX(1);
+  transform: scaleX(0.32);
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
+  z-index: -1;
+  /* 默认无 transition，由 --animate 控制 */
+}
+
+/* State layer — ::after（灰色，与一级菜单一致，hover/pressed 态） */
+.sub-panel__item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background-color: var(--md-sys-color-on-surface-variant, #49454f);
+  opacity: 0;
   z-index: 0;
   pointer-events: none;
-  /* 默认无 transition，由 --animate 控制 */
+  transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
 /* mounted 后启用 transition（严格复刻 m3：0.2s linear 同步） */
@@ -893,31 +902,35 @@ const bodyMarginLeft = computed(() => {
   transition-timing-function: linear;
 }
 
-/* Inactive 项 hover state layer — ::before 作为淡背景（与一级菜单 hover 颜色统一） */
-.sub-panel__item:not(.sub-panel__item--active):hover::before {
-  opacity: 0.08;
-}
-
-/* Inactive 项 pressed state layer */
-.sub-panel__item:not(.sub-panel__item--active):active::before {
-  opacity: 0.12;
-}
-
 /* 激活态 indicator（m3: opacity:1 + scaleX(1)） */
 .sub-panel__item--active::before {
   opacity: 1;
   transform: scaleX(1);
 }
 
-/* Active 项 pressed — indicator 保持 + 颜色变深 */
-.sub-panel__item--active:active::before {
-  opacity: 1;
-  filter: brightness(0.92);
-}
-
 /* 激活态文字颜色 */
 .sub-panel__item--active {
   color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+/* Inactive 项 hover state layer（灰色 8%，与一级菜单一致） */
+.sub-panel__item:not(.sub-panel__item--active):hover::after {
+  opacity: 0.08;
+}
+
+/* Active 项 hover state layer */
+.sub-panel__item--active:hover::after {
+  opacity: 0.08;
+}
+
+/* Inactive 项 pressed state layer */
+.sub-panel__item:not(.sub-panel__item--active):active::after {
+  opacity: 0.12;
+}
+
+/* Active 项 pressed state layer */
+.sub-panel__item--active:active::after {
+  opacity: 0.12;
 }
 
 .sub-panel__item-label {
@@ -978,6 +991,10 @@ const bodyMarginLeft = computed(() => {
 
 :global([data-theme="dark"]) .sub-panel__item::before {
   background-color: var(--md-sys-color-secondary-container, #4a4458);
+}
+
+:global([data-theme="dark"]) .sub-panel__item::after {
+  background-color: var(--md-sys-color-on-surface-variant, #cac4d0);
 }
 
 :global([data-theme="dark"]) .sub-panel__item--active {
