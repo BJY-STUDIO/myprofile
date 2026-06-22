@@ -68,7 +68,7 @@
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-a:not(.sub-panel__item):not(.nav-rail__destination):not(.nav-drawer__item):not(.nav-rail__action-btn),
+a:not(.sub-panel__item):not(.nav-rail__destination):not(.nav-drawer__item):not(.nav-rail__action-btn):not(.mobile-top-bar__title):not(.mobile-top-bar__icon-btn),
 .green {
   text-decoration: none;
   color: var(--md-sys-color-primary);
@@ -77,7 +77,7 @@ a:not(.sub-panel__item):not(.nav-rail__destination):not(.nav-drawer__item):not(.
 }
 
 @media (hover: hover) {
-  a:hover:not(.sub-panel__item):not(.nav-rail__destination):not(.nav-drawer__item):not(.nav-rail__action-btn) {
+  a:hover:not(.sub-panel__item):not(.nav-rail__destination):not(.nav-drawer__item):not(.nav-rail__action-btn):not(.mobile-top-bar__title):not(.mobile-top-bar__icon-btn) {
     background-color: var(--md-sys-color-primary-container);
     border-radius: 4px;
   }
