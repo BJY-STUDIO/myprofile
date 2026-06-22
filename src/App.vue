@@ -870,7 +870,7 @@ const bodyMarginLeft = computed(() => {
   transition: background-image 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
-/* Indicator 药丸 — ::before 伪元素（严格复刻 m3.material.io） */
+/* Indicator 药丸 — ::before 伪元素（严格复刻 m3.material.io，与 Rail 一致用 z-index: -1） */
 .sub-panel__item::before {
   content: '';
   position: absolute;
@@ -879,7 +879,7 @@ const bodyMarginLeft = computed(() => {
   opacity: 0;
   transform: scaleX(0.32);
   background-color: var(--md-sys-color-secondary-container, #e8def8);
-  z-index: 0;
+  z-index: -1;
   /* 默认无 transition，由 --animate 控制 */
 }
 
@@ -926,7 +926,7 @@ const bodyMarginLeft = computed(() => {
   font-weight: 500;
   letter-spacing: 0.1px;
   position: relative;
-  z-index: 2;
+  z-index: 1;
   white-space: nowrap;
   font-variation-settings: "GRAD" 0;
   transition: font-variation-settings 0.2s cubic-bezier(0.2, 0, 0, 1);
