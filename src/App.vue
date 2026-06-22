@@ -798,6 +798,7 @@ const bodyMarginLeft = computed(() => {
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
+  margin: 0 8px; /* 对应 m3 .topic-wrapper 的 margin: 0 8px，与 .nav-drawer__items 的 padding 一致 */
 }
 
 /* m3: .main-menu:hover = background: on-surface-variant-2, color: on-surface */
