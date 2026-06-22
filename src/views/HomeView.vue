@@ -213,9 +213,10 @@ function gradient(id) {
 
 .primary-container {
   display: flex;
+  flex-direction: row;
   padding: 56px;
   border-radius: 24px;
-  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  background: rgb(248, 241, 246);
   min-height: 544px;
 }
 
@@ -228,18 +229,18 @@ function gradient(id) {
 }
 
 .primary-container .wrapper .title h1 {
-  font-size: 57px;
-  font-weight: 400;
-  line-height: 64px;
-  letter-spacing: -0.25px;
+  font-size: 96px;
+  font-weight: 475;
+  line-height: 96px;
+  letter-spacing: normal;
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0 0 16px;
 }
 
 .primary-container .wrapper .title .description {
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 400;
-  line-height: 28px;
+  line-height: 30px;
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
@@ -263,7 +264,21 @@ function gradient(id) {
   );
 }
 
-@media screen and (max-width: 840px) {
+@media screen and (max-width: 1024px) {
+  .mio-header {
+    grid-template-columns: 1fr 1fr;
+  }
+  .primary-container .wrapper .title h1 {
+    font-size: 48px;
+    line-height: 56px;
+  }
+  .primary-container .wrapper .title .description {
+    font-size: 18px;
+    line-height: 28px;
+  }
+}
+
+@media screen and (max-width: 600px) {
   .mio-header {
     grid-template-columns: 1fr;
   }
@@ -272,8 +287,12 @@ function gradient(id) {
     padding: 32px 24px;
   }
   .primary-container .wrapper .title h1 {
-    font-size: 40px;
-    line-height: 48px;
+    font-size: 36px;
+    line-height: 44px;
+  }
+  .primary-container .wrapper .title .description {
+    font-size: 16px;
+    line-height: 24px;
   }
   .split-asset-image {
     min-height: unset;
@@ -282,17 +301,6 @@ function gradient(id) {
   .split-asset-image__foreground {
     position: absolute;
     inset: 0;
-  }
-}
-
-@media screen and (max-width: 600px) {
-  .primary-container .wrapper .title h1 {
-    font-size: 32px;
-    line-height: 40px;
-  }
-  .primary-container .wrapper .title .description {
-    font-size: 16px;
-    line-height: 24px;
   }
 }
 
@@ -318,21 +326,21 @@ function gradient(id) {
 
 .toc nav {
   position: sticky;
-  top: 24px;
+  top: 136px;
 }
 
 .toc__overline {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
+  line-height: 16px;
+  letter-spacing: 0.1px;
+  color: var(--md-sys-color-on-surface-variant, #4d4256);
   margin: 0 16px 8px;
 }
 
 .toc__title {
   font-size: 24px;
-  font-weight: 400;
+  font-weight: 475;
   line-height: 32px;
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0 16px 8px;
@@ -341,8 +349,10 @@ function gradient(id) {
 .toc__indicator {
   height: 2px;
   border-radius: 18px;
-  background: var(--md-sys-color-primary, #6750a4);
-  margin: 0 16px 8px;
+  background: transparent;
+  margin: 0;
+  position: absolute;
+  z-index: -1;
 }
 
 .toc__list {
@@ -363,9 +373,9 @@ function gradient(id) {
 
 .toc__link {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 20px;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
+  color: var(--md-sys-color-on-surface-variant, #4d4256);
   text-decoration: none;
   border-radius: 4px;
 }
@@ -375,7 +385,7 @@ function gradient(id) {
 }
 
 /* 移动端隐藏 TOC */
-@media screen and (max-width: 840px) {
+@media screen and (max-width: 1024px) {
   .toc {
     display: none;
   }
@@ -408,23 +418,23 @@ function gradient(id) {
    section-header（对照 m3: div.section-header, margin 24px）
    ================================================================ */
 .section-header {
-  margin: 0 24px;
+  margin: 24px;
 }
 
 .section-header h2 {
-  font-size: 32px;
-  font-weight: 400;
-  line-height: 40px;
-  letter-spacing: 0;
+  font-size: 57px;
+  font-weight: 475;
+  line-height: 64px;
+  letter-spacing: normal;
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0 0 8px;
 }
 
 .section-header h2.sub-heading {
-  font-size: 22px;
-  font-weight: 400;
-  line-height: 28px;
-  margin-top: 48px;
+  font-size: 28px;
+  font-weight: 475;
+  line-height: 36px;
+  margin: 48px 0 8px;
 }
 
 /* ================================================================
@@ -434,10 +444,17 @@ function gradient(id) {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 8px;
+  padding: 0 8px;
   margin: 32px 0 0;
 }
 
-@media screen and (max-width: 840px) {
+@media screen and (max-width: 1024px) {
+  .card-set {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media screen and (max-width: 600px) {
   .card-set {
     grid-template-columns: 1fr;
   }
@@ -510,7 +527,7 @@ function gradient(id) {
 
 .thumbnail > .content-container .title {
   font-size: 24px;
-  font-weight: 500;
+  font-weight: 475;
   line-height: 32px;
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
@@ -539,6 +556,7 @@ function gradient(id) {
   align-items: center;
   justify-content: center;
   position: relative;
+  z-index: 1;
 }
 
 .thumb-icon {
@@ -557,6 +575,7 @@ function gradient(id) {
   grid-column: 1 / -1;
   display: grid;
   grid-template-columns: 1fr 1fr;
+  background-color: rgb(248, 241, 246);
 }
 
 .feature-card.thumbnail > .content-container {
@@ -567,7 +586,7 @@ function gradient(id) {
   min-height: 298px;
 }
 
-@media screen and (max-width: 840px) {
+@media screen and (max-width: 1024px) {
   .feature-card.thumbnail {
     display: inline-flex;
     flex-direction: column-reverse;
@@ -585,6 +604,11 @@ function gradient(id) {
 .regular-card.thumbnail {
   display: inline-flex;
   flex-direction: column-reverse;
+  background-color: rgb(248, 241, 246);
+}
+
+.regular-card.thumbnail > .content-container {
+  align-self: start;
 }
 
 .regular-card.thumbnail > .thumb-container {
