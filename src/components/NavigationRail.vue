@@ -117,7 +117,7 @@ function onItemLeave() {
       >
         <!-- 图标区域（含 indicator + state layer + 图标本身） -->
         <span class="nav-rail__icon">
-          {{ activeId === item.id ? (item.activeIcon || item.icon) : item.icon }}
+          <span class="nav-rail__icon-glyph">{{ activeId === item.id ? (item.activeIcon || item.icon) : item.icon }}</span>
         </span>
         <div class="nav-rail__label">{{ item.label }}</div>
       </a>
@@ -371,6 +371,12 @@ function onItemLeave() {
 
 .nav-rail__destination--active.nav-rail__destination--has-children:hover .nav-rail__icon {
   font-variation-settings: "FILL" 1, "wght" 600, "opsz" 24;
+}
+
+/* ======== 图标字形（确保在 ::after state layer 之上） ======== */
+.nav-rail__icon-glyph {
+  position: relative;
+  z-index: 2;
 }
 
 /* ======== 标签 (参照 .label) ======== */
