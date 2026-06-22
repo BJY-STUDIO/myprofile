@@ -323,13 +323,13 @@ const bodyMarginLeft = computed(() => {
       <header class="mobile-top-bar">
         <button
           class="mobile-top-bar__menu-btn"
-          :aria-label="drawerOpen ? 'Close navigation menu' : 'Open navigation menu'"
+          :aria-label="drawerOpen ? 'close menu' : 'open menu'"
           :title="drawerOpen ? 'Close' : 'Menu'"
           @click="toggleDrawer"
         >
-          <span class="material-symbols-rounded">{{ drawerOpen ? 'close' : 'menu' }}</span>
+          <span class="material-symbols-rounded">{{ drawerOpen ? 'menu_open' : 'menu' }}</span>
         </button>
-        <span class="mobile-top-bar__title">Kernel's Blog</span>
+        <a class="mobile-top-bar__title" href="/">Kernel's Blog</a>
         <div class="mobile-top-bar__actions">
           <a
             class="mobile-top-bar__icon-btn"
@@ -373,8 +373,15 @@ const bodyMarginLeft = computed(() => {
         role="navigation"
         aria-label="Mobile navigation"
       >
-        <div class="nav-drawer__header">
-          <span class="nav-drawer__title">Kernel's Blog</span>
+        <!-- Drawer 内部 close 按钮（官方: menu_open icon, margin: 0 0 8px 12px） -->
+        <div class="nav-drawer__close-btn-wrap">
+          <button
+            class="nav-drawer__close-btn"
+            aria-label="close menu"
+            @click="closeDrawer"
+          >
+            <span class="material-symbols-rounded">menu_open</span>
+          </button>
         </div>
 
         <!-- 子菜单导航容器（带滑动动画） -->
@@ -383,57 +390,40 @@ const bodyMarginLeft = computed(() => {
             <!-- 主菜单列表 -->
             <div v-if="!drawerSubMenu" key="main" class="nav-drawer__page">
               <nav class="nav-drawer__items">
-                <div
+                <a
                   v-for="item in navItems"
                   :key="item.id"
                   class="nav-drawer__item"
                   :class="{ 'nav-drawer__item--active': activeNavId === item.id }"
-                  @click="onDrawerItemClick(item)"
+                  @click.prevent="onDrawerItemClick(item)"
                 >
-                  <span class="material-symbols-rounded nav-drawer__icon">
-                    {{ activeNavId === item.id ? (item.activeIcon || item.icon) : item.icon }}
-                  </span>
+                  <span class="material-symbols-rounded nav-drawer__icon">{{ item.icon }}</span>
                   <span class="nav-drawer__label">{{ item.label }}</span>
                   <span v-if="item.children" class="material-symbols-rounded nav-drawer__arrow">arrow_forward</span>
-                </div>
+                </a>
               </nav>
             </div>
 
             <!-- 子菜单列表 -->
             <div v-else key="sub" class="nav-drawer__page">
-              <!-- 返回按钮 -->
-              <div class="nav-drawer__back" @click="backToDrawerMain">
+              <!-- 返回主菜单按钮（官方: arrow_back + "Main menu"） -->
+              <div class="nav-drawer__back" role="button" aria-label="back to main menu" @click="backToDrawerMain">
                 <span class="material-symbols-rounded nav-drawer__back-icon">arrow_back</span>
-                <span class="nav-drawer__back-label">{{ drawerSubParent?.label }}</span>
+                <span class="nav-drawer__back-label">Main menu</span>
               </div>
-              <md-divider></md-divider>
               <nav class="nav-drawer__items">
-                <div
+                <a
                   v-for="child in drawerSubItems"
                   :key="child.id"
                   class="nav-drawer__item"
                   :class="{ 'nav-drawer__item--active': activeSubItemId === child.id }"
-                  @click="navigateDrawerSubItem(child)"
+                  @click.prevent="navigateDrawerSubItem(child)"
                 >
                   <span class="nav-drawer__label">{{ child.label }}</span>
-                </div>
+                </a>
               </nav>
             </div>
           </Transition>
-        </div>
-
-        <div class="nav-drawer__footer">
-          <a
-            class="nav-drawer__footer-link"
-            href="https://github.com/BJY-STUDIO/myprofile"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <svg viewBox="0 0 16 16" fill="currentColor" width="20" height="20">
-              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
-            </svg>
-            <span>GitHub</span>
-          </a>
         </div>
       </aside>
     </Teleport>
@@ -661,7 +651,8 @@ const bodyMarginLeft = computed(() => {
   z-index: 1;
 }
 
-/* ======== Navigation Drawer（移动端） ======== */
+/* ======== Navigation Drawer（移动端，严格对照 m3.material.io） ======== */
+/* m3 实测数据: drawer width=320px, bg=surface-2, border-radius: 0 16px 16px 0, border-left: 1px solid surface-variant */
 .drawer-scrim {
   position: fixed;
   inset: 0;
@@ -680,12 +671,14 @@ const bodyMarginLeft = computed(() => {
   left: 0;
   top: 0;
   bottom: 0;
-  width: 360px;
+  width: 320px;
   max-width: calc(100vw - 56px);
-  background-color: var(--md-sys-color-surface, #fffbfe);
+  background-color: var(--md-sys-color-surface-2, #f3edf7);
+  border-left: 1px solid var(--md-sys-color-surface-variant, #e7e0ec);
   z-index: 201;
   transform: translateX(-100%);
-  transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1);
+  transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.3s cubic-bezier(0.2, 0, 0, 1);
   display: flex;
   flex-direction: column;
   border-radius: 0 16px 16px 0;
@@ -696,16 +689,63 @@ const bodyMarginLeft = computed(() => {
   transform: translateX(0);
 }
 
-.nav-drawer__header {
-  padding: 28px 24px 20px 24px;
+/* Drawer 内部的 close 按钮（官方: mio-icon-button icon="menu_open"） */
+/* m3 实测: margin: 0 0 8px 12px, width/height: 48px */
+.nav-drawer__close-btn-wrap {
   flex-shrink: 0;
+  padding: 12px 0 0 0;
 }
 
-.nav-drawer__title {
+.nav-drawer__close-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;
+  border: none;
+  background: none;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 8px 12px;
+  position: relative;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-drawer__close-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background-color: var(--md-sys-color-on-surface-variant, #49454f);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.nav-drawer__close-btn:hover::before {
+  opacity: 0.08;
+}
+
+.nav-drawer__close-btn:active::before {
+  opacity: 0.12;
+}
+
+.nav-drawer__close-btn .material-symbols-rounded {
   font-size: 24px;
-  font-weight: 400;
-  color: var(--md-sys-color-on-surface, #1c1b1f);
-  line-height: 32px;
+  font-variation-settings: "wght" 400, "opsz" 24;
+  transition: font-variation-settings 0.2s cubic-bezier(0.2, 0, 0, 1);
+  position: relative;
+  z-index: 1;
+}
+
+.nav-drawer__close-btn:hover .material-symbols-rounded {
+  font-variation-settings: "wght" 600, "opsz" 24;
+}
+
+.nav-drawer__close-btn:active .material-symbols-rounded {
+  font-variation-settings: "wght" 300, "opsz" 24;
 }
 
 /* 滑动容器 — overflow:hidden 裁剪超出部分 */
@@ -752,214 +792,233 @@ const bodyMarginLeft = computed(() => {
   opacity: 0;
 }
 
-/* 返回按钮行 */
+/* ======== 返回主菜单按钮（严格对照 m3 .main-menu） ======== */
+/* m3 实测: height=48px, padding=0 16px, border-radius=100px, color=on-surface-variant, fontSize=16px */
 .nav-drawer__back {
   display: flex;
   align-items: center;
-  height: 56px;
+  height: 48px;
   padding: 0 16px;
-  gap: 12px;
+  border-radius: 100px;
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  color: var(--md-sys-color-primary, #6750a4);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-size: 16px;
+  font-weight: 500;
   position: relative;
+  overflow: hidden;
   flex-shrink: 0;
 }
 
-.nav-drawer__back::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-color: var(--md-sys-color-primary, #6750a4);
-  opacity: 0;
-  transition: opacity 0.2s;
-  pointer-events: none;
+/* m3: .main-menu:hover = background: on-surface-variant-2, color: on-surface */
+.nav-drawer__back:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
-.nav-drawer__back:hover::before {
-  opacity: 0.08;
+/* m3: .main-menu:active = background: on-surface-variant-4, color: on-surface */
+.nav-drawer__back:active {
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 12%, transparent);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
-.nav-drawer__back:active::before {
-  opacity: 0.12;
-}
-
+/* m3: arrow-back-icon margin-right: 16px */
 .nav-drawer__back-icon {
   font-family: 'Material Symbols Rounded';
   font-size: 24px;
-  font-variation-settings: "FILL" 0, "wght" 400, "opsz" 24;
+  font-variation-settings: "wght" 400, "opsz" 24;
+  transition: font-variation-settings 0.2s cubic-bezier(0.2, 0, 0, 1);
+  margin-right: 16px;
   position: relative;
   z-index: 1;
+  flex-shrink: 0;
+}
+
+/* m3: .main-menu:hover .google-symbols = wght 600 */
+.nav-drawer__back:hover .nav-drawer__back-icon {
+  font-variation-settings: "wght" 600, "opsz" 24;
+}
+
+/* m3: .main-menu:active .google-symbols = wght 300 */
+.nav-drawer__back:active .nav-drawer__back-icon {
+  font-variation-settings: "wght" 300, "opsz" 24;
 }
 
 .nav-drawer__back-label {
   font-size: 16px;
   font-weight: 500;
-  color: var(--md-sys-color-primary, #6750a4);
+  font-variation-settings: "GRAD" 0;
+  transition: font-variation-settings 0.2s cubic-bezier(0.2, 0, 0, 1);
   position: relative;
   z-index: 1;
 }
 
-/* md-divider 在 drawer 内需要适配 */
-.nav-drawer__page md-divider {
-  flex-shrink: 0;
+/* m3: .main-menu:hover .label = GRAD 50 */
+.nav-drawer__back:hover .nav-drawer__back-label {
+  font-variation-settings: "GRAD" 50;
 }
 
+/* m3: .main-menu:active .label = GRAD -50 */
+.nav-drawer__back:active .nav-drawer__back-label {
+  font-variation-settings: "GRAD" -50;
+}
+
+/* ======== Drawer 项目列表容器 ======== */
+/* m3 实测: topic-wrapper margin: 0 8px; nav-drawer-section padding-bottom: 24px */
 .nav-drawer__items {
   flex: 1;
-  padding: 8px 12px;
+  padding: 0 8px 24px;
   display: flex;
   flex-direction: column;
   gap: 0;
   overflow-y: auto;
 }
 
+/* ======== Drawer 项目（严格对照 m3 .item） ======== */
+/* m3 实测: display=flex, height=48px, padding=2px 16px, borderRadius=100px, fontSize=16px, fontWeight=500 */
 .nav-drawer__item {
   display: flex;
   align-items: center;
-  height: 56px;
-  border-radius: 28px;
-  padding: 0 24px 0 16px;
-  gap: 12px;
+  height: 48px;
+  padding: 2px 16px;
+  border-radius: 100px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-size: 16px;
+  font-weight: 500;
+  font-variation-settings: "GRAD" 0, "opsz" 24;
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   outline: none;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
+  text-decoration: none;
   position: relative;
   overflow: hidden;
+  transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
+/* m3: .item::before = indicator pill (secondary-container, scaleX(0.32), opacity 0) */
 .nav-drawer__item::before {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 28px;
-  background-color: var(--md-sys-color-on-surface-variant, #49454f);
-  opacity: 0;
-  transition: opacity 0.2s;
-  pointer-events: none;
-}
-
-.nav-drawer__item:hover::before {
-  opacity: 0.08;
-}
-
-.nav-drawer__item:active::before {
-  opacity: 0.12;
-}
-
-.nav-drawer__item--active {
+  border-radius: 100px;
   background-color: var(--md-sys-color-secondary-container, #e8def8);
+  opacity: 0;
+  transform: scaleX(0.32);
+  transition-duration: 0.2s;
+  transition-property: transform, opacity;
+  transition-timing-function: linear;
+  z-index: -1;
+}
+
+/* m3: .item.active::before = opacity 1, scaleX(1) */
+.nav-drawer__item--active::before {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+/* m3: .item.active = color on-secondary-container */
+.nav-drawer__item--active {
   color: var(--md-sys-color-on-secondary-container, #1d192b);
 }
 
-.nav-drawer__item--active::before {
-  background-color: var(--md-sys-color-on-secondary-container, #1d192b);
+/* m3: .item:hover = background on-surface-variant-2 */
+.nav-drawer__item:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent);
 }
 
+/* m3: .item:active = background on-surface-variant-4 */
+.nav-drawer__item:active {
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 12%, transparent);
+}
+
+/* ======== section-icon（图标） ======== */
+/* m3 实测: fontSize=24px, fontVariationSettings="opsz 24, wght 400", marginRight=16px */
 .nav-drawer__icon {
   font-family: 'Material Symbols Rounded';
   font-size: 24px;
-  font-variation-settings: "FILL" 0, "wght" 400, "opsz" 24;
+  font-variation-settings: "wght" 400, "opsz" 24;
   transition: font-variation-settings 0.2s cubic-bezier(0.2, 0, 0, 1);
+  margin-right: 16px;
   position: relative;
   z-index: 1;
   flex-shrink: 0;
 }
 
+/* m3: .item:hover .google-symbols = FILL 1, wght 600, opsz 24 */
 .nav-drawer__item:hover .nav-drawer__icon {
-  font-variation-settings: "FILL" 0, "wght" 600, "opsz" 24, "GRAD" 50;
+  font-variation-settings: "FILL" 1, "wght" 600, "opsz" 24;
 }
 
-.nav-drawer__item--active .nav-drawer__icon {
-  font-variation-settings: "FILL" 1, "wght" 400, "opsz" 24, "GRAD" 125;
-}
-
-.nav-drawer__item--active:hover .nav-drawer__icon {
-  font-variation-settings: "FILL" 1, "wght" 600, "opsz" 24, "GRAD" 50;
-}
-
+/* m3: .item:active .google-symbols = FILL 1, wght 300, opsz 24 */
 .nav-drawer__item:active .nav-drawer__icon {
-  font-variation-settings: "FILL" 0, "wght" 300, "opsz" 24, "GRAD" -50;
+  font-variation-settings: "FILL" 1, "wght" 300, "opsz" 24;
 }
 
-.nav-drawer__item--active:active .nav-drawer__icon {
-  font-variation-settings: "FILL" 1, "wght" 300, "opsz" 24, "GRAD" -50;
-}
-
+/* ======== label（文字） ======== */
+/* m3 实测: fontSize=16px, fontWeight=500, GRAD=0 */
 .nav-drawer__label {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
-  letter-spacing: 0.1px;
   font-variation-settings: "GRAD" 0;
-  transition: font-variation-settings 0.2s cubic-bezier(0.2, 0, 0, 1),
-              transform 0.1s ease;
+  transition: font-variation-settings 0.2s cubic-bezier(0.2, 0, 0, 1);
   position: relative;
   z-index: 1;
-  flex: 1;
+  flex-grow: 0;
 }
 
-.nav-drawer__item--active .nav-drawer__label {
-  font-variation-settings: "GRAD" 125;
-}
-
+/* m3: .item:hover .label = GRAD 50 */
 .nav-drawer__item:hover .nav-drawer__label {
   font-variation-settings: "GRAD" 50;
 }
 
+/* m3: .item:active .label = GRAD -50 */
+.nav-drawer__item:active .nav-drawer__label {
+  font-variation-settings: "GRAD" -50;
+}
+
+/* m3: active item 的 icon 在 hover 时也是 FILL 1, wght 600 */
+.nav-drawer__item--active:hover .nav-drawer__icon {
+  font-variation-settings: "FILL" 1, "wght" 600, "opsz" 24;
+}
+
+/* m3: active item 的 icon 在 press 时也是 FILL 1, wght 300 */
+.nav-drawer__item--active:active .nav-drawer__icon {
+  font-variation-settings: "FILL" 1, "wght" 300, "opsz" 24;
+}
+
+/* m3: active item label hover = GRAD 50 */
 .nav-drawer__item--active:hover .nav-drawer__label {
   font-variation-settings: "GRAD" 50;
 }
 
-/* Press 效果：文字短暂缩放 */
-.nav-drawer__item:active .nav-drawer__label {
+/* m3: active item label press = GRAD -50 */
+.nav-drawer__item--active:active .nav-drawer__label {
   font-variation-settings: "GRAD" -50;
-  transform: scale(0.96);
 }
 
-/* 右侧箭头图标（有子菜单的项） */
+/* ======== arrow-right-icon（右侧箭头，有子菜单的项） ======== */
+/* m3: arrow-right-icon margin-left: auto */
 .nav-drawer__arrow {
   font-family: 'Material Symbols Rounded';
-  font-size: 20px;
-  font-variation-settings: "FILL" 0, "wght" 400, "opsz" 24;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-size: 24px;
+  font-variation-settings: "wght" 400, "opsz" 24;
+  transition: font-variation-settings 0.2s cubic-bezier(0.2, 0, 0, 1);
   position: relative;
   z-index: 1;
   flex-shrink: 0;
   margin-left: auto;
 }
 
+/* m3: .item:hover .google-symbols = FILL 1, wght 600, opsz 24（箭头也受影响） */
 .nav-drawer__item:hover .nav-drawer__arrow {
-  font-variation-settings: "FILL" 0, "wght" 600, "opsz" 24, "GRAD" 50;
+  font-variation-settings: "FILL" 1, "wght" 600, "opsz" 24;
 }
 
-.nav-drawer__footer {
-  padding: 12px 16px 16px;
-  border-top: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  flex-shrink: 0;
-}
-
-.nav-drawer__footer-link {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  height: 48px;
-  border-radius: 24px;
-  padding: 0 16px;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-  position: relative;
-  overflow: hidden;
-  -webkit-tap-highlight-color: transparent;
-  transition: background-color 0.2s;
-}
-
-.nav-drawer__footer-link:hover {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent);
+/* m3: .item:active .google-symbols = FILL 1, wght 300, opsz 24 */
+.nav-drawer__item:active .nav-drawer__arrow {
+  font-variation-settings: "FILL" 1, "wght" 300, "opsz" 24;
 }
 
 /* ======== 主题面板（Teleported to body，需要全局选择器） ======== */
@@ -1318,47 +1377,47 @@ const bodyMarginLeft = computed(() => {
 }
 
 :global([data-theme="dark"]) .nav-drawer {
-  background-color: var(--md-sys-color-surface, #1c1b1f);
+  background-color: var(--md-sys-color-surface-2, #211f26);
+  border-left-color: var(--md-sys-color-surface-variant, #49454f);
 }
 
-:global([data-theme="dark"]) .nav-drawer__title {
-  color: var(--md-sys-color-on-surface, #e6e1e5);
+:global([data-theme="dark"]) .nav-drawer__close-btn {
+  color: var(--md-sys-color-on-surface-variant, #cac4d0);
+}
+
+:global([data-theme="dark"]) .nav-drawer__close-btn::before {
+  background-color: var(--md-sys-color-on-surface-variant, #cac4d0);
 }
 
 :global([data-theme="dark"]) .nav-drawer__item {
   color: var(--md-sys-color-on-surface-variant, #cac4d0);
 }
 
-:global([data-theme="dark"]) .nav-drawer__item--active {
+:global([data-theme="dark"]) .nav-drawer__item::before {
   background-color: var(--md-sys-color-secondary-container, #4a4458);
+}
+
+:global([data-theme="dark"]) .nav-drawer__item--active {
   color: var(--md-sys-color-on-secondary-container, #e8def8);
 }
 
-:global([data-theme="dark"]) .nav-drawer__item::before {
-  background-color: var(--md-sys-color-on-secondary-container, #e8def8);
-}
-
 :global([data-theme="dark"]) .nav-drawer__back {
-  color: var(--md-sys-color-primary, #d0bcff);
-}
-
-:global([data-theme="dark"]) .nav-drawer__back::before {
-  background-color: var(--md-sys-color-primary, #d0bcff);
-}
-
-:global([data-theme="dark"]) .nav-drawer__back-label {
-  color: var(--md-sys-color-primary, #d0bcff);
-}
-
-:global([data-theme="dark"]) .nav-drawer__arrow {
   color: var(--md-sys-color-on-surface-variant, #cac4d0);
 }
 
-:global([data-theme="dark"]) .nav-drawer__footer {
-  border-top-color: var(--md-sys-color-outline-variant, #49454f);
+:global([data-theme="dark"]) .nav-drawer__back:hover {
+  color: var(--md-sys-color-on-surface, #e6e1e5);
 }
 
-:global([data-theme="dark"]) .nav-drawer__footer-link {
+:global([data-theme="dark"]) .nav-drawer__back-icon {
+  color: var(--md-sys-color-on-surface-variant, #cac4d0);
+}
+
+:global([data-theme="dark"]) .nav-drawer__back-label {
+  color: var(--md-sys-color-on-surface-variant, #cac4d0);
+}
+
+:global([data-theme="dark"]) .nav-drawer__arrow {
   color: var(--md-sys-color-on-surface-variant, #cac4d0);
 }
 
