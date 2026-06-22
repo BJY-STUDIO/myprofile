@@ -196,6 +196,8 @@ function gradient(id) {
   display: flex;
   flex-direction: column;
   width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
 }
 
 /* ================================================================
