@@ -594,6 +594,7 @@ const bodyMarginLeft = computed(() => {
   font-weight: 400;
   color: var(--md-sys-color-on-surface, #1c1b1f);
   line-height: 28px;
+  text-decoration: none;
 }
 
 .mobile-top-bar__actions {
