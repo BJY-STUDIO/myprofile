@@ -386,7 +386,7 @@ const bodyMarginLeft = computed(() => {
 
         <!-- 子菜单导航容器（带滑动动画） -->
         <div class="nav-drawer__content">
-          <Transition :name="drawerSlideDirection === 'forward' ? 'drawer-slide-forward' : 'drawer-slide-back'">
+          <Transition mode="out-in" :name="drawerSlideDirection === 'forward' ? 'drawer-slide-forward' : 'drawer-slide-back'">
             <!-- 主菜单列表 -->
             <div v-if="!drawerSubMenu" key="main" class="nav-drawer__page">
               <nav class="nav-drawer__items">
@@ -769,8 +769,8 @@ const bodyMarginLeft = computed(() => {
 .drawer-slide-forward-leave-active,
 .drawer-slide-back-enter-active,
 .drawer-slide-back-leave-active {
-  transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1),
-              opacity 0.2s ease;
+  transition: transform 0.18s cubic-bezier(0.2, 0, 0, 1),
+              opacity 0.15s ease;
 }
 
 /* 进入子菜单：新页从右滑入，旧页向左滑出 */
