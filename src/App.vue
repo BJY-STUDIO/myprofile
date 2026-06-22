@@ -529,11 +529,10 @@ const bodyMarginLeft = computed(() => {
 /* ======== 主内容区 ======== */
 .app-main {
   flex: 1;
-  padding: 24px 32px;
-  max-width: 1200px;
+  padding: 0;
   width: 100%;
   box-sizing: border-box;
-  margin: 0 auto;
+  overflow-x: hidden;
 }
 
 /* ======== 移动端顶部 App Bar ======== */

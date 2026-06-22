@@ -195,7 +195,6 @@ function gradient(id) {
 .editorial {
   display: flex;
   flex-direction: column;
-  max-width: 1200px;
   width: 100%;
 }
 
@@ -343,6 +342,10 @@ function gradient(id) {
   display: flex;
   flex-direction: row-reverse;
   margin-top: 72px;
+  max-width: 1200px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* ================================================================

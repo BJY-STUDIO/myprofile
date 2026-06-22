@@ -114,6 +114,9 @@ const interests = ref([
 .about-view {
   max-width: 720px;
   width: 100%;
+  margin: 0 auto;
+  padding: 24px 32px;
+  box-sizing: border-box;
 }
 
 /* ======== Profile ======== */
