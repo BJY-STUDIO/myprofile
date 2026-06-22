@@ -18,49 +18,64 @@
 
     <!-- 最近文章 -->
     <section class="section">
-      <div class="section__header">
-        <h2 class="section__title">最近文章</h2>
-        <router-link to="/blog" class="section__link">
-          查看全部
-          <span class="material-symbols-rounded">arrow_forward</span>
-        </router-link>
+      <div class="section-header">
+        <span class="overline">BLOG</span>
+        <h2 class="title">最近文章</h2>
       </div>
-      <div class="card-row">
+
+      <!-- Feature card（横排：文字左 + 图片右） -->
+      <router-link
+        v-if="recentPosts.length"
+        :to="recentPosts[0].route"
+        class="card card--feature thumbnail"
+      >
+        <div class="content-container">
+          <span class="date">{{ recentPosts[0].date }}</span>
+          <span class="card-title">{{ recentPosts[0].title }}</span>
+          <span class="card-desc">{{ recentPosts[0].excerpt }}</span>
+        </div>
+        <div class="thumb-container" :style="{ background: thumbGradient(0) }"></div>
+      </router-link>
+
+      <!-- Regular cards（竖排：图片上 + 文字下） -->
+      <div class="card-set">
         <router-link
-          v-for="post in recentPosts"
+          v-for="post in recentPosts.slice(1)"
           :key="post.id"
           :to="post.route"
-          class="card card--blog"
+          class="card thumbnail"
         >
-          <div class="card__badge">{{ post.category }}</div>
-          <h3 class="card__title">{{ post.title }}</h3>
-          <p class="card__desc">{{ post.excerpt }}</p>
-          <span class="card__meta">{{ post.date }}</span>
+          <div class="content-container">
+            <span class="date">{{ post.date }}</span>
+            <span class="card-title">{{ post.title }}</span>
+            <span class="card-desc">{{ post.excerpt }}</span>
+          </div>
+          <div class="thumb-container" :style="{ background: thumbGradient(post.id) }"></div>
         </router-link>
       </div>
     </section>
 
     <!-- 精选项目 -->
     <section class="section">
-      <div class="section__header">
-        <h2 class="section__title">精选项目</h2>
-        <router-link to="/projects" class="section__link">
-          查看全部
-          <span class="material-symbols-rounded">arrow_forward</span>
-        </router-link>
+      <div class="section-header">
+        <span class="overline">PROJECTS</span>
+        <h2 class="title">精选项目</h2>
       </div>
-      <div class="card-row">
+
+      <div class="card-set">
         <router-link
           v-for="project in featuredProjects"
           :key="project.id"
           :to="project.route"
-          class="card card--project"
+          class="card thumbnail"
         >
-          <span class="material-symbols-rounded card__icon">{{ project.icon }}</span>
-          <h3 class="card__title">{{ project.title }}</h3>
-          <p class="card__desc">{{ project.excerpt }}</p>
-          <div class="card__tags">
-            <span v-for="tag in project.tags" :key="tag" class="card__tag">{{ tag }}</span>
+          <div class="content-container">
+            <span class="date">{{ project.tags.join(' · ') }}</span>
+            <span class="card-title">{{ project.title }}</span>
+            <span class="card-desc">{{ project.excerpt }}</span>
+          </div>
+          <div class="thumb-container" :style="{ background: thumbGradient(project.id + 10) }">
+            <span class="material-symbols-rounded thumb-icon">{{ project.icon }}</span>
           </div>
         </router-link>
       </div>
@@ -101,7 +116,7 @@ const recentPosts = ref([
 const featuredProjects = ref([
   {
     id: 1,
-    title: 'Kernel\'s Blog',
+    title: "Kernel's Blog",
     icon: 'web',
     excerpt: '基于 Vue 3 + Material Web 的个人博客站点，严格遵循 M3 规范。',
     tags: ['Vue 3', 'Material Web', 'Vite'],
@@ -124,6 +139,18 @@ const featuredProjects = ref([
     route: '/projects/web',
   },
 ])
+
+// 为占位卡片生成不同色调的渐变背景
+const gradients = [
+  'linear-gradient(135deg, var(--md-sys-color-primary-container, #eaddff) 0%, var(--md-sys-color-secondary-container, #e8def8) 50%, var(--md-sys-color-tertiary-container, #ffd8e4) 100%)',
+  'linear-gradient(135deg, var(--md-sys-color-secondary-container, #e8def8) 0%, var(--md-sys-color-tertiary-container, #ffd8e4) 50%, var(--md-sys-color-primary-container, #eaddff) 100%)',
+  'linear-gradient(135deg, var(--md-sys-color-tertiary-container, #ffd8e4) 0%, var(--md-sys-color-primary-container, #eaddff) 50%, var(--md-sys-color-secondary-container, #e8def8) 100%)',
+  'linear-gradient(135deg, var(--md-sys-color-primary-container, #eaddff) 30%, var(--md-sys-color-surface-container-high, #ece6f0) 100%)',
+]
+
+function thumbGradient(id) {
+  return gradients[id % gradients.length]
+}
 </script>
 
 <style scoped>
@@ -132,9 +159,9 @@ const featuredProjects = ref([
   width: 100%;
 }
 
-/* ======== mio-header（严格对照 m3 源码） ======== */
-/* m3 官方: CSS Grid 两列布局，左侧 primary-container 放文字，右侧 split-asset-image 放图片
- * 移动端（≤1294px）自动变为单列堆叠 */
+/* ================================================================
+   mio-header（严格对照 m3 源码 split-asset 布局）
+   ================================================================ */
 
 .mio-header {
   display: grid;
@@ -150,16 +177,13 @@ const featuredProjects = ref([
   }
 }
 
-/* ======== primary-container（对照 m3 .primary-container） ======== */
+/* primary-container */
 .primary-container {
   display: flex;
   margin: 0;
   padding: 56px;
   border-radius: 24px;
   background: var(--md-sys-color-surface-container-low, #f7f2fa);
-  background-repeat: no-repeat;
-  background-position: 0 50%;
-  background-size: cover;
   min-height: 544px;
   grid-column: span 1;
 }
@@ -172,7 +196,7 @@ const featuredProjects = ref([
   }
 }
 
-/* ======== wrapper（对照 m3 .wrapper） ======== */
+/* wrapper */
 .wrapper {
   display: flex;
   flex-direction: column;
@@ -226,21 +250,18 @@ const featuredProjects = ref([
   }
 }
 
-/* ======== split-asset-image（对照 m3 .split-asset-image） ======== */
+/* split-asset-image */
 .split-asset-image {
   display: flex;
   position: relative;
   justify-content: center;
   border: 1px solid var(--md-sys-color-surface-variant, #cac4d0);
   border-radius: 24px;
-  background-repeat: no-repeat;
-  background-size: cover;
   overflow: hidden;
   min-height: 544px;
   grid-column: span 1;
 }
 
-/* 占位渐变背景（临时，后续替换为真实图片） */
 .split-asset-image__foreground {
   width: 100%;
   height: 100%;
@@ -250,9 +271,6 @@ const featuredProjects = ref([
     var(--md-sys-color-secondary-container, #e8def8) 50%,
     var(--md-sys-color-tertiary-container, #ffd8e4) 100%
   );
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 @media screen and (max-width: 1294px) {
@@ -267,159 +285,232 @@ const featuredProjects = ref([
   }
 }
 
-/* ======== Section ======== */
+/* ================================================================
+   Section（对照 m3 .section + .section-header）
+   ================================================================ */
+
 .section {
-  margin: 40px 0;
+  margin: 56px 0;
 }
 
-.section__header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 16px;
+.section-header {
+  margin-bottom: 24px;
 }
 
-.section__title {
-  font-size: 22px;
-  font-weight: 400;
-  color: var(--md-sys-color-on-surface, #1c1b1f);
-  line-height: 28px;
-}
-
-.section__link {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 14px;
+.section-header .overline {
+  display: block;
+  font-size: 12px;
   font-weight: 500;
-  color: var(--md-sys-color-primary, #6750a4);
-  text-decoration: none;
-  border-radius: 20px;
-  padding: 6px 12px;
-  transition: background-color 0.2s;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin-bottom: 4px;
 }
 
-.section__link:hover {
-  background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 8%, transparent);
+.section-header .title {
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 40px;
+  letter-spacing: 0;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0;
 }
 
-.section__link .material-symbols-rounded {
-  font-size: 18px;
-  font-variation-settings: "FILL" 0, "wght" 400;
+@media screen and (max-width: 600px) {
+  .section-header .title {
+    font-size: 24px;
+    line-height: 32px;
+  }
 }
 
-/* ======== Card Row ======== */
-.card-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
-}
+/* ================================================================
+   Card — 通用（对照 m3 mio-card a.thumbnail）
+   m3 使用 <a.thumbnail> 作为卡片容器，border-radius 24px，
+   内部 content-container + thumb-container
+   ================================================================ */
 
-/* ======== Card (M3 Filled Card 风格) ======== */
-.card {
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-  border-radius: 12px;
+.card.thumbnail {
+  position: relative;
+  border-radius: 24px;
   background-color: var(--md-sys-color-surface-container, #f3edf7);
   color: var(--md-sys-color-on-surface, #1c1b1f);
   text-decoration: none;
-  transition: box-shadow 0.2s cubic-bezier(0.2, 0, 0, 1),
-              background-color 0.2s;
-  cursor: pointer;
-  position: relative;
   overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
-.card:hover {
-  box-shadow: var(--md-sys-elevation-2, 0 1px 3px 1px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.3));
+.card.thumbnail:hover {
+  box-shadow: var(--md-sys-elevation-2, 0 1px 2px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.15));
 }
 
-/* State layer */
-.card::after {
+/* State layer（覆盖在整张卡片上） */
+.card.thumbnail::after {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 12px;
+  border-radius: 24px;
   background-color: var(--md-sys-color-on-surface, #1c1b1f);
   opacity: 0;
   transition: opacity 0.2s;
   pointer-events: none;
+  z-index: 2;
 }
 
-.card:hover::after {
+.card.thumbnail:hover::after {
   opacity: 0.08;
 }
 
-.card:active::after {
+.card.thumbnail:active::after {
   opacity: 0.12;
 }
 
-/* Blog card badge */
-.card__badge {
-  display: inline-flex;
-  align-self: flex-start;
-  padding: 2px 10px;
-  border-radius: 8px;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.5px;
-  background-color: var(--md-sys-color-primary, #6750a4);
-  color: var(--md-sys-color-on-primary, #ffffff);
-  margin-bottom: 12px;
+/* ================================================================
+   content-container（对照 m3 .content-container）
+   m3: display grid, gap 8px, margin 24px (feature), padding (regular)
+   ================================================================ */
+
+.content-container {
+  display: grid;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
 }
 
-.card__icon {
-  font-size: 32px;
-  color: var(--md-sys-color-primary, #6750a4);
-  margin-bottom: 12px;
-}
-
-.card__title {
+.content-container .date {
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 24px;
-  margin-bottom: 8px;
-  position: relative;
-  z-index: 1;
-}
-
-.card__desc {
-  font-size: 14px;
   color: var(--md-sys-color-on-surface-variant, #49454f);
-  line-height: 20px;
-  flex: 1;
-  position: relative;
-  z-index: 1;
 }
 
-.card__meta {
-  font-size: 12px;
-  color: var(--md-sys-color-outline, #79747e);
-  margin-top: 12px;
-  position: relative;
-  z-index: 1;
-}
-
-.card__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 12px;
-  position: relative;
-  z-index: 1;
-}
-
-.card__tag {
-  padding: 2px 10px;
-  border-radius: 8px;
-  font-size: 11px;
+.content-container .card-title {
+  font-size: 24px;
   font-weight: 500;
-  background-color: var(--md-sys-color-secondary-container, #e8def8);
-  color: var(--md-sys-color-on-secondary-container, #1d192b);
+  line-height: 32px;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
-/* ======== 暗色主题 ======== */
+@media screen and (max-width: 600px) {
+  .content-container .card-title {
+    font-size: 18px;
+    line-height: 24px;
+  }
+}
+
+.content-container .card-desc {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media screen and (max-width: 600px) {
+  .content-container .card-desc {
+    font-size: 14px;
+    line-height: 20px;
+  }
+}
+
+/* ================================================================
+   thumb-container（对照 m3 mio-thumbnail .thumb-container）
+   ================================================================ */
+
+.thumb-container {
+  border-radius: 24px;
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 项目卡片中的覆盖图标 */
+.thumb-icon {
+  font-size: 64px;
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  opacity: 0.5;
+  z-index: 1;
+}
+
+/* ================================================================
+   Feature card（对照 m3 mio-card.feature-block）
+   桌面端：grid 1fr 1fr 横排（文字左 + 图片右）
+   移动端：inline-flex column-reverse 竖排（图片上 + 文字下）
+   ================================================================ */
+
+.card--feature.thumbnail {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-bottom: 24px;
+}
+
+.card--feature.thumbnail .content-container {
+  margin: 24px;
+  align-self: center;
+}
+
+.card--feature.thumbnail .thumb-container {
+  min-height: 298px;
+}
+
+@media screen and (max-width: 840px) {
+  .card--feature.thumbnail {
+    display: inline-flex;
+    flex-direction: column-reverse;
+  }
+
+  .card--feature.thumbnail .content-container {
+    margin: 0;
+    padding: 24px;
+  }
+
+  .card--feature.thumbnail .thumb-container {
+    min-height: 200px;
+    border-radius: 24px 24px 0 0;
+  }
+}
+
+/* ================================================================
+   Regular card（对照 m3 mio-card a.thumbnail column-reverse）
+   竖排：图片上 + 文字下
+   ================================================================ */
+
+.card-set {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.card-set .card.thumbnail {
+  display: inline-flex;
+  flex-direction: column-reverse;
+}
+
+.card-set .card.thumbnail .content-container {
+  padding: 24px;
+}
+
+.card-set .card.thumbnail .thumb-container {
+  min-height: 200px;
+  border-radius: 24px 24px 0 0;
+}
+
+@media screen and (max-width: 840px) {
+  .card-set {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ================================================================
+   暗色主题
+   ================================================================ */
+
 :global([data-theme="dark"]) .primary-container {
   background: var(--md-sys-color-surface-container-low, #1d1b20);
 }
@@ -437,21 +528,15 @@ const featuredProjects = ref([
   );
 }
 
-:global([data-theme="dark"]) .card {
+:global([data-theme="dark"]) .card.thumbnail {
   background-color: var(--md-sys-color-surface-container, #211f26);
 }
 
-:global([data-theme="dark"]) .card__badge {
-  background-color: var(--md-sys-color-primary, #d0bcff);
-  color: var(--md-sys-color-on-primary, #381e72);
-}
-
-:global([data-theme="dark"]) .card__tag {
-  background-color: var(--md-sys-color-secondary-container, #4a4458);
-  color: var(--md-sys-color-on-secondary-container, #e8def8);
-}
-
-:global([data-theme="dark"]) .card::after {
+:global([data-theme="dark"]) .card.thumbnail::after {
   background-color: var(--md-sys-color-on-surface, #e6e1e5);
+}
+
+:global([data-theme="dark"]) .thumb-icon {
+  color: var(--md-sys-color-on-primary-container, #eaddff);
 }
 </style>
