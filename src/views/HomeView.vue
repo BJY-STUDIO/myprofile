@@ -510,7 +510,7 @@ function gradient(id) {
 .thumbnail {
   position: relative;
   border-radius: 24px;
-  background-color: var(--md-sys-color-surface-container, #f3edf7);
+  background-color: var(--md-sys-color-surface-container-low, #f8f1f6);
   color: var(--md-sys-color-on-surface, #1c1b1f);
   text-decoration: none;
   overflow: hidden;
@@ -559,8 +559,8 @@ function gradient(id) {
   font-size: 16px;
   font-weight: 400;
   line-height: 24px;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  margin-bottom: 8px;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0 0 8px;
 }
 
 .thumbnail > .content-container .mio-title-row {
@@ -579,7 +579,7 @@ function gradient(id) {
   font-size: 16px;
   font-weight: 400;
   line-height: 24px;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -618,7 +618,7 @@ function gradient(id) {
   grid-column: 1 / -1;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  background-color: rgb(248, 241, 246);
+  background-color: var(--md-sys-color-surface-container-low, #f8f1f6);
 }
 
 .feature-card.thumbnail > .content-container {
@@ -647,7 +647,7 @@ function gradient(id) {
 .regular-card.thumbnail {
   display: inline-flex;
   flex-direction: column-reverse;
-  background-color: rgb(248, 241, 246);
+  background-color: var(--md-sys-color-surface-container-low, #f8f1f6);
 }
 
 .regular-card.thumbnail > .content-container {
@@ -676,7 +676,7 @@ function gradient(id) {
 }
 
 :global([data-theme="dark"]) .thumbnail {
-  background-color: var(--md-sys-color-surface-container, #211f26);
+  background-color: var(--md-sys-color-surface-container-low, #1d1b20);
 }
 
 :global([data-theme="dark"]) .thumbnail::after {
@@ -689,6 +689,10 @@ function gradient(id) {
 
 :global([data-theme="dark"]) .toc__item--active {
   background: var(--md-sys-color-secondary-container, #4a4458);
+}
+
+:global([data-theme="dark"]) .toc__item:hover {
+  background: var(--md-sys-color-surface-variant, #49454f);
 }
 
 :global([data-theme="dark"]) .toc__item--active .toc__link {
