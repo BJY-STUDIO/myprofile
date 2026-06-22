@@ -205,14 +205,63 @@ function onFabClick() {
 
 // ======== 移动端 Navigation Drawer ========
 const drawerOpen = ref(false)
+const drawerSubMenu = ref(null) // 当前展开的子菜单父级 id，null 表示主菜单
+
+// 抽屉导航方向：'forward' 进入子菜单, 'back' 返回主菜单
+const drawerSlideDirection = ref('forward')
 
 function toggleDrawer() {
   drawerOpen.value = !drawerOpen.value
+  // 打开时重置到主菜单
+  if (drawerOpen.value) {
+    drawerSubMenu.value = null
+  }
 }
 
 function closeDrawer() {
   drawerOpen.value = false
+  drawerSubMenu.value = null
 }
+
+// 点击有子菜单的项 → 进入子菜单
+function openDrawerSubMenu(item) {
+  drawerSlideDirection.value = 'forward'
+  drawerSubMenu.value = item.id
+}
+
+// 从子菜单返回主菜单
+function backToDrawerMain() {
+  drawerSlideDirection.value = 'back'
+  drawerSubMenu.value = null
+}
+
+// 子菜单项点击 → 导航后关闭抽屉
+function navigateDrawerSubItem(child) {
+  if (child.route) router.push(child.route)
+  closeDrawer()
+}
+
+// 抽屉主菜单项点击逻辑
+function onDrawerItemClick(item) {
+  if (item.children) {
+    openDrawerSubMenu(item)
+  } else {
+    navigateTo(item)
+  }
+}
+
+// 当前子菜单的子项列表
+const drawerSubItems = computed(() => {
+  if (!drawerSubMenu.value) return null
+  const parent = navItems.find(i => i.id === drawerSubMenu.value)
+  return parent?.children || null
+})
+
+// 当前子菜单的父级项数据
+const drawerSubParent = computed(() => {
+  if (!drawerSubMenu.value) return null
+  return navItems.find(i => i.id === drawerSubMenu.value) || null
+})
 
 // 桌面端内容区左边距
 // 只有常驻模式（persistent）才增加 240px 边距压缩内容区
@@ -327,20 +376,52 @@ const bodyMarginLeft = computed(() => {
         <div class="nav-drawer__header">
           <span class="nav-drawer__title">Kernel's Blog</span>
         </div>
-        <nav class="nav-drawer__items">
-          <div
-            v-for="item in navItems"
-            :key="item.id"
-            class="nav-drawer__item"
-            :class="{ 'nav-drawer__item--active': activeNavId === item.id }"
-            @click="navigateTo(item)"
-          >
-            <span class="material-symbols-rounded nav-drawer__icon">
-              {{ activeNavId === item.id ? (item.activeIcon || item.icon) : item.icon }}
-            </span>
-            <span class="nav-drawer__label">{{ item.label }}</span>
-          </div>
-        </nav>
+
+        <!-- 子菜单导航容器（带滑动动画） -->
+        <div class="nav-drawer__content">
+          <Transition :name="drawerSlideDirection === 'forward' ? 'drawer-slide-forward' : 'drawer-slide-back'">
+            <!-- 主菜单列表 -->
+            <div v-if="!drawerSubMenu" key="main" class="nav-drawer__page">
+              <nav class="nav-drawer__items">
+                <div
+                  v-for="item in navItems"
+                  :key="item.id"
+                  class="nav-drawer__item"
+                  :class="{ 'nav-drawer__item--active': activeNavId === item.id }"
+                  @click="onDrawerItemClick(item)"
+                >
+                  <span class="material-symbols-rounded nav-drawer__icon">
+                    {{ activeNavId === item.id ? (item.activeIcon || item.icon) : item.icon }}
+                  </span>
+                  <span class="nav-drawer__label">{{ item.label }}</span>
+                  <span v-if="item.children" class="material-symbols-rounded nav-drawer__arrow">arrow_forward</span>
+                </div>
+              </nav>
+            </div>
+
+            <!-- 子菜单列表 -->
+            <div v-else key="sub" class="nav-drawer__page">
+              <!-- 返回按钮 -->
+              <div class="nav-drawer__back" @click="backToDrawerMain">
+                <span class="material-symbols-rounded nav-drawer__back-icon">arrow_back</span>
+                <span class="nav-drawer__back-label">{{ drawerSubParent?.label }}</span>
+              </div>
+              <md-divider></md-divider>
+              <nav class="nav-drawer__items">
+                <div
+                  v-for="child in drawerSubItems"
+                  :key="child.id"
+                  class="nav-drawer__item"
+                  :class="{ 'nav-drawer__item--active': activeSubItemId === child.id }"
+                  @click="navigateDrawerSubItem(child)"
+                >
+                  <span class="nav-drawer__label">{{ child.label }}</span>
+                </div>
+              </nav>
+            </div>
+          </Transition>
+        </div>
+
         <div class="nav-drawer__footer">
           <a
             class="nav-drawer__footer-link"
@@ -617,6 +698,7 @@ const bodyMarginLeft = computed(() => {
 
 .nav-drawer__header {
   padding: 28px 24px 20px 24px;
+  flex-shrink: 0;
 }
 
 .nav-drawer__title {
@@ -624,6 +706,104 @@ const bodyMarginLeft = computed(() => {
   font-weight: 400;
   color: var(--md-sys-color-on-surface, #1c1b1f);
   line-height: 32px;
+}
+
+/* 滑动容器 — overflow:hidden 裁剪超出部分 */
+.nav-drawer__content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 每一页（主菜单 / 子菜单）占满容器 */
+.nav-drawer__page {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ======== 子菜单左右滑动动画 ======== */
+.drawer-slide-forward-enter-active,
+.drawer-slide-forward-leave-active,
+.drawer-slide-back-enter-active,
+.drawer-slide-back-leave-active {
+  transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1),
+              opacity 0.2s ease;
+}
+
+/* 进入子菜单：新页从右滑入，旧页向左滑出 */
+.drawer-slide-forward-enter-from {
+  transform: translateX(100%);
+  opacity: 0;
+}
+.drawer-slide-forward-leave-to {
+  transform: translateX(-30%);
+  opacity: 0.5;
+}
+
+/* 返回主菜单：新页从左滑入，旧页向右滑出 */
+.drawer-slide-back-enter-from {
+  transform: translateX(-30%);
+  opacity: 0.5;
+}
+.drawer-slide-back-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+/* 返回按钮行 */
+.nav-drawer__back {
+  display: flex;
+  align-items: center;
+  height: 56px;
+  padding: 0 16px;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  color: var(--md-sys-color-primary, #6750a4);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.nav-drawer__back::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--md-sys-color-primary, #6750a4);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.nav-drawer__back:hover::before {
+  opacity: 0.08;
+}
+
+.nav-drawer__back:active::before {
+  opacity: 0.12;
+}
+
+.nav-drawer__back-icon {
+  font-family: 'Material Symbols Rounded';
+  font-size: 24px;
+  font-variation-settings: "FILL" 0, "wght" 400, "opsz" 24;
+  position: relative;
+  z-index: 1;
+}
+
+.nav-drawer__back-label {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--md-sys-color-primary, #6750a4);
+  position: relative;
+  z-index: 1;
+}
+
+/* md-divider 在 drawer 内需要适配 */
+.nav-drawer__page md-divider {
+  flex-shrink: 0;
 }
 
 .nav-drawer__items {
@@ -648,6 +828,7 @@ const bodyMarginLeft = computed(() => {
   outline: none;
   color: var(--md-sys-color-on-surface-variant, #49454f);
   position: relative;
+  overflow: hidden;
 }
 
 .nav-drawer__item::before {
@@ -685,10 +866,27 @@ const bodyMarginLeft = computed(() => {
   transition: font-variation-settings 0.2s cubic-bezier(0.2, 0, 0, 1);
   position: relative;
   z-index: 1;
+  flex-shrink: 0;
+}
+
+.nav-drawer__item:hover .nav-drawer__icon {
+  font-variation-settings: "FILL" 0, "wght" 600, "opsz" 24, "GRAD" 50;
 }
 
 .nav-drawer__item--active .nav-drawer__icon {
-  font-variation-settings: "FILL" 1, "wght" 400, "opsz" 24;
+  font-variation-settings: "FILL" 1, "wght" 400, "opsz" 24, "GRAD" 125;
+}
+
+.nav-drawer__item--active:hover .nav-drawer__icon {
+  font-variation-settings: "FILL" 1, "wght" 600, "opsz" 24, "GRAD" 50;
+}
+
+.nav-drawer__item:active .nav-drawer__icon {
+  font-variation-settings: "FILL" 0, "wght" 300, "opsz" 24, "GRAD" -50;
+}
+
+.nav-drawer__item--active:active .nav-drawer__icon {
+  font-variation-settings: "FILL" 1, "wght" 300, "opsz" 24, "GRAD" -50;
 }
 
 .nav-drawer__label {
@@ -696,19 +894,51 @@ const bodyMarginLeft = computed(() => {
   font-weight: 500;
   letter-spacing: 0.1px;
   font-variation-settings: "GRAD" 0;
-  transition: font-variation-settings 0.2s cubic-bezier(0.2, 0, 0, 1);
+  transition: font-variation-settings 0.2s cubic-bezier(0.2, 0, 0, 1),
+              transform 0.1s ease;
   position: relative;
   z-index: 1;
+  flex: 1;
 }
 
 .nav-drawer__item--active .nav-drawer__label {
   font-variation-settings: "GRAD" 125;
 }
 
+.nav-drawer__item:hover .nav-drawer__label {
+  font-variation-settings: "GRAD" 50;
+}
+
+.nav-drawer__item--active:hover .nav-drawer__label {
+  font-variation-settings: "GRAD" 50;
+}
+
+/* Press 效果：文字短暂缩放 */
+.nav-drawer__item:active .nav-drawer__label {
+  font-variation-settings: "GRAD" -50;
+  transform: scale(0.96);
+}
+
+/* 右侧箭头图标（有子菜单的项） */
+.nav-drawer__arrow {
+  font-family: 'Material Symbols Rounded';
+  font-size: 20px;
+  font-variation-settings: "FILL" 0, "wght" 400, "opsz" 24;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.nav-drawer__item:hover .nav-drawer__arrow {
+  font-variation-settings: "FILL" 0, "wght" 600, "opsz" 24, "GRAD" 50;
+}
+
 .nav-drawer__footer {
   padding: 12px 16px 16px;
   border-top: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  margin-top: auto;
+  flex-shrink: 0;
 }
 
 .nav-drawer__footer-link {
@@ -1106,6 +1336,22 @@ const bodyMarginLeft = computed(() => {
 
 :global([data-theme="dark"]) .nav-drawer__item::before {
   background-color: var(--md-sys-color-on-secondary-container, #e8def8);
+}
+
+:global([data-theme="dark"]) .nav-drawer__back {
+  color: var(--md-sys-color-primary, #d0bcff);
+}
+
+:global([data-theme="dark"]) .nav-drawer__back::before {
+  background-color: var(--md-sys-color-primary, #d0bcff);
+}
+
+:global([data-theme="dark"]) .nav-drawer__back-label {
+  color: var(--md-sys-color-primary, #d0bcff);
+}
+
+:global([data-theme="dark"]) .nav-drawer__arrow {
+  color: var(--md-sys-color-on-surface-variant, #cac4d0);
 }
 
 :global([data-theme="dark"]) .nav-drawer__footer {
