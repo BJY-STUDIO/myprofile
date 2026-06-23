@@ -95,7 +95,7 @@ const isPersistentPanel = computed(() => {
 })
 
 // 计算当前要显示在子面板中的子菜单项
-// 优先级：hover 项 > active 项
+// 优先级：hover 项 > active 项（仅 persistent 模式）
 const displaySubItems = computed(() => {
   if (!isWideScreen.value) return null
   // hover 优先（悬停模式，浮动不压缩页面）
@@ -103,8 +103,19 @@ const displaySubItems = computed(() => {
     const hoverItem = navItems.find(i => i.id === hoveredNavId.value)
     if (hoverItem?.children) return hoverItem.children
   }
-  // 否则显示 active 项的子菜单（仅常驻模式下有意义）
-  return activeSubItems.value
+  // 常驻模式：显示 active 项的子菜单
+  if (isPersistentPanel.value) return activeSubItems.value
+  return null
+})
+
+// 当前子面板显示的是哪个父菜单（用于 Transition key 触发 fade）
+const displayParentId = computed(() => {
+  if (hoveredNavId.value) {
+    const hoverItem = navItems.find(i => i.id === hoveredNavId.value)
+    if (hoverItem?.children) return hoveredNavId.value
+  }
+  if (isPersistentPanel.value) return activeNavId.value
+  return null
 })
 
 // 子面板是否显示（hover 模式 或 常驻模式）
@@ -115,8 +126,8 @@ const subPanelVisible = computed(() => {
     const hoverItem = navItems.find(i => i.id === hoveredNavId.value)
     if (hoverItem?.children) return true
   }
-  // 常驻触发：active 有子菜单且屏幕够宽
-  return !!activeSubItems.value
+  // 常驻触发：仅在 persistent 模式下自动显示 active 项的子菜单
+  return isPersistentPanel.value
 })
 
 // 当前是否为 hover 模式（非常驻）——用于 CSS 区分样式
@@ -183,10 +194,12 @@ function onSubPanelEnter() {
   isHoveringPanel.value = true
 }
 
-// 鼠标离开子面板
+// 鼠标离开子面板（延迟收缩，避免鼠标往返 rail 时闪烁）
 function onSubPanelLeave() {
   isHoveringPanel.value = false
-  hoveredNavId.value = null
+  hoverLeaveTimer.value = setTimeout(() => {
+    hoveredNavId.value = null
+  }, 100)
 }
 
 function navigateToSubItem(child) {
@@ -301,18 +314,22 @@ const bodyMarginLeft = computed(() => {
         @mouseleave="onSubPanelLeave"
       >
       <nav class="sub-panel__items">
-        <a
-          v-for="child in displaySubItems"
-          :key="child.id"
-          class="sub-panel__item"
-          :class="{
-            'sub-panel__item--active': subPanelActiveReady && activeSubItemId === child.id,
-            'sub-panel__item--animate': subPanelTransitionsReady,
-          }"
-          @click.prevent="navigateToSubItem(child)"
-        >
-          <span class="sub-panel__item-label">{{ child.label }}</span>
-        </a>
+        <Transition name="sub-content-fade" mode="out-in">
+          <div :key="displayParentId" class="sub-panel__content">
+            <a
+              v-for="child in displaySubItems"
+              :key="child.id"
+              class="sub-panel__item"
+              :class="{
+                'sub-panel__item--active': subPanelActiveReady && activeSubItemId === child.id,
+                'sub-panel__item--animate': subPanelTransitionsReady,
+              }"
+              @click.prevent="navigateToSubItem(child)"
+            >
+              <span class="sub-panel__item-label">{{ child.label }}</span>
+            </a>
+          </div>
+        </Transition>
       </nav>
     </aside>
     </Transition>
@@ -356,7 +373,11 @@ const bodyMarginLeft = computed(() => {
 
       <!-- 主内容 -->
       <main class="app-main">
-        <router-view />
+        <router-view v-slot="{ Component }">
+          <Transition name="page-fade" mode="out-in">
+            <component :is="Component" :key="route.path" />
+          </Transition>
+        </router-view>
       </main>
     </div>
 
@@ -513,26 +534,47 @@ const bodyMarginLeft = computed(() => {
 
 <style scoped>
 .app-layout {
-  min-height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: row;
+  overflow: hidden;
 }
 
 .app-layout__body {
   flex: 1;
-  min-height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   transition: margin-left 0.3s cubic-bezier(0.2, 0, 0, 1);
 }
 
-/* ======== 主内容区 ======== */
+/* ======== 主内容区（滚动容器，匹配 m3 .page-content） ======== */
 .app-main {
   flex: 1;
   padding: 0;
   width: 100%;
   box-sizing: border-box;
   overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* 页面切换 fadeIn 过渡
+ * m3 ng-trigger-fadeIn: opacity 0→1 + translateY(10px→0)
+ * FADE_IN = 200ms delay + 200ms linear
+ * FADE_OUT = 100ms cubic-bezier(0.2,0,0,1) */
+.page-fade-enter-active {
+  transition: opacity 200ms linear 200ms, transform 200ms linear 200ms;
+}
+.page-fade-leave-active {
+  transition: opacity 100ms cubic-bezier(0.2, 0, 0, 1), transform 100ms cubic-bezier(0.2, 0, 0, 1);
+}
+.page-fade-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.page-fade-leave-to {
+  opacity: 0;
 }
 
 /* ======== 移动端顶部 App Bar ======== */
@@ -1196,8 +1238,7 @@ const bodyMarginLeft = computed(() => {
   overflow-y: auto;
   overflow-x: hidden;
   transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1),
-              box-shadow 0.3s cubic-bezier(0.2, 0, 0, 1),
-              opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
+              box-shadow 0.3s cubic-bezier(0.2, 0, 0, 1);
 }
 
 /* ====== Hover 模式（悬浮浮动，不压缩页面） ====== */
@@ -1218,20 +1259,18 @@ const bodyMarginLeft = computed(() => {
 }
 
 /* ====== 子面板进入/离开动画（Vue Transition） ====== */
-/* hover 模式：从左侧滑入 + 淡入；离开时滑出 + 淡出 */
+/* m3 LEFT_NAV_SLIDE_ANIMATION: 300ms cubic-bezier(0.2, 0, 0, 1)，纯平移无 fade */
 .sub-panel-enter-active {
-  transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1), opacity 0.25s ease;
+  transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1);
 }
 .sub-panel-leave-active {
-  transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1), opacity 0.2s ease;
+  transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1);
 }
 .sub-panel-enter-from {
-  transform: translateX(-12px);
-  opacity: 0;
+  transform: translateX(-100%);
 }
 .sub-panel-leave-to {
-  transform: translateX(-12px);
-  opacity: 0;
+  transform: translateX(-100%);
 }
 
 .sub-panel__items {
@@ -1240,6 +1279,29 @@ const bodyMarginLeft = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 0;
+  overflow: hidden;
+}
+
+/* 二级菜单内容切换容器 */
+.sub-panel__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* 二级菜单内容 fadeInOut 过渡
+ * m3 fadeInOut: 纯 opacity fade（桌面端子面板内容切换）
+ * FADE_IN = 200ms delay + 200ms linear
+ * FADE_OUT = 100ms cubic-bezier(0.2,0,0,1) */
+.sub-content-fade-enter-active {
+  transition: opacity 200ms linear 200ms;
+}
+.sub-content-fade-leave-active {
+  transition: opacity 100ms cubic-bezier(0.2, 0, 0, 1);
+}
+.sub-content-fade-enter-from,
+.sub-content-fade-leave-to {
+  opacity: 0;
 }
 
 /* ======== 子面板项（m3.material.io 风格，无 ripple） ======== */

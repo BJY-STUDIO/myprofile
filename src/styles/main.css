@@ -66,6 +66,8 @@
   background-color: var(--mio-bg, var(--md-sys-color-surface, #fefbff));
   color: var(--md-sys-color-on-surface, #1c1b1f);
   transition: background-color 0.3s ease, color 0.3s ease;
+  height: 100%;
+  overflow: hidden;
 }
 
 a:not(.sub-panel__item):not(.nav-rail__destination):not(.nav-drawer__item):not(.nav-rail__action-btn):not(.mobile-top-bar__title):not(.mobile-top-bar__icon-btn):not(.thumbnail):not(.toc__link),
