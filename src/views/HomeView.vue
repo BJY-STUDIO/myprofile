@@ -73,6 +73,7 @@
               <div class="thumb-container" :style="{ background: gradient(section.feature.id) }">
                 <span class="material-symbols-rounded thumb-icon">{{ section.feature.icon || 'article' }}</span>
               </div>
+              <div class="ripple"></div>
             </a>
 
             <!-- 中卡片（对照 m3: mio-card > a.thumbnail, inline-flex column-reverse） -->
@@ -93,6 +94,7 @@
               <div class="thumb-container" :style="{ background: gradient(post.id + 10) }">
                 <span class="material-symbols-rounded thumb-icon">{{ post.icon || 'article' }}</span>
               </div>
+              <div class="ripple"></div>
             </a>
           </div>
         </div>
@@ -112,7 +114,7 @@ function scrollToSection(i) {
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
-// Ripple: 记录点击位置，通过 CSS 自定义属性传给 ::after
+// Ripple: 记录点击位置，触发涟漪动画（对照 m3: <div class="ripple">）
 function onCardClick(e) {
   const card = e.currentTarget
   const rect = card.getBoundingClientRect()
@@ -120,6 +122,14 @@ function onCardClick(e) {
   const y = e.clientY - rect.top
   card.style.setProperty('--ripple-x', x + 'px')
   card.style.setProperty('--ripple-y', y + 'px')
+  // 触发 ripple 动画：先移除再添加，确保可重复触发
+  const ripple = card.querySelector('.ripple')
+  if (ripple) {
+    ripple.classList.remove('ripple--active')
+    // 强制 reflow
+    void ripple.offsetWidth
+    ripple.classList.add('ripple--active')
+  }
 }
 
 const sections = ref([
@@ -556,9 +566,8 @@ function gradient(id) {
   background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 12%, var(--md-sys-color-surface-container-low, #f8f1f6));
 }
 
-/* ripple 涟漪动效（对照 m3: .ripple 圆形扩散从点击位置） */
-.thumbnail::after {
-  content: '';
+/* ripple 涟漪动效（对照 m3: <div class="ripple"> 真实 DOM 元素） */
+.thumbnail > .ripple {
   position: absolute;
   left: var(--ripple-x, 50%);
   top: var(--ripple-y, 50%);
@@ -568,12 +577,13 @@ function gradient(id) {
   background-color: var(--md-sys-color-primary, #6750a4);
   opacity: 0;
   pointer-events: none;
-  z-index: 3;
+  overflow: visible;
   transform: translate(-50%, -50%);
 }
 
 /* pressed 时触发 ripple（从点击位置扩散） */
-.thumbnail:active::after {
+.thumbnail:active > .ripple,
+.thumbnail > .ripple.ripple--active {
   animation: ripple-expand 0.4s cubic-bezier(0.2, 0, 0, 1) forwards;
 }
 
@@ -653,6 +663,7 @@ function gradient(id) {
   align-items: center;
   justify-content: center;
   position: relative;
+  z-index: 1;
 }
 
 .thumb-icon {
