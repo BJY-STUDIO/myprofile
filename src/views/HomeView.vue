@@ -61,6 +61,7 @@
               v-if="section.feature"
               :href="section.feature.route"
               class="feature-card thumbnail"
+              @mousedown="onCardClick"
             >
               <div class="content-container">
                 <span class="date">{{ section.feature.date }}</span>
@@ -80,6 +81,7 @@
               :key="post.id"
               :href="post.route"
               class="regular-card thumbnail"
+              @mousedown="onCardClick"
             >
               <div class="content-container">
                 <span v-if="post.date" class="date">{{ post.date }}</span>
@@ -108,6 +110,16 @@ function scrollToSection(i) {
   activeSection.value = i
   const el = document.getElementById('section-' + i)
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+// Ripple: 记录点击位置，通过 CSS 自定义属性传给 ::after
+function onCardClick(e) {
+  const card = e.currentTarget
+  const rect = card.getBoundingClientRect()
+  const x = e.clientX - rect.left
+  const y = e.clientY - rect.top
+  card.style.setProperty('--ripple-x', x + 'px')
+  card.style.setProperty('--ripple-y', y + 'px')
 }
 
 const sections = ref([
@@ -500,9 +512,11 @@ function gradient(id) {
 }
 
 /* ================================================================
-   卡片通用 — thumbnail 容器（对照 m3: a.thumbnail）
-   border-radius 24px, bg surface-container, overflow hidden, position relative
-   ================================================================ */
+    卡片通用 — thumbnail 容器（对照 m3: a.thumbnail）
+    border-radius 24px, bg surface-container, overflow hidden, position relative
+    hover: backgroundColor 用 primary 8% 混合
+    pressed: border-radius 24px→40px, backgroundColor 用 primary 12% 混合, ripple
+    ================================================================ */
 .thumbnail {
   position: relative;
   border-radius: 24px;
@@ -519,25 +533,61 @@ function gradient(id) {
   outline-offset: 0.8px;
 }
 
-/* state layer（对照 m3: hover/pressed overlay, opacity 变化） */
+/* hover: primary 8% 混合到 surface（对照 m3: backgroundColor 变为 primary 色 state-layer） */
+.thumbnail:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 8%, var(--md-sys-color-surface-container-low, #f8f1f6));
+}
+
+/* pressed: border-radius 变大 + primary 12% 混合 */
+.thumbnail:active {
+  border-radius: 40px;
+  background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 12%, var(--md-sys-color-surface-container-low, #f8f1f6));
+}
+
+/* feature-card / regular-card 的 hover/active 需要同等的 specificity 来覆盖各自的基础 bg */
+.feature-card.thumbnail:hover,
+.regular-card.thumbnail:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 8%, var(--md-sys-color-surface-container-low, #f8f1f6));
+}
+
+.feature-card.thumbnail:active,
+.regular-card.thumbnail:active {
+  border-radius: 40px;
+  background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 12%, var(--md-sys-color-surface-container-low, #f8f1f6));
+}
+
+/* ripple 涟漪动效（对照 m3: .ripple 圆形扩散从点击位置） */
 .thumbnail::after {
   content: '';
   position: absolute;
-  inset: 0;
-  border-radius: 24px;
-  background-color: var(--md-sys-color-on-surface, #1c1b1f);
+  left: var(--ripple-x, 50%);
+  top: var(--ripple-y, 50%);
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background-color: var(--md-sys-color-primary, #6750a4);
   opacity: 0;
-  transition: opacity 0.3s cubic-bezier(0.2, 0, 0, 1);
   pointer-events: none;
   z-index: 3;
+  transform: translate(-50%, -50%);
 }
 
-.thumbnail:hover::after {
-  opacity: 0.08;
-}
-
+/* pressed 时触发 ripple（从点击位置扩散） */
 .thumbnail:active::after {
-  opacity: 0.12;
+  animation: ripple-expand 0.4s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+@keyframes ripple-expand {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 0.1;
+  }
+  100% {
+    width: 400px;
+    height: 400px;
+    opacity: 0;
+  }
 }
 
 /* ================================================================
@@ -707,8 +757,20 @@ function gradient(id) {
   background-color: var(--md-sys-color-surface-container-low, #1d1b20);
 }
 
+:global([data-theme="dark"]) .thumbnail:hover,
+:global([data-theme="dark"]) .feature-card.thumbnail:hover,
+:global([data-theme="dark"]) .regular-card.thumbnail:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary, #d0bcff) 8%, var(--md-sys-color-surface-container-low, #1d1b20));
+}
+
+:global([data-theme="dark"]) .thumbnail:active,
+:global([data-theme="dark"]) .feature-card.thumbnail:active,
+:global([data-theme="dark"]) .regular-card.thumbnail:active {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary, #d0bcff) 12%, var(--md-sys-color-surface-container-low, #1d1b20));
+}
+
 :global([data-theme="dark"]) .thumbnail::after {
-  background-color: var(--md-sys-color-on-surface, #e6e1e5);
+  background-color: var(--md-sys-color-primary, #d0bcff);
 }
 
 :global([data-theme="dark"]) .thumbnail:focus-visible {
