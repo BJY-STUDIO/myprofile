@@ -613,14 +613,17 @@ function gradient(id) {
 }
 
 /* ================================================================
-   feature-block 长卡（对照 m3: mio-card.feature-block > a.thumbnail）
-   grid 1fr 1fr, 左 content-container + 右 thumb-container
-   移动端: inline-flex column-reverse
-   ================================================================ */
+    feature-block 长卡（对照 m3: mio-card.feature-block > a.thumbnail）
+    grid 1fr 1fr, grid-auto-flow column, align-items center
+    thumb order:-1 排左列, content 自然排右列
+    移动端: inline-flex column-reverse
+    ================================================================ */
 .feature-card.thumbnail {
   grid-column: 1 / -1;
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-auto-flow: column;
+  align-items: center;
   background-color: var(--md-sys-color-surface-container-low, #f8f1f6);
 }
 
@@ -631,6 +634,7 @@ function gradient(id) {
 
 .feature-card.thumbnail > .thumb-container {
   min-height: 298px;
+  order: -1;
 }
 
 @media screen and (max-width: 1294px) {
@@ -641,6 +645,7 @@ function gradient(id) {
   .feature-card.thumbnail > .thumb-container {
     min-height: 200px;
     border-radius: 24px;
+    order: 0;
   }
   .feature-card.thumbnail > .content-container {
     max-width: none;
@@ -650,9 +655,9 @@ function gradient(id) {
 }
 
 /* ================================================================
-   regular-card 中卡（对照 m3: mio-card > a.thumbnail）
-   inline-flex column-reverse: 图片上 + 文字下
-   ================================================================ */
+    regular-card 中卡（对照 m3: mio-card > a.thumbnail）
+    inline-flex column-reverse: 图片上 + 文字下
+    ================================================================ */
 .regular-card.thumbnail {
   display: inline-flex;
   flex-direction: column-reverse;
@@ -668,7 +673,6 @@ function gradient(id) {
 .regular-card.thumbnail > .thumb-container {
   flex: 1 1 auto;
   min-height: 298px;
-  border-radius: 24px;
 }
 
 /* 移动端 regular-card content 适配 */
