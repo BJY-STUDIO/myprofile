@@ -661,6 +661,7 @@ function gradient(id) {
 .regular-card.thumbnail {
   display: inline-flex;
   flex-direction: column-reverse;
+  justify-content: flex-end;
   background-color: var(--md-sys-color-surface-container-low, #f8f1f6);
 }
 
