@@ -507,18 +507,13 @@ function formatDate(dateStr) {
 /* ================================================================
    card-set（对照 m3: mio-card-set, grid, gap 8px, margin 32px 0 0）
    ================================================================ */
+/* card-set: ≤600px 单列，>600px 双列（对照 m3 断点 @600px） */
 .card-set {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   padding: 0 8px;
-  margin: 32px 0 0;
-}
-
-@media screen and (max-width: 1294px) {
-  .card-set {
-    grid-template-columns: 1fr;
-  }
+  margin: 24px 0 0;
 }
 
 @media screen and (max-width: 600px) {
@@ -712,8 +707,8 @@ function formatDate(dateStr) {
   order: -1;
 }
 
-/* feature-card 窄屏：inline-flex column-reverse（对照 m3 @ ≤1294px） */
-@media screen and (max-width: 1294px) {
+/* feature-card 窄屏：inline-flex column-reverse（对照 m3 @ ≤600px） */
+@media screen and (max-width: 600px) {
   .feature-card.thumbnail {
     display: inline-flex;
     flex-direction: column-reverse;
