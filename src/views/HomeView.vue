@@ -116,20 +116,37 @@
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 
 const activeSection = ref(-1) // -1 = 无激活态（hide 状态）
-const itemHeight = 56 // m3 list-item 高度 (px)
 
-// 指示器 top 偏移（动态计算，因为标题可能换行）
-const indicatorTop = ref(64)
+// 动态指示器位置：存储每个 item 的 top 和 height（对照 m3: item 高度随文字长度 36/56px 动态变化）
+const indicatorTop = ref(0)   // 指示器 top（相对于 nav）
+const indicatorY = ref(0)     // translateY（当前激活 item 的相对偏移）
+const indicatorH = ref(36)    // 指示器高度（匹配 item 高度）
 
-// 指示器内联样式：translateY + height（对照 m3: transform:translateY + height, border-only）
-// 注意：hide 状态只改 opacity，不改 transform/height（与 m3 一致）
+// 计算 indicator inline style
+// 对照 m3: style="transform: translateY(Npx); height: Npx"
+// hide 态只改 opacity，不改 transform/height
 const indicatorStyle = computed(() => {
-  const y = Math.max(0, activeSection.value) * itemHeight
-  return { transform: `translateY(${y}px)`, height: `${itemHeight}px` }
+  return {
+    transform: `translateY(${indicatorY.value}px)`,
+    height: `${indicatorH.value}px`,
+  }
 })
 
-// 滚动检测 — 对照 m3: IntersectionObserver rootMargin "0px 0px -30% 0px"
-// 方案: IntersectionObserver 只监听进入，不清除 lastActive，滚动向上时自动回退
+// 更新指示器位置：读取激活 item 的 DOM 位置
+function updateIndicatorPosition(index) {
+  if (index < 0) return
+  const nav = document.querySelector('.toc nav')
+  const items = document.querySelectorAll('.toc__item')
+  if (!nav || !items[index]) return
+
+  const navRect = nav.getBoundingClientRect()
+  const itemRect = items[index].getBoundingClientRect()
+
+  indicatorY.value = Math.round(itemRect.top - navRect.top - indicatorTop.value)
+  indicatorH.value = Math.round(itemRect.height)
+}
+
+// 滚动检测 — 对照 m3: IntersectionObserver rootMargin "0px 0px -50% 0px"
 let observer = null
 let scrollRoot = null
 
@@ -137,22 +154,14 @@ function setupScrollObserver() {
   scrollRoot = document.querySelector('.app-main')
   if (!scrollRoot) return
 
-  // rootMargin "0px 0px -60% 0px": 只有进入视口上方 40% 的 section 才触发
-  // 这比 m3 的 -30% 更严，避免 section 刚刚可见就激活
   observer = new IntersectionObserver(
     (entries) => {
-      // 滚动方向检测
-      const scrollTop = scrollRoot.scrollTop
-      const scrollingDown = scrollTop > (setupScrollObserver._lastScrollTop || 0)
-      setupScrollObserver._lastScrollTop = scrollTop
-
       for (const entry of entries) {
         if (entry.isIntersecting) {
           const idx = parseInt(entry.target.getAttribute('data-section-index'))
           if (!isNaN(idx) && activeSection.value !== idx) {
-            // 向下滚：后面的 section 进入 → 直接激活
-            // 向上滚：前面的 section 进入 → 直接激活
             activeSection.value = idx
+            updateIndicatorPosition(idx)
           }
         }
       }
@@ -180,7 +189,10 @@ function setupScrollObserver() {
         active = parseInt(el.getAttribute('data-section-index'))
       }
     })
-    if (active >= 0) activeSection.value = active
+    if (active >= 0) {
+      activeSection.value = active
+      updateIndicatorPosition(active)
+    }
   })
 }
 
@@ -188,7 +200,6 @@ function setupScrollObserver() {
 function onScroll() {
   if (!scrollRoot) return
   const scrollTop = scrollRoot.scrollTop
-  // 滚动到顶部附近且没有 section 进入过 → 隐藏指示器
   if (scrollTop < 100 && activeSection.value >= 0) {
     const rootRect = scrollRoot.getBoundingClientRect()
     const midPoint = rootRect.top + rootRect.height * 0.5
@@ -207,14 +218,15 @@ function onScroll() {
 
 function scrollToSection(i) {
   activeSection.value = i
+  updateIndicatorPosition(i)
   const el = document.getElementById('section-' + i)
   if (el) {
-    const scrollRoot = document.querySelector('.app-main')
-    if (scrollRoot) {
-      const rootRect = scrollRoot.getBoundingClientRect()
+    const sr = document.querySelector('.app-main')
+    if (sr) {
+      const rootRect = sr.getBoundingClientRect()
       const elRect = el.getBoundingClientRect()
-      scrollRoot.scrollTo({
-        top: scrollRoot.scrollTop + elRect.top - rootRect.top - 24,
+      sr.scrollTo({
+        top: sr.scrollTop + elRect.top - rootRect.top - 24,
         behavior: 'smooth',
       })
     }
@@ -324,7 +336,7 @@ function formatDate(dateStr) {
 
 onMounted(() => {
   nextTick(() => {
-    // 计算 indicator top：取第一个 list-item 相对于 nav 的 top 位置
+    // 计算 indicator top 基准位置：取第一个 list-item 相对于 nav 的 top
     const nav = document.querySelector('.toc nav')
     const firstItem = document.querySelector('.toc__item')
     if (nav && firstItem) {
@@ -572,12 +584,12 @@ onBeforeUnmount(() => {
 .toc__item {
   display: flex;
   padding: 8px 16px;
-  height: 56px;
+  min-height: 36px;
   box-sizing: border-box;
   border-radius: 18px;
   cursor: pointer;
   align-items: center;
-  /* 对照 m3: 无 transition（hover state-layer 由 Angular 控制） */
+  /* 对照 m3: 高度动态 — 单行 36px, 换行 56px */
 }
 
 /* 对照 m3: hover — on-surface 8%, 灰色半透明态（非 primary 色） */
