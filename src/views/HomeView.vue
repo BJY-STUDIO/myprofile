@@ -169,7 +169,6 @@ const sections = ref([
         id: 4,
         title: "Kernel's Blog",
         excerpt: '基于 Vue 3 + Material Web 的个人博客站点，严格遵循 M3 规范。',
-        date: '2026-06-20',
         icon: 'web',
         route: '/projects/web',
       },
@@ -177,7 +176,6 @@ const sections = ref([
         id: 5,
         title: '数据可视化工具集',
         excerpt: '面向电信行业的数据抓取、清洗与可视化展示工具。',
-        date: '2026-03-28',
         icon: 'analytics',
         route: '/projects/tools',
       },
@@ -698,7 +696,6 @@ function formatDate(dateStr) {
 
 .feature-card.thumbnail > .content-container {
   align-self: center;
-  max-width: 442px;
 }
 
 .feature-card.thumbnail > .thumb-container {
@@ -717,8 +714,6 @@ function formatDate(dateStr) {
     order: 0;
   }
   .feature-card.thumbnail > .content-container {
-    max-width: none;
-    width: calc(100% - 32px);
     margin: 16px;
   }
 }
@@ -736,8 +731,6 @@ function formatDate(dateStr) {
 
 .regular-card.thumbnail > .content-container {
   align-self: start;
-  max-width: 438px;
-  width: calc(100% - 48px);
 }
 
 .regular-card.thumbnail > .thumb-container {
@@ -747,8 +740,6 @@ function formatDate(dateStr) {
 /* 移动端 regular-card content 适配 */
 @media screen and (max-width: 600px) {
   .regular-card.thumbnail > .content-container {
-    max-width: none;
-    width: calc(100% - 32px);
     margin: 16px;
   }
   .regular-card.thumbnail > .thumb-container {
