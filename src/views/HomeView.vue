@@ -122,11 +122,9 @@ const itemHeight = 56 // m3 list-item 高度 (px)
 const indicatorTop = ref(64)
 
 // 指示器内联样式：translateY + height（对照 m3: transform:translateY + height, border-only）
+// 注意：hide 状态只改 opacity，不改 transform/height（与 m3 一致）
 const indicatorStyle = computed(() => {
-  if (activeSection.value < 0) {
-    return { transform: 'translateY(0px)', height: '2px' }
-  }
-  const y = activeSection.value * itemHeight
+  const y = Math.max(0, activeSection.value) * itemHeight
   return { transform: `translateY(${y}px)`, height: `${itemHeight}px` }
 })
 
@@ -573,17 +571,18 @@ onBeforeUnmount(() => {
 
 .toc__item {
   display: flex;
-  padding: 16px;
+  padding: 8px 16px;
   height: 56px;
   box-sizing: border-box;
   border-radius: 18px;
   cursor: pointer;
   align-items: center;
-  transition: background-color 200ms cubic-bezier(0.2, 0, 0, 1);
+  /* 对照 m3: 无 transition（hover state-layer 由 Angular 控制） */
 }
 
+/* 对照 m3: hover — on-surface 8%, 灰色半透明态（非 primary 色） */
 .toc__item:hover {
-  background: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 8%, transparent);
+  background: color-mix(in srgb, var(--md-sys-color-on-surface, #1c1b1f) 8%, transparent);
 }
 
 /* 注意: m3 的 active item 没有背景色, 指示器用 border pill 代替 */
@@ -952,7 +951,7 @@ onBeforeUnmount(() => {
 }
 
 :global([data-theme="dark"]) .toc__item:hover {
-  background: color-mix(in srgb, var(--md-sys-color-primary, #d0bcff) 8%, transparent);
+  background: color-mix(in srgb, var(--md-sys-color-on-surface, #e6e1e5) 8%, transparent);
 }
 
 :global([data-theme="dark"]) .toc__link--selected {
