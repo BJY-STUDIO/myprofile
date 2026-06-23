@@ -17,23 +17,31 @@
 
     <!-- ======== content-container（对照 m3: flex row-reverse, TOC右 + posts左） ======== -->
     <div class="content-container">
-      <!-- TOC 目录（对照 m3: mio-toc > nav, sticky, 156px宽） -->
+      <!-- TOC 目录（对照 m3: mio-toc > nav, sticky, 156px宽, indicator border-only） -->
       <aside class="toc">
-        <nav>
+        <nav aria-label="page content">
           <div class="toc__overline">On this page</div>
           <h2 class="toc__title">Kernel's Blog</h2>
-          <div class="toc__indicator"></div>
+          <div
+            class="toc__indicator"
+            :class="{ 'toc__indicator--hide': activeSection < 0 }"
+            :style="indicatorStyle"
+          ></div>
           <ul class="toc__list">
             <li
               v-for="(section, i) in sections"
               :key="i"
+              role="link"
+              tabindex="0"
               class="toc__item"
-              :class="{ 'toc__item--active': activeSection === i }"
+              :aria-current="activeSection === i ? 'true' : 'false'"
+              @click="scrollToSection(i)"
+              @keydown.enter="scrollToSection(i)"
             >
               <a
-                :href="'#section-' + i"
                 class="toc__link"
-                @click.prevent="scrollToSection(i)"
+                :class="{ 'toc__link--selected': activeSection === i }"
+                @click.prevent
               >{{ section.label }}</a>
             </li>
           </ul>
@@ -47,6 +55,7 @@
           v-for="(section, si) in sections"
           :key="si"
           :id="'section-' + si"
+          :data-section-index="si"
           class="section"
         >
           <!-- section-header（对照 m3: div.section-header, margin 24px） -->
@@ -104,14 +113,114 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 
-const activeSection = ref(0)
+const activeSection = ref(-1) // -1 = 无激活态（hide 状态）
+const itemHeight = 56 // m3 list-item 高度 (px)
+
+// 指示器 top 偏移（动态计算，因为标题可能换行）
+const indicatorTop = ref(64)
+
+// 指示器内联样式：translateY + height（对照 m3: transform:translateY + height, border-only）
+const indicatorStyle = computed(() => {
+  if (activeSection.value < 0) {
+    return { transform: 'translateY(0px)', height: '2px' }
+  }
+  const y = activeSection.value * itemHeight
+  return { transform: `translateY(${y}px)`, height: `${itemHeight}px` }
+})
+
+// 滚动检测 — 对照 m3: IntersectionObserver rootMargin "0px 0px -30% 0px"
+// 方案: IntersectionObserver 只监听进入，不清除 lastActive，滚动向上时自动回退
+let observer = null
+let scrollRoot = null
+
+function setupScrollObserver() {
+  scrollRoot = document.querySelector('.app-main')
+  if (!scrollRoot) return
+
+  // rootMargin "0px 0px -60% 0px": 只有进入视口上方 40% 的 section 才触发
+  // 这比 m3 的 -30% 更严，避免 section 刚刚可见就激活
+  observer = new IntersectionObserver(
+    (entries) => {
+      // 滚动方向检测
+      const scrollTop = scrollRoot.scrollTop
+      const scrollingDown = scrollTop > (setupScrollObserver._lastScrollTop || 0)
+      setupScrollObserver._lastScrollTop = scrollTop
+
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          const idx = parseInt(entry.target.getAttribute('data-section-index'))
+          if (!isNaN(idx) && activeSection.value !== idx) {
+            // 向下滚：后面的 section 进入 → 直接激活
+            // 向上滚：前面的 section 进入 → 直接激活
+            activeSection.value = idx
+          }
+        }
+      }
+    },
+    {
+      root: scrollRoot,
+      rootMargin: '0px 0px -50% 0px',
+      threshold: 0,
+    }
+  )
+
+  const sectionEls = scrollRoot.querySelectorAll('[data-section-index]')
+  sectionEls.forEach((el) => observer.observe(el))
+
+  // 初始检测：检查是否已有 section 在视口上半区
+  requestAnimationFrame(() => {
+    const rootRect = scrollRoot.getBoundingClientRect()
+    const midPoint = rootRect.top + rootRect.height * 0.5
+    let active = -1
+    let maxTop = -Infinity
+    sectionEls.forEach((el) => {
+      const rect = el.getBoundingClientRect()
+      if (rect.top < midPoint && rect.bottom > rootRect.top && rect.top > maxTop) {
+        maxTop = rect.top
+        active = parseInt(el.getAttribute('data-section-index'))
+      }
+    })
+    if (active >= 0) activeSection.value = active
+  })
+}
+
+// 监听回到顶部时隐藏指示器
+function onScroll() {
+  if (!scrollRoot) return
+  const scrollTop = scrollRoot.scrollTop
+  // 滚动到顶部附近且没有 section 进入过 → 隐藏指示器
+  if (scrollTop < 100 && activeSection.value >= 0) {
+    const rootRect = scrollRoot.getBoundingClientRect()
+    const midPoint = rootRect.top + rootRect.height * 0.5
+    const sectionEls = scrollRoot.querySelectorAll('[data-section-index]')
+    let anyVisible = false
+    for (const el of sectionEls) {
+      const rect = el.getBoundingClientRect()
+      if (rect.top < midPoint && rect.bottom > rootRect.top) {
+        anyVisible = true
+        break
+      }
+    }
+    if (!anyVisible) activeSection.value = -1
+  }
+}
 
 function scrollToSection(i) {
   activeSection.value = i
   const el = document.getElementById('section-' + i)
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  if (el) {
+    const scrollRoot = document.querySelector('.app-main')
+    if (scrollRoot) {
+      const rootRect = scrollRoot.getBoundingClientRect()
+      const elRect = el.getBoundingClientRect()
+      scrollRoot.scrollTo({
+        top: scrollRoot.scrollTop + elRect.top - rootRect.top - 24,
+        behavior: 'smooth',
+      })
+    }
+  }
 }
 
 // Ripple: 记录点击位置，触发涟漪动画（对照 m3: <div class="ripple">）
@@ -214,6 +323,28 @@ function formatDate(dateStr) {
   if (isNaN(d.getTime())) return dateStr // 不是合法日期则原样返回
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
+
+onMounted(() => {
+  nextTick(() => {
+    // 计算 indicator top：取第一个 list-item 相对于 nav 的 top 位置
+    const nav = document.querySelector('.toc nav')
+    const firstItem = document.querySelector('.toc__item')
+    if (nav && firstItem) {
+      const navRect = nav.getBoundingClientRect()
+      const itemRect = firstItem.getBoundingClientRect()
+      indicatorTop.value = Math.round(itemRect.top - navRect.top)
+    }
+
+    setupScrollObserver()
+    scrollRoot = document.querySelector('.app-main')
+    if (scrollRoot) scrollRoot.addEventListener('scroll', onScroll, { passive: true })
+  })
+})
+
+onBeforeUnmount(() => {
+  if (observer) observer.disconnect()
+  if (scrollRoot) scrollRoot.removeEventListener('scroll', onScroll)
+})
 </script>
 
 <style scoped>
@@ -378,9 +509,10 @@ function formatDate(dateStr) {
 }
 
 /* ================================================================
-   TOC（对照 m3: mio-toc > nav）
-   156px宽, margin 112px 24px 0, sticky top
-   ================================================================ */
+    TOC（对照 m3: mio-toc > nav）
+    156px宽, margin 112px 24px 0, sticky top
+    指示器: border-only (1px solid outline), translateY + height 动画, hide 状态 opacity:0
+    ================================================================ */
 .toc {
   flex: 0 0 156px;
   width: 156px;
@@ -409,15 +541,28 @@ function formatDate(dateStr) {
   margin: 0 16px 8px;
 }
 
+/* ====== 指示器（对照 m3: .indicator, border-only pill） ====== */
 .toc__indicator {
-  width: 156px;
-  height: 36px;
-  border-radius: 18px;
-  background: transparent;
-  margin: 0;
   position: absolute;
+  width: 156px;
+  left: 0;
+  /* top = overline + title 高度（动态计算，因标题可能换行） */
+  top: v-bind(indicatorTop + 'px');
+  border: 1px solid var(--md-sys-color-outline, #79747e);
+  border-radius: 18px;
+  background-color: rgba(0, 0, 0, 0);
+  opacity: 1;
   z-index: -1;
-  transition: transform 300ms cubic-bezier(0.2, 0, 0, 1), background-color 200ms cubic-bezier(0.2, 0, 0, 1);
+  pointer-events: none;
+  /* 对照 m3: transition transform 0.5s, opacity 0.2s, height 0.5s, cubic-bezier(0.2,0,0,1) */
+  transition: transform 0.5s cubic-bezier(0.2, 0, 0, 1),
+              opacity 0.2s cubic-bezier(0.2, 0, 0, 1),
+              height 0.5s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* hide 状态：opacity: 0（对照 m3: .indicator.hide { opacity: 0 }） */
+.toc__indicator--hide {
+  opacity: 0;
 }
 
 .toc__list {
@@ -428,31 +573,39 @@ function formatDate(dateStr) {
 
 .toc__item {
   display: flex;
-  padding: 8px 16px;
+  padding: 16px;
+  height: 56px;
+  box-sizing: border-box;
   border-radius: 18px;
   cursor: pointer;
+  align-items: center;
   transition: background-color 200ms cubic-bezier(0.2, 0, 0, 1);
 }
 
 .toc__item:hover {
-  background: var(--md-sys-color-surface-variant, #e8e0e8);
+  background: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 8%, transparent);
 }
 
-.toc__item--active {
-  background: var(--md-sys-color-secondary-container, #e8def8);
-}
+/* 注意: m3 的 active item 没有背景色, 指示器用 border pill 代替 */
 
+/* 对照 m3: .toc-item — body-m 字号 */
 .toc__link {
   font-size: 14px;
   font-weight: 400;
   line-height: 20px;
-  color: var(--md-sys-color-on-surface-variant, #4d4256);
+  letter-spacing: 0.1px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
   text-decoration: none;
   border-radius: 4px;
+  font-variation-settings: "GRAD" 0;
+  transition: color 200ms cubic-bezier(0.2, 0, 0, 1),
+              font-variation-settings 200ms cubic-bezier(0.2, 0, 0, 1);
 }
 
-.toc__item--active .toc__link {
+/* 对照 m3: .toc-item.toc-item-selected — color on-secondary-container, GRAD 125 */
+.toc__link--selected {
   color: var(--md-sys-color-on-secondary-container, #1d192b);
+  font-variation-settings: "GRAD" 125;
 }
 
 /* 移动端隐藏 TOC */
@@ -794,15 +947,15 @@ function formatDate(dateStr) {
   color: var(--md-sys-color-on-primary-container, #eaddff);
 }
 
-:global([data-theme="dark"]) .toc__item--active {
-  background: var(--md-sys-color-secondary-container, #4a4458);
+:global([data-theme="dark"]) .toc__indicator {
+  border-color: var(--md-sys-color-outline, #938f99);
 }
 
 :global([data-theme="dark"]) .toc__item:hover {
-  background: var(--md-sys-color-surface-variant, #49454f);
+  background: color-mix(in srgb, var(--md-sys-color-primary, #d0bcff) 8%, transparent);
 }
 
-:global([data-theme="dark"]) .toc__item--active .toc__link {
+:global([data-theme="dark"]) .toc__link--selected {
   color: var(--md-sys-color-on-secondary-container, #e8def8);
 }
 </style>
