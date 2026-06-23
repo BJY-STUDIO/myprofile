@@ -617,6 +617,7 @@ function formatDate(dateStr) {
   position: relative;
   z-index: auto;
   min-width: 0;
+  flex-shrink: 0;
 }
 
 .thumbnail > .content-container .date {
@@ -670,6 +671,8 @@ function formatDate(dateStr) {
   justify-content: center;
   position: relative;
   z-index: 1;
+  width: 100%;
+  flex-shrink: 0;
 }
 
 .thumb-icon {
@@ -696,6 +699,8 @@ function formatDate(dateStr) {
 
 .feature-card.thumbnail > .content-container {
   align-self: center;
+  width: calc(100% - 48px);
+  overflow: hidden;
 }
 
 .feature-card.thumbnail > .thumb-container {
@@ -703,6 +708,7 @@ function formatDate(dateStr) {
   order: -1;
 }
 
+/* feature-card 窄屏：inline-flex column-reverse（对照 m3 @ ≤1294px） */
 @media screen and (max-width: 1294px) {
   .feature-card.thumbnail {
     display: inline-flex;
@@ -710,11 +716,7 @@ function formatDate(dateStr) {
   }
   .feature-card.thumbnail > .thumb-container {
     min-height: 200px;
-    border-radius: 24px;
     order: 0;
-  }
-  .feature-card.thumbnail > .content-container {
-    margin: 16px;
   }
 }
 
@@ -731,18 +733,20 @@ function formatDate(dateStr) {
 
 .regular-card.thumbnail > .content-container {
   align-self: start;
+  width: calc(100% - 48px);
+  overflow: hidden;
 }
 
 .regular-card.thumbnail > .thumb-container {
   height: 298px;
 }
 
-/* 移动端 regular-card content 适配 */
+/* 移动端 thumb 高度缩小（对照 m3 @ ≤600px: thumb h 200px） */
 @media screen and (max-width: 600px) {
-  .regular-card.thumbnail > .content-container {
-    margin: 16px;
-  }
   .regular-card.thumbnail > .thumb-container {
+    height: 200px;
+  }
+  .feature-card.thumbnail > .thumb-container {
     min-height: 200px;
   }
 }
