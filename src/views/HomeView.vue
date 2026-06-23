@@ -612,12 +612,15 @@ function formatDate(dateStr) {
    ================================================================ */
 .thumbnail > .content-container {
   display: grid;
+  grid-template-columns: 1fr;
   gap: 8px;
   margin: 24px;
   position: relative;
   z-index: auto;
   min-width: 0;
   flex-shrink: 0;
+  max-width: none;
+  justify-content: start;
 }
 
 .thumbnail > .content-container .date {
@@ -633,6 +636,7 @@ function formatDate(dateStr) {
   display: flex;
   gap: 5px;
   align-items: flex-start;
+  justify-content: space-between;
 }
 
 .thumbnail > .content-container .title {
