@@ -671,8 +671,7 @@ function gradient(id) {
 }
 
 .regular-card.thumbnail > .thumb-container {
-  flex: 1 1 auto;
-  min-height: 298px;
+  height: 298px;
 }
 
 /* 移动端 regular-card content 适配 */
