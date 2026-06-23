@@ -64,7 +64,7 @@
               @mousedown="onCardClick"
             >
               <div class="content-container">
-                <span class="date">{{ section.feature.date }}</span>
+                <span v-if="section.feature.date" class="date">{{ formatDate(section.feature.date) }}</span>
                 <span class="mio-title-row">
                   <span class="title">{{ section.feature.title }}</span>
                 </span>
@@ -85,7 +85,7 @@
               @mousedown="onCardClick"
             >
               <div class="content-container">
-                <span v-if="post.date" class="date">{{ post.date }}</span>
+                <span v-if="post.date" class="date">{{ formatDate(post.date) }}</span>
                 <span class="mio-title-row">
                   <span class="title">{{ post.title }}</span>
                 </span>
@@ -169,7 +169,7 @@ const sections = ref([
         id: 4,
         title: "Kernel's Blog",
         excerpt: '基于 Vue 3 + Material Web 的个人博客站点，严格遵循 M3 规范。',
-        date: 'Vue 3 · Material Web · Vite',
+        date: '2026-06-20',
         icon: 'web',
         route: '/projects/web',
       },
@@ -177,7 +177,7 @@ const sections = ref([
         id: 5,
         title: '数据可视化工具集',
         excerpt: '面向电信行业的数据抓取、清洗与可视化展示工具。',
-        date: 'Python · ECharts · Pandas',
+        date: '2026-03-28',
         icon: 'analytics',
         route: '/projects/tools',
       },
@@ -207,6 +207,14 @@ const gradients = [
 
 function gradient(id) {
   return gradients[id % gradients.length]
+}
+
+// 日期格式化（对照 m3: "Jun 18, 2026"）
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return dateStr // 不是合法日期则原样返回
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 </script>
 

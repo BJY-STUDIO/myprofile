@@ -76,7 +76,7 @@ const M3_BASELINE_DARK = {
   '--md-sys-color-surface-container-high': '#2b2930',
   '--md-sys-color-surface-container-highest': '#36343b',
   '--md-sys-color-surface-2': '#211f26',
-  '--md-sys-color-surface-dim': '#1c1b1f',
+  '--md-sys-color-surface-dim': '#141314',
   '--md-sys-color-surface-bright': '#36343b',
   '--md-sys-color-inverse-surface': '#e6e1e5',
   '--md-sys-color-inverse-on-surface': '#313033',
@@ -253,6 +253,13 @@ export function applyThemeFromHCT(hue, chroma, darkMode) {
   for (const [key, value] of Object.entries(tokens)) {
     document.documentElement.style.setProperty(key, value)
   }
+
+  // 页面背景：亮色用 surface，暗色用 surface-dim（对照 m3.material.io）
+  const bgToken = isDark ? '--md-sys-color-surface-dim' : '--md-sys-color-surface'
+  const bgFallback = isDark ? '#141314' : '#fffbfe'
+  document.documentElement.style.setProperty('--mio-bg',
+    tokens[bgToken] || getComputedStyle(document.documentElement).getPropertyValue(bgToken).trim() || bgFallback
+  )
 }
 
 /**
