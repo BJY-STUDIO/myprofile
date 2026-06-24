@@ -10,16 +10,15 @@
       <span class="material-symbols-rounded" slot="leading-icon">search</span>
     </md-outlined-text-field>
     <div class="icon-picker__grid">
-      <button
-        v-for="icon in filteredIcons"
-        :key="icon"
-        class="icon-picker__item"
-        :class="{ 'icon-picker__item--active': modelValue === icon }"
-        @click="$emit('update:modelValue', icon)"
-      >
-        <span class="material-symbols-rounded">{{ icon }}</span>
-        <span class="icon-picker__label">{{ icon }}</span>
-      </button>
+      <md-chip-set>
+        <md-filter-chip
+          v-for="icon in filteredIcons"
+          :key="icon"
+          :selected="modelValue === icon"
+          @click="$emit('update:modelValue', icon)"
+          :label="icon"
+        ></md-filter-chip>
+      </md-chip-set>
     </div>
   </div>
 </template>
@@ -27,6 +26,8 @@
 <script setup>
 import { ref, computed } from 'vue'
 import '@material/web/textfield/outlined-text-field'
+import '@material/web/chips/chip-set'
+import '@material/web/chips/filter-chip'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -89,48 +90,12 @@ const filteredIcons = computed(() => {
 }
 
 .icon-picker__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
-  gap: 4px;
   max-height: 280px;
   overflow-y: auto;
   padding: 4px;
 }
 
-.icon-picker__item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 8px 4px;
-  border: 1px solid transparent;
-  border-radius: 12px;
-  background: none;
-  cursor: pointer;
-  color: var(--md-sys-color-on-surface, #1c1b1f);
-  transition: background-color 0.2s, border-color 0.2s;
-}
-
-.icon-picker__item:hover {
-  background: color-mix(in srgb, var(--md-sys-color-on-surface, #1c1b1f) 8%, transparent);
-}
-
-.icon-picker__item--active {
-  border-color: var(--md-sys-color-primary, #6750a4);
-  background: var(--md-sys-color-primary-container, #eaddff);
-}
-
-.icon-picker__item .material-symbols-rounded {
-  font-size: 24px;
-}
-
-.icon-picker__label {
-  font-size: 9px;
-  line-height: 12px;
-  text-align: center;
-  max-width: 64px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.icon-picker__grid md-chip-set {
+  flex-wrap: wrap;
 }
 </style>

@@ -139,46 +139,6 @@ function onAddPage() {
   display: block;
 }
 
-.page-editor__page-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.page-chip {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border: 1px solid var(--md-sys-color-outline, #79747e);
-  border-radius: 20px;
-  background: none;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
-}
-
-.page-chip:hover {
-  background: color-mix(in srgb, var(--md-sys-color-on-surface, #1c1b1f) 8%, transparent);
-}
-
-.page-chip--active {
-  background: var(--md-sys-color-secondary-container, #e8def8);
-  border-color: transparent;
-  color: var(--md-sys-color-on-secondary-container, #1d192b);
-}
-
-.page-chip--add {
-  border-style: dashed;
-  color: var(--md-sys-color-primary, #6750a4);
-}
-
-.page-chip__icon {
-  font-size: 18px;
-}
-
 .page-editor__form {
   display: flex;
   flex-direction: column;

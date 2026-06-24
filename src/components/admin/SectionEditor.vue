@@ -207,12 +207,12 @@
         <div class="icon-field">
           <label class="field-label">图标</label>
           <div class="icon-field__preview">
-            <span class="material-symbols-rounded">{{ editingCard?.icon || 'article' }}</span>
+            <span class="material-symbols-rounded">{{ pickedCardIcon || editingCard?.icon || 'article' }}</span>
             <md-outlined-button type="button" @click="showCardIconPicker = !showCardIconPicker">选择图标</md-outlined-button>
           </div>
           <IconPicker
             v-if="showCardIconPicker"
-            :modelValue="editingCard?.icon || 'article'"
+            :modelValue="pickedCardIcon || editingCard?.icon || 'article'"
             @update:modelValue="onPickCardIcon"
           />
         </div>
@@ -333,7 +333,6 @@ function openCardEditor(si, type, ci) {
 
 function onPickCardIcon(icon) {
   pickedCardIcon.value = icon
-  showCardIconPicker.value = false
   if (editingCard.value) {
     editingCard.value = { ...editingCard.value, icon }
   }

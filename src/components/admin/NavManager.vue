@@ -23,7 +23,7 @@
             <span class="nav-card__route">{{ item.route }}</span>
           </div>
           <div class="nav-card__actions">
-            <md-icon-button @click="editNav = i; showNavDialog = true">
+            <md-icon-button @click="editNav = i; pickedIcon = navItems[i]?.icon || 'article'; showNavDialog = true">
               <span class="material-symbols-rounded">edit</span>
             </md-icon-button>
             <md-icon-button @click="removeNav(i)">
@@ -67,10 +67,10 @@
         <div class="icon-field">
           <label class="icon-field__label">图标</label>
           <div class="icon-field__preview">
-            <span class="material-symbols-rounded">{{ editNav >= 0 ? navItems[editNav]?.icon : 'article' }}</span>
+            <span class="material-symbols-rounded">{{ pickedIcon || (editNav >= 0 ? navItems[editNav]?.icon : 'article') }}</span>
             <md-outlined-button @click="showIconPicker = !showIconPicker" type="button">选择图标</md-outlined-button>
           </div>
-          <IconPicker v-if="showIconPicker" :modelValue="editNav >= 0 ? navItems[editNav]?.icon : 'article'" @update:modelValue="onPickIcon" />
+          <IconPicker v-if="showIconPicker" :modelValue="pickedIcon || (editNav >= 0 ? navItems[editNav]?.icon : 'article')" @update:modelValue="onPickIcon" />
         </div>
       </form>
       <div slot="actions">
@@ -135,7 +135,6 @@ function onAddNav() {
 
 function onPickIcon(icon) {
   pickedIcon.value = icon
-  showIconPicker.value = false
 }
 
 function onSaveNav() {
