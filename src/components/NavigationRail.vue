@@ -481,6 +481,9 @@ function onItemLeave() {
 
 .nav-rail__action-btn {
   --md-icon-button-icon-size: 24px;
+  --md-icon-button-state-layer-width: 48px;
+  --md-icon-button-state-layer-height: 48px;
+  --md-icon-button-state-layer-shape: 24px;
 }
 
 /* ======== 暗色主题（通过 data-theme 属性切换） ======== */
