@@ -34,3 +34,12 @@ import '@material/web/fab/fab.js'
 import '@material/web/list/list.js'
 import '@material/web/list/list-item.js'
 import '@material/web/ripple/ripple.js'
+
+import '@material/web/select/outlined-select.js'
+import '@material/web/select/select-option.js'
+
+import '@material/web/switch/switch.js'
+
+import '@material/web/tabs/tabs.js'
+import '@material/web/tabs/primary-tab.js'
+import '@material/web/tabs/secondary-tab.js'

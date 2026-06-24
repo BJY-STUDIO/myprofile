@@ -5,8 +5,8 @@
       <div class="primary-container">
         <div class="wrapper">
           <div class="title">
-            <h1>Kernel's Blog</h1>
-            <div class="description">探索技术，记录生活。一个遵循 Material Design 3 规范的个人博客。</div>
+            <h1>{{ pageTitle }}</h1>
+            <div class="description">{{ pageDescription }}</div>
           </div>
         </div>
       </div>
@@ -21,7 +21,7 @@
       <aside class="toc">
         <nav aria-label="page content">
           <div class="toc__overline">On this page</div>
-          <h2 class="toc__title">Kernel's Blog</h2>
+          <h2 class="toc__title">{{ pageTitle }}</h2>
           <div
             class="toc__indicator"
             :class="{ 'toc__indicator--hide': activeSection < 0 }"
@@ -29,20 +29,20 @@
           ></div>
           <ul class="toc__list">
             <li
-              v-for="(section, i) in sections"
+              v-for="(tocItem, i) in tocSections"
               :key="i"
               role="link"
               tabindex="0"
               class="toc__item"
-              :aria-current="activeSection === i ? 'true' : 'false'"
-              @click="scrollToSection(i)"
-              @keydown.enter="scrollToSection(i)"
+              :aria-current="activeSection === sections.indexOf(tocItem) ? 'true' : 'false'"
+              @click="scrollToSection(sections.indexOf(tocItem))"
+              @keydown.enter="scrollToSection(sections.indexOf(tocItem))"
             >
               <a
                 class="toc__link"
-                :class="{ 'toc__link--selected': activeSection === i }"
+                :class="{ 'toc__link--selected': activeSection === sections.indexOf(tocItem) }"
                 @click.prevent
-              >{{ section.label }}</a>
+              >{{ tocItem.label }}</a>
             </li>
           </ul>
         </nav>
@@ -60,7 +60,7 @@
         >
           <!-- section-header（对照 m3: div.section-header, margin 24px） -->
           <div class="section-header">
-            <h2 :class="si === 0 ? '' : 'sub-heading'">{{ section.label }}</h2>
+            <h2 :class="section.headingLevel === 'section-header' ? '' : 'sub-heading'">{{ section.label }}</h2>
           </div>
 
           <!-- card-set（对照 m3: mio-card-set, grid, gap 8px） -->
@@ -114,6 +114,10 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { usePage } from '@/stores/blogStore'
+import store from '@/stores/blogStore'
+
+const pageApi = usePage('home')
 
 const activeSection = ref(-1) // -1 = 无激活态（hide 状态）
 
@@ -122,9 +126,23 @@ const indicatorTop = ref(0)   // 指示器 top（相对于 nav）
 const indicatorY = ref(0)     // translateY（当前激活 item 的相对偏移）
 const indicatorH = ref(36)    // 指示器高度（匹配 item 高度）
 
+// 从 blogStore 读取页面数据
+const sections = computed(() => {
+  const page = store.pages.home
+  if (!page?.sections) return []
+  return page.sections
+})
+
+// TOC 列表：只包含非 noJumplink 的 section（对照需求: section-header 中 noJumplink 的 h2 不进 TOC）
+const tocSections = computed(() => {
+  return sections.value.filter(s => !s.noJumplink)
+})
+
+// 页面标题和描述从 blogStore 读取
+const pageTitle = computed(() => store.pages.home?.title || "Kernel's Blog")
+const pageDescription = computed(() => store.pages.home?.description || '')
+
 // 计算 indicator inline style
-// 对照 m3: style="transform: translateY(Npx); height: Npx"
-// hide 态只改 opacity，不改 transform/height
 const indicatorStyle = computed(() => {
   return {
     transform: `translateY(${indicatorY.value}px)`,
@@ -132,15 +150,19 @@ const indicatorStyle = computed(() => {
   }
 })
 
-// 更新指示器位置：读取激活 item 的 DOM 位置
-function updateIndicatorPosition(index) {
-  if (index < 0) return
+// 更新指示器位置：读取激活 TOC item 的 DOM 位置
+function updateIndicatorPosition(sectionIndex) {
+  if (sectionIndex < 0) return
   const nav = document.querySelector('.toc nav')
-  const items = document.querySelectorAll('.toc__item')
-  if (!nav || !items[index]) return
+  const tocItems = document.querySelectorAll('.toc__item')
+  if (!nav || !tocItems.length) return
+
+  // 找到该 sectionIndex 对应的 TOC item 索引
+  const tocIdx = tocSections.value.findIndex(s => sections.value.indexOf(s) === sectionIndex)
+  if (tocIdx < 0 || !tocItems[tocIdx]) return
 
   const navRect = nav.getBoundingClientRect()
-  const itemRect = items[index].getBoundingClientRect()
+  const itemRect = tocItems[tocIdx].getBoundingClientRect()
 
   indicatorY.value = Math.round(itemRect.top - navRect.top - indicatorTop.value)
   indicatorH.value = Math.round(itemRect.height)
@@ -250,70 +272,6 @@ function onCardClick(e) {
     ripple.classList.add('ripple--active')
   }
 }
-
-const sections = ref([
-  {
-    label: 'Featured',
-    feature: {
-      id: 1,
-      title: 'Vue 3 Composition API 实战指南',
-      excerpt: '深入理解 setup 语法、响应式原理与组合式函数的设计模式。',
-      date: '2026-06-18',
-      icon: 'code',
-      route: '/blog/tech',
-    },
-    items: [
-      {
-        id: 2,
-        title: 'Material Design 3 主题系统解析',
-        excerpt: '从 HCT 色彩空间到动态配色，了解 Google 最新设计语言的色彩体系。',
-        date: '2026-06-12',
-        icon: 'palette',
-        route: '/blog/tech',
-      },
-      {
-        id: 3,
-        title: '我的 2026 上半年阅读清单',
-        excerpt: '分享上半年读过的几本好书，涵盖技术、设计和思维方式。',
-        date: '2026-06-05',
-        icon: 'menu_book',
-        route: '/blog/life',
-      },
-    ],
-  },
-  {
-    label: 'Projects',
-    items: [
-      {
-        id: 4,
-        title: "Kernel's Blog",
-        excerpt: '基于 Vue 3 + Material Web 的个人博客站点，严格遵循 M3 规范。',
-        icon: 'web',
-        route: '/projects/web',
-      },
-      {
-        id: 5,
-        title: '数据可视化工具集',
-        excerpt: '面向电信行业的数据抓取、清洗与可视化展示工具。',
-        icon: 'analytics',
-        route: '/projects/tools',
-      },
-    ],
-  },
-  {
-    label: '2026',
-    items: [
-      {
-        id: 6,
-        title: '考核题库管理平台',
-        excerpt: '客户经理培训考核系统，支持题目录入、组卷与成绩统计。',
-        date: '2026-03-15',
-        icon: 'school',
-        route: '/projects/web',
-      },
-    ],
-  },
-])
 
 const gradients = [
   'linear-gradient(135deg, var(--md-sys-color-primary-container, #eaddff) 0%, var(--md-sys-color-secondary-container, #e8def8) 50%, var(--md-sys-color-tertiary-container, #ffd8e4) 100%)',

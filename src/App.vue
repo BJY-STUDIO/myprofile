@@ -2,52 +2,36 @@
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import NavigationRail from '@/components/NavigationRail.vue'
+import { useNavItems } from '@/stores/blogStore'
+import store from '@/stores/blogStore'
 
 const route = useRoute()
 const router = useRouter()
 
-const navItems = [
-  { id: 'home', label: '首页', icon: 'home', activeIcon: 'home', route: '/' },
-  { id: 'about', label: '关于', icon: 'person_outline', activeIcon: 'person', route: '/about' },
-  {
-    id: 'blog', label: '博客', icon: 'description', activeIcon: 'description', route: '/blog',
-    children: [
-      { id: 'blog-overview', label: '全部文章', route: '/blog' },
-      { id: 'blog-tech', label: '技术', route: '/blog/tech' },
-      { id: 'blog-life', label: '生活', route: '/blog/life' },
-    ],
-  },
-  {
-    id: 'projects', label: '项目', icon: 'code', activeIcon: 'code', route: '/projects',
-    children: [
-      { id: 'projects-overview', label: '全部项目', route: '/projects' },
-      { id: 'projects-web', label: 'Web 应用', route: '/projects/web' },
-      { id: 'projects-tools', label: '工具', route: '/projects/tools' },
-    ],
-  },
-  { id: 'contact', label: '联系', icon: 'mail_outline', activeIcon: 'mail', route: '/contact' },
-]
+const navApi = useNavItems()
+const navItems = computed(() => navApi.navItems())
 
 const fabConfig = { icon: 'create', label: '新建' }
 
 const activeNavId = computed(() => {
-  const matched = navItems.find(
+  const items = navItems.value
+  const matched = items.find(
     (item) => route.path === item.route || route.path.startsWith(item.route + '/')
   )
-  return matched ? matched.id : navItems[0].id
+  return matched ? matched.id : items[0]?.id
 })
 
 // ======== 二级子菜单面板 ========
 const PERSISTENT_THRESHOLD = 1200 // 常驻模式的最小宽度
 
 const activeSubItems = computed(() => {
-  const activeItem = navItems.find(item => item.id === activeNavId.value)
+  const activeItem = navItems.value.find(item => item.id === activeNavId.value)
   return activeItem?.children || null
 })
 
 // 当前活跃一级菜单项的完整数据
 const activeNavItem = computed(() => {
-  return navItems.find(item => item.id === activeNavId.value)
+  return navItems.value.find(item => item.id === activeNavId.value)
 })
 
 const activeSubItemId = computed(() => {
@@ -100,7 +84,7 @@ const displaySubItems = computed(() => {
   if (!isWideScreen.value) return null
   // hover 优先（悬停模式，浮动不压缩页面）
   if (hoveredNavId.value) {
-    const hoverItem = navItems.find(i => i.id === hoveredNavId.value)
+    const hoverItem = navItems.value.find(i => i.id === hoveredNavId.value)
     if (hoverItem?.children) return hoverItem.children
   }
   // 常驻模式：显示 active 项的子菜单
@@ -111,7 +95,7 @@ const displaySubItems = computed(() => {
 // 当前子面板显示的是哪个父菜单（用于 Transition key 触发 fade）
 const displayParentId = computed(() => {
   if (hoveredNavId.value) {
-    const hoverItem = navItems.find(i => i.id === hoveredNavId.value)
+    const hoverItem = navItems.value.find(i => i.id === hoveredNavId.value)
     if (hoverItem?.children) return hoveredNavId.value
   }
   if (isPersistentPanel.value) return activeNavId.value
@@ -123,7 +107,7 @@ const subPanelVisible = computed(() => {
   if (!isWideScreen.value) return false
   // hover 触发：任何有 children 的项被悬停时都显示
   if (hoveredNavId.value) {
-    const hoverItem = navItems.find(i => i.id === hoveredNavId.value)
+    const hoverItem = navItems.value.find(i => i.id === hoveredNavId.value)
     if (hoverItem?.children) return true
   }
   // 常驻触发：仅在 persistent 模式下自动显示 active 项的子菜单
@@ -135,7 +119,7 @@ const isHoverMode = computed(() => {
   if (!subPanelVisible.value) return false
   // 如果是因为 hover 而显示的 → hover 模式
   if (hoveredNavId.value) {
-    const hoverItem = navItems.find(i => i.id === hoveredNavId.value)
+    const hoverItem = navItems.value.find(i => i.id === hoveredNavId.value)
     if (hoverItem?.children) return true
   }
   // 如果 active 就是当前显示的内容，但屏幕不够宽做常驻 → 也算 hover 模式
@@ -175,7 +159,7 @@ function onRailItemHover(itemId) {
 // hover 离开 Rail 项（延迟清除，给鼠标移到子面板留时间）
 function onRailItemLeave() {
   // 只有当前 hover 项有 children 时才延迟，否则立即清除
-  const item = navItems.find(i => i.id === hoveredNavId.value)
+  const item = navItems.value.find(i => i.id === hoveredNavId.value)
   if (item?.children) {
     hoverLeaveTimer.value = setTimeout(() => {
       hoveredNavId.value = null
@@ -266,14 +250,14 @@ function onDrawerItemClick(item) {
 // 当前子菜单的子项列表
 const drawerSubItems = computed(() => {
   if (!drawerSubMenu.value) return null
-  const parent = navItems.find(i => i.id === drawerSubMenu.value)
+  const parent = navItems.value.find(i => i.id === drawerSubMenu.value)
   return parent?.children || null
 })
 
 // 当前子菜单的父级项数据
 const drawerSubParent = computed(() => {
   if (!drawerSubMenu.value) return null
-  return navItems.find(i => i.id === drawerSubMenu.value) || null
+  return navItems.value.find(i => i.id === drawerSubMenu.value) || null
 })
 
 // 桌面端内容区左边距
