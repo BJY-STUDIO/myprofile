@@ -7,22 +7,21 @@
     <!-- 页面选择 -->
     <div class="page-editor__selector">
       <label class="field-label">选择页面</label>
-      <div class="page-editor__page-list">
-        <button
+      <md-chip-set>
+        <md-filter-chip
           v-for="(page, key) in pages"
           :key="key"
-          class="page-chip"
-          :class="{ 'page-chip--active': selectedPageId === key }"
+          :selected="selectedPageId === key"
           @click="selectedPageId = key"
+          :label="page.title || key"
+        ></md-filter-chip>
+        <md-filter-chip
+          @click="onAddPage"
+          label="新页面"
         >
-          <span class="material-symbols-rounded page-chip__icon">article</span>
-          {{ page.title || key }}
-        </button>
-        <button class="page-chip page-chip--add" @click="onAddPage">
-          <span class="material-symbols-rounded">add</span>
-          新页面
-        </button>
-      </div>
+          <span class="material-symbols-rounded" slot="trailing-icon">add</span>
+        </md-filter-chip>
+      </md-chip-set>
     </div>
 
     <!-- 页面编辑表单 -->
@@ -71,6 +70,8 @@ import { ref, computed, watch } from 'vue'
 import { usePage } from '@/stores/blogStore'
 import store from '@/stores/blogStore'
 import '@material/web/textfield/outlined-text-field'
+import '@material/web/chips/chip-set'
+import '@material/web/chips/filter-chip'
 
 const pages = computed(() => store.pages)
 const selectedPageId = ref(Object.keys(store.pages)[0] || '')

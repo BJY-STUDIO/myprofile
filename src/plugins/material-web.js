@@ -43,3 +43,9 @@ import '@material/web/switch/switch.js'
 import '@material/web/tabs/tabs.js'
 import '@material/web/tabs/primary-tab.js'
 import '@material/web/tabs/secondary-tab.js'
+
+import '@material/web/chips/chip-set.js'
+import '@material/web/chips/filter-chip.js'
+
+import '@material/web/labs/segmentedbuttonset/outlined-segmented-button-set.js'
+import '@material/web/labs/segmentedbutton/outlined-segmented-button.js'

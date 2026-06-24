@@ -7,17 +7,15 @@
     <!-- 页面选择 -->
     <div class="section-editor__selector">
       <label class="field-label">选择页面</label>
-      <div class="section-editor__page-list">
-        <button
+      <md-chip-set>
+        <md-filter-chip
           v-for="(_, key) in pages"
           :key="key"
-          class="page-chip"
-          :class="{ 'page-chip--active': selectedPageId === key }"
+          :selected="selectedPageId === key"
           @click="selectedPageId = key"
-        >
-          {{ key }}
-        </button>
-      </div>
+          :label="key"
+        ></md-filter-chip>
+      </md-chip-set>
     </div>
 
     <!-- TOC 预览 -->
@@ -145,31 +143,27 @@
         ></md-outlined-text-field>
         <div class="field-group">
           <label class="field-label">标题级别</label>
-          <div class="toggle-group">
-            <button
-              type="button"
-              class="toggle-btn"
-              :class="{ 'toggle-btn--active': dialogHeadingLevel === 'section-header' }"
+          <md-outlined-segmented-button-set>
+            <md-outlined-segmented-button
+              :selected="dialogHeadingLevel === 'section-header'"
               @click="dialogHeadingLevel = 'section-header'"
-            >Section Header (H2)</button>
-            <button
-              type="button"
-              class="toggle-btn"
-              :class="{ 'toggle-btn--active': dialogHeadingLevel === 'sub-heading' }"
+              label="Section Header (H2)"
+            ></md-outlined-segmented-button>
+            <md-outlined-segmented-button
+              :selected="dialogHeadingLevel === 'sub-heading'"
               @click="dialogHeadingLevel = 'sub-heading'"
-            >Sub Heading (H3)</button>
-          </div>
+              label="Sub Heading (H3)"
+            ></md-outlined-segmented-button>
+          </md-outlined-segmented-button-set>
         </div>
         <div class="field-group">
           <label class="field-label">加入 TOC 目录</label>
-          <label class="switch-row">
-            <md-switch
-              :selected="!dialogNoJumplink"
-              @change="dialogNoJumplink = !$event.target.selected"
-              icons
-            ></md-switch>
-            <span class="switch-row__label">{{ dialogNoJumplink ? '不加入' : '加入' }}</span>
-          </label>
+          <md-switch
+            :selected="!dialogNoJumplink"
+            @change="dialogNoJumplink = !$event.target.selected"
+            icons
+          ></md-switch>
+          <span class="switch-label">{{ dialogNoJumplink ? '不加入' : '加入' }}</span>
         </div>
       </form>
       <div slot="actions">
@@ -251,6 +245,10 @@ import '@material/web/iconbutton/icon-button'
 import '@material/web/dialog/dialog'
 import '@material/web/textfield/outlined-text-field'
 import '@material/web/switch/switch'
+import '@material/web/chips/chip-set'
+import '@material/web/chips/filter-chip'
+import '@material/web/labs/segmentedbuttonset/outlined-segmented-button-set'
+import '@material/web/labs/segmentedbutton/outlined-segmented-button'
 
 const pages = computed(() => store.pages)
 const selectedPageId = ref(Object.keys(store.pages)[0] || '')
@@ -403,37 +401,6 @@ function removeCard(si, type, ci) {
   color: var(--md-sys-color-on-surface-variant, #49454f);
   margin-bottom: 8px;
   display: block;
-}
-
-.section-editor__page-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.page-chip {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border: 1px solid var(--md-sys-color-outline, #79747e);
-  border-radius: 20px;
-  background: none;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
-}
-
-.page-chip:hover {
-  background: color-mix(in srgb, var(--md-sys-color-on-surface, #1c1b1f) 8%, transparent);
-}
-
-.page-chip--active {
-  background: var(--md-sys-color-secondary-container, #e8def8);
-  border-color: transparent;
-  color: var(--md-sys-color-on-secondary-container, #1d192b);
 }
 
 /* TOC 预览 */
@@ -627,45 +594,10 @@ function removeCard(si, type, ci) {
   gap: 6px;
 }
 
-.toggle-group {
-  display: flex;
-  gap: 0;
-  border: 1px solid var(--md-sys-color-outline, #79747e);
-  border-radius: 20px;
-  overflow: hidden;
-}
-
-.toggle-btn {
-  flex: 1;
-  padding: 8px 12px;
-  border: none;
-  background: none;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
-}
-
-.toggle-btn:first-child {
-  border-right: 1px solid var(--md-sys-color-outline, #79747e);
-}
-
-.toggle-btn--active {
-  background: var(--md-sys-color-secondary-container, #e8def8);
-  color: var(--md-sys-color-on-secondary-container, #1d192b);
-}
-
-.switch-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-}
-
-.switch-row__label {
+.switch-label {
   font-size: 14px;
   color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin-left: 12px;
 }
 
 .icon-field {

@@ -9,18 +9,12 @@
     </div>
 
     <!-- 标签栏切换 -->
-    <div class="admin-view__tabs">
-      <button
-        v-for="tab in tabs"
-        :key="tab.id"
-        class="admin-tab"
-        :class="{ 'admin-tab--active': activeTab === tab.id }"
-        @click="activeTab = tab.id"
-      >
-        <span class="material-symbols-rounded admin-tab__icon">{{ tab.icon }}</span>
-        <span class="admin-tab__label">{{ tab.label }}</span>
-      </button>
-    </div>
+    <md-tabs :active-tab-index="activeTabIdx" @change="onTabChange">
+      <md-secondary-tab v-for="tab in tabs" :key="tab.id" :inline-icon="true">
+        <span class="material-symbols-rounded" slot="icon">{{ tab.icon }}</span>
+        {{ tab.label }}
+      </md-secondary-tab>
+    </md-tabs>
 
     <!-- 内容区 -->
     <div class="admin-view__content">
@@ -32,12 +26,14 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { resetStore } from '@/stores/blogStore'
 import NavManager from '@/components/admin/NavManager.vue'
 import PageEditor from '@/components/admin/PageEditor.vue'
 import SectionEditor from '@/components/admin/SectionEditor.vue'
 import '@material/web/button/outlined-button'
+import '@material/web/tabs/tabs'
+import '@material/web/tabs/secondary-tab'
 
 const activeTab = ref('nav')
 
@@ -46,6 +42,13 @@ const tabs = [
   { id: 'page', label: '页面信息', icon: 'article' },
   { id: 'section', label: '区块与卡片', icon: 'dashboard' },
 ]
+
+const activeTabIdx = computed(() => tabs.findIndex(t => t.id === activeTab.value))
+
+function onTabChange(e) {
+  const idx = e.target.activeTabIndex
+  if (idx >= 0 && idx < tabs.length) activeTab.value = tabs[idx].id
+}
 
 function onReset() {
   if (confirm('确认重置所有数据为默认值？此操作不可恢复。')) {
@@ -78,56 +81,8 @@ function onReset() {
   margin: 0;
 }
 
-.admin-view__tabs {
-  display: flex;
-  gap: 8px;
+md-tabs {
   margin-bottom: 24px;
-  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  padding-bottom: 4px;
-}
-
-.admin-tab {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border: none;
-  border-radius: 20px 20px 0 0;
-  background: none;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: 0.1px;
-  position: relative;
-  transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1),
-              color 0.2s cubic-bezier(0.2, 0, 0, 1);
-}
-
-.admin-tab:hover {
-  background: color-mix(in srgb, var(--md-sys-color-on-surface, #1c1b1f) 8%, transparent);
-}
-
-.admin-tab--active {
-  color: var(--md-sys-color-on-secondary-container, #1d192b);
-  background: var(--md-sys-color-secondary-container, #e8def8);
-}
-
-.admin-tab--active:hover {
-  background: color-mix(in srgb, var(--md-sys-color-secondary-container, #e8def8) 90%, var(--md-sys-color-on-surface, #1c1b1f) 8%);
-}
-
-.admin-tab__icon {
-  font-size: 20px;
-}
-
-.admin-tab__label {
-  font-variation-settings: "GRAD" 0;
-  transition: font-variation-settings 0.2s;
-}
-
-.admin-tab--active .admin-tab__label {
-  font-variation-settings: "GRAD" 125;
 }
 
 .admin-view__content {
