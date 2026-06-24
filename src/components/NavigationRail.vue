@@ -82,13 +82,13 @@ function onItemLeave() {
     <div class="nav-rail__top">
       <!-- FAB 区域 -->
       <div v-if="fab" class="nav-rail__fab-container">
-        <button
-          class="nav-rail__fab"
+        <md-fab
           :aria-label="fab.label"
           @click="emit('fab-click')"
+          size="small"
         >
-          <span class="material-symbols-rounded">{{ fab.icon }}</span>
-        </button>
+          <span class="material-symbols-rounded" slot="icon">{{ fab.icon }}</span>
+        </md-fab>
       </div>
 
       <div v-else class="nav-rail__fab-spacer"></div>
@@ -138,14 +138,14 @@ function onItemLeave() {
             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
           </svg>
         </a>
-        <button
+        <md-icon-button
           id="theme-btn"
           class="nav-rail__action-btn"
           aria-label="Toggle theme"
           title="Toggle theme"
         >
           <span class="material-symbols-rounded">palette</span>
-        </button>
+        </md-icon-button>
       </div>
     </div>
   </nav>
@@ -190,27 +190,8 @@ function onItemLeave() {
   height: 20px;
 }
 
-.nav-rail__fab {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  border: none;
-  background-color: var(--md-sys-color-tertiary-container, #ffd8e4);
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: box-shadow 0.2s cubic-bezier(0.2, 0, 0, 1), color 0.2s;
-}
-
-.nav-rail__fab:hover {
-  color: var(--md-sys-color-on-tertiary-container, #31111d);
-}
-
-.nav-rail__fab .material-symbols-rounded {
-  font-size: 24px;
-  margin-bottom: 0;
+.nav-rail__fab-container md-fab {
+  --md-fab-container-shape: 16px;
 }
 
 /* ======== 导航目标项 ======== */
@@ -421,67 +402,14 @@ function onItemLeave() {
   gap: 4px;
 }
 
-/* ======== 底部操作按钮（保留简单 state layer，无 ripple） ======== */
+/* ======== 底部操作按钮 ======== */
 .nav-rail__action-btn {
-  width: 48px;
-  height: 48px;
-  border-radius: 24px;
-  border: none;
-  background: none;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-  text-decoration: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.nav-rail__action-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 24px;
-  background-color: var(--md-sys-color-on-surface-variant, #49454f);
-  opacity: 0;
-  transition: opacity 0.2s;
-  pointer-events: none;
-}
-
-.nav-rail__action-btn:hover::before {
-  opacity: 0.08;
-}
-
-.nav-rail__action-btn:active::before {
-  opacity: 0.12;
-}
-
-.nav-rail__action-btn svg {
-  width: 24px;
-  height: 24px;
-  position: relative;
-  z-index: 1;
-}
-
-.nav-rail__action-btn .material-symbols-rounded {
-  font-size: 24px;
-  position: relative;
-  z-index: 1;
+  --md-icon-button-icon-size: 24px;
 }
 
 /* ======== 暗色主题（通过 data-theme 属性切换） ======== */
 :global([data-theme="dark"]) .nav-rail {
   background-color: var(--md-sys-color-surface-2, #1d1b20);
-}
-
-:global([data-theme="dark"]) .nav-rail__fab {
-  background-color: var(--md-sys-color-tertiary-container, #633b48);
-}
-
-:global([data-theme="dark"]) .nav-rail__fab:hover {
-  color: var(--md-sys-color-on-tertiary-container, #ffd8e4);
 }
 
 :global([data-theme="dark"]) .nav-rail__destination {
@@ -511,9 +439,5 @@ function onItemLeave() {
 
 :global([data-theme="dark"]) .nav-rail__action-btn {
   color: var(--md-sys-color-on-surface-variant, #cac4d0);
-}
-
-:global([data-theme="dark"]) .nav-rail__action-btn::before {
-  background-color: var(--md-sys-color-on-surface-variant, #cac4d0);
 }
 </style>

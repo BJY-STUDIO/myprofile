@@ -8,15 +8,15 @@
 
     <!-- 分类筛选 -->
     <div class="filter-bar">
-      <button
-        v-for="cat in categories"
-        :key="cat.id"
-        class="filter-chip"
-        :class="{ 'filter-chip--active': activeCategory === cat.id }"
-        @click="activeCategory = cat.id"
-      >
-        {{ cat.label }}
-      </button>
+      <md-chip-set>
+        <md-filter-chip
+          v-for="cat in categories"
+          :key="cat.id"
+          :selected="activeCategory === cat.id"
+          @click="activeCategory = cat.id"
+          :label="cat.label"
+        ></md-filter-chip>
+      </md-chip-set>
     </div>
 
     <!-- 项目卡片网格 -->
@@ -63,9 +63,9 @@
     <Teleport to="body">
       <div v-if="selectedProject" class="project-overlay" @click.self="selectedProject = null">
         <div class="project-detail">
-          <button class="project-detail__close" @click="selectedProject = null">
+          <md-icon-button class="project-detail__close" @click="selectedProject = null">
             <span class="material-symbols-rounded">close</span>
-          </button>
+          </md-icon-button>
           <span class="material-symbols-rounded project-detail__icon">{{ selectedProject.icon }}</span>
           <h1 class="project-detail__title">{{ selectedProject.title }}</h1>
           <p class="project-detail__desc">{{ selectedProject.description }}</p>
@@ -96,6 +96,9 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
+import '@material/web/chips/chip-set'
+import '@material/web/chips/filter-chip'
+import '@material/web/iconbutton/icon-button'
 
 const route = useRoute()
 const activeCategory = ref('all')
@@ -231,35 +234,7 @@ function statusLabel(status) {
 
 /* ======== Filter Bar ======== */
 .filter-bar {
-  display: flex;
-  gap: 8px;
   margin-bottom: 24px;
-  flex-wrap: wrap;
-}
-
-.filter-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 16px;
-  border-radius: 8px;
-  border: 1px solid var(--md-sys-color-outline, #79747e);
-  background: none;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
-  font-family: inherit;
-}
-
-.filter-chip:hover {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent);
-}
-
-.filter-chip--active {
-  background-color: var(--md-sys-color-secondary-container, #e8def8);
-  color: var(--md-sys-color-on-secondary-container, #1d192b);
-  border-color: transparent;
 }
 
 /* ======== Project Grid ======== */
@@ -435,21 +410,6 @@ function statusLabel(status) {
   position: absolute;
   top: 16px;
   right: 16px;
-  width: 40px;
-  height: 40px;
-  border-radius: 20px;
-  border: none;
-  background: none;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s;
-}
-
-.project-detail__close:hover {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent);
 }
 
 .project-detail__icon {
@@ -555,11 +515,6 @@ function statusLabel(status) {
 }
 
 /* ======== 暗色主题 ======== */
-:global([data-theme="dark"]) .filter-chip--active {
-  background-color: var(--md-sys-color-secondary-container, #4a4458);
-  color: var(--md-sys-color-on-secondary-container, #e8def8);
-}
-
 :global([data-theme="dark"]) .project-card {
   background-color: var(--md-sys-color-surface-container, #211f26);
 }

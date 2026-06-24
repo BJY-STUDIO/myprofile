@@ -8,16 +8,15 @@
 
     <!-- 分类筛选 -->
     <div class="filter-bar">
-      <button
-        v-for="cat in categories"
-        :key="cat.id"
-        class="filter-chip"
-        :class="{ 'filter-chip--active': activeCategory === cat.id }"
-        @click="activeCategory = cat.id"
-      >
-        <span class="material-symbols-rounded filter-chip__icon" v-if="cat.icon">{{ cat.icon }}</span>
-        {{ cat.label }}
-      </button>
+      <md-chip-set>
+        <md-filter-chip
+          v-for="cat in categories"
+          :key="cat.id"
+          :selected="activeCategory === cat.id"
+          @click="activeCategory = cat.id"
+          :label="cat.label"
+        ></md-filter-chip>
+      </md-chip-set>
     </div>
 
     <!-- 文章列表 -->
@@ -44,9 +43,9 @@
     <Teleport to="body">
       <div v-if="selectedPost" class="post-overlay" @click.self="selectedPost = null">
         <div class="post-detail">
-          <button class="post-detail__close" @click="selectedPost = null">
+          <md-icon-button class="post-detail__close" @click="selectedPost = null">
             <span class="material-symbols-rounded">close</span>
-          </button>
+          </md-icon-button>
           <div class="post-detail__badge">{{ selectedPost.category }}</div>
           <h1 class="post-detail__title">{{ selectedPost.title }}</h1>
           <div class="post-detail__meta">
@@ -65,6 +64,9 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
+import '@material/web/chips/chip-set'
+import '@material/web/chips/filter-chip'
+import '@material/web/iconbutton/icon-button'
 
 const route = useRoute()
 
@@ -214,41 +216,7 @@ function openPost(post) {
 
 /* ======== Filter Bar ======== */
 .filter-bar {
-  display: flex;
-  gap: 8px;
   margin-bottom: 24px;
-  flex-wrap: wrap;
-}
-
-.filter-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 16px;
-  border-radius: 8px;
-  border: 1px solid var(--md-sys-color-outline, #79747e);
-  background: none;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
-  font-family: inherit;
-}
-
-.filter-chip:hover {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent);
-}
-
-.filter-chip--active {
-  background-color: var(--md-sys-color-secondary-container, #e8def8);
-  color: var(--md-sys-color-on-secondary-container, #1d192b);
-  border-color: transparent;
-}
-
-.filter-chip__icon {
-  font-size: 18px;
-  font-variation-settings: "FILL" 0, "wght" 400;
 }
 
 /* ======== Post List ======== */
@@ -375,21 +343,6 @@ function openPost(post) {
   position: absolute;
   top: 16px;
   right: 16px;
-  width: 40px;
-  height: 40px;
-  border-radius: 20px;
-  border: none;
-  background: none;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s;
-}
-
-.post-detail__close:hover {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent);
 }
 
 .post-detail__badge {
@@ -446,11 +399,6 @@ function openPost(post) {
 }
 
 /* ======== 暗色主题 ======== */
-:global([data-theme="dark"]) .filter-chip--active {
-  background-color: var(--md-sys-color-secondary-container, #4a4458);
-  color: var(--md-sys-color-on-secondary-container, #e8def8);
-}
-
 :global([data-theme="dark"]) .post-card {
   background-color: var(--md-sys-color-surface-container, #211f26);
 }

@@ -322,14 +322,14 @@ const bodyMarginLeft = computed(() => {
     <div class="app-layout__body" :style="{ marginLeft: bodyMarginLeft }">
       <!-- 移动端：顶部 App Bar -->
       <header class="mobile-top-bar">
-        <button
+        <md-icon-button
           class="mobile-top-bar__menu-btn"
           :aria-label="drawerOpen ? 'close menu' : 'open menu'"
           :title="drawerOpen ? 'Close' : 'Menu'"
           @click="toggleDrawer"
         >
           <span class="material-symbols-rounded">{{ drawerOpen ? 'menu_open' : 'menu' }}</span>
-        </button>
+        </md-icon-button>
         <a class="mobile-top-bar__title" href="/">Kernel's Blog</a>
         <div class="mobile-top-bar__actions">
           <a
@@ -344,14 +344,14 @@ const bodyMarginLeft = computed(() => {
               <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
             </svg>
           </a>
-          <button
+          <md-icon-button
             id="theme-btn-mobile"
             class="mobile-top-bar__icon-btn"
             aria-label="Toggle theme"
             title="Toggle theme"
           >
             <span class="material-symbols-rounded">palette</span>
-          </button>
+          </md-icon-button>
         </div>
       </header>
 
@@ -380,13 +380,13 @@ const bodyMarginLeft = computed(() => {
       >
         <!-- Drawer 内部 close 按钮（官方: menu_open icon, margin: 0 0 8px 12px） -->
         <div class="nav-drawer__close-btn-wrap">
-          <button
+          <md-icon-button
             class="nav-drawer__close-btn"
             aria-label="close menu"
             @click="closeDrawer"
           >
             <span class="material-symbols-rounded">menu_open</span>
-          </button>
+          </md-icon-button>
         </div>
 
         <!-- 子菜单导航容器（带淡入淡出+微位移动画，对照 m3 @fadeInOutSectionModal / @fadeInOutSubsectionModal） -->
@@ -499,15 +499,15 @@ const bodyMarginLeft = computed(() => {
         <div class="theme-panel__section">
           <label class="theme-panel__label">Color Scheme</label>
           <div class="theme-panel__mode-buttons">
-            <button class="theme-mode-btn" data-mode="dark" aria-label="dark color scheme" title="Dark">
+            <md-icon-button class="theme-mode-btn" data-mode="dark" aria-label="dark color scheme" title="Dark">
               <span class="material-symbols-rounded">dark_mode</span>
-            </button>
-            <button class="theme-mode-btn" data-mode="system" aria-label="auto color scheme" title="Auto">
+            </md-icon-button>
+            <md-icon-button class="theme-mode-btn" data-mode="system" aria-label="auto color scheme" title="Auto">
               <span class="material-symbols-rounded">brightness_medium</span>
-            </button>
-            <button class="theme-mode-btn" data-mode="light" aria-label="light color scheme" title="Light">
+            </md-icon-button>
+            <md-icon-button class="theme-mode-btn" data-mode="light" aria-label="light color scheme" title="Light">
               <span class="material-symbols-rounded">light_mode</span>
-            </button>
+            </md-icon-button>
           </div>
         </div>
       </div>
@@ -575,44 +575,7 @@ const bodyMarginLeft = computed(() => {
 }
 
 .mobile-top-bar__menu-btn {
-  width: 48px;
-  height: 48px;
-  border-radius: 24px;
-  border: none;
-  background: none;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.mobile-top-bar__menu-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 24px;
-  background-color: var(--md-sys-color-on-surface-variant, #49454f);
-  opacity: 0;
-  transition: opacity 0.2s;
-  pointer-events: none;
-}
-
-.mobile-top-bar__menu-btn:hover::before {
-  opacity: 0.08;
-}
-
-.mobile-top-bar__menu-btn:active::before {
-  opacity: 0.12;
-}
-
-.mobile-top-bar__menu-btn .material-symbols-rounded {
-  font-size: 24px;
-  position: relative;
-  z-index: 1;
+  --md-icon-button-icon-size: 24px;
 }
 
 .mobile-top-bar__title {
@@ -725,55 +688,8 @@ const bodyMarginLeft = computed(() => {
 }
 
 .nav-drawer__close-btn {
-  width: 48px;
-  height: 48px;
-  border-radius: 24px;
-  border: none;
-  background: none;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  --md-icon-button-icon-size: 24px;
   margin: 0 0 8px 12px;
-  position: relative;
-  overflow: hidden;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.nav-drawer__close-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 24px;
-  background-color: var(--md-sys-color-on-surface-variant, #49454f);
-  opacity: 0;
-  transition: opacity 0.2s;
-  pointer-events: none;
-}
-
-.nav-drawer__close-btn:hover::before {
-  opacity: 0.08;
-}
-
-.nav-drawer__close-btn:active::before {
-  opacity: 0.12;
-}
-
-.nav-drawer__close-btn .material-symbols-rounded {
-  font-size: 24px;
-  font-variation-settings: "wght" 400, "opsz" 24;
-  transition: font-variation-settings 0.2s cubic-bezier(0.2, 0, 0, 1);
-  position: relative;
-  z-index: 1;
-}
-
-.nav-drawer__close-btn:hover .material-symbols-rounded {
-  font-variation-settings: "wght" 600, "opsz" 24;
-}
-
-.nav-drawer__close-btn:active .material-symbols-rounded {
-  font-variation-settings: "wght" 300, "opsz" 24;
 }
 
 /* 滑动容器 — overflow:hidden 裁剪超出部分 */
@@ -1173,33 +1089,11 @@ const bodyMarginLeft = computed(() => {
 
 .theme-mode-btn {
   flex: 1;
-  height: 40px;
-  border: none;
-  background: none;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s, color 0.2s;
-  position: relative;
-}
-
-.theme-mode-btn:not(:last-child) {
-  border-right: 1px solid var(--md-sys-color-outline, #79747e);
-}
-
-.theme-mode-btn:hover {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent);
+  --md-icon-button-icon-size: 20px;
 }
 
 .theme-mode-btn.selected {
-  background-color: var(--md-sys-color-secondary-container, #e8def8);
   color: var(--md-sys-color-on-secondary-container, #1d192b);
-}
-
-.theme-mode-btn .material-symbols-rounded {
-  font-size: 20px;
 }
 
 /* ======== 二级子菜单面板（严格参照 m3.material.io Shadow DOM 样式） ======== */
@@ -1452,54 +1346,9 @@ const bodyMarginLeft = computed(() => {
   border-left-color: var(--md-sys-color-surface-variant, #49454f);
 }
 
-:global([data-theme="dark"]) .nav-drawer__close-btn {
-  color: var(--md-sys-color-on-surface-variant, #cac4d0);
-}
-
-:global([data-theme="dark"]) .nav-drawer__close-btn::before {
-  background-color: var(--md-sys-color-on-surface-variant, #cac4d0);
-}
-
-:global([data-theme="dark"]) .nav-drawer__item {
-  color: var(--md-sys-color-on-surface-variant, #cac4d0);
-}
-
-:global([data-theme="dark"]) .nav-drawer__item::before {
-  background-color: var(--md-sys-color-secondary-container, #4a4458);
-}
-
-:global([data-theme="dark"]) .nav-drawer__item--active {
-  color: var(--md-sys-color-on-secondary-container, #e8def8);
-}
-
-:global([data-theme="dark"]) .nav-drawer__back {
-  color: var(--md-sys-color-on-surface-variant, #cac4d0);
-}
-
-:global([data-theme="dark"]) .nav-drawer__back:hover {
-  color: var(--md-sys-color-on-surface, #e6e1e5);
-}
-
-:global([data-theme="dark"]) .nav-drawer__back-icon {
-  color: var(--md-sys-color-on-surface-variant, #cac4d0);
-}
-
-:global([data-theme="dark"]) .nav-drawer__back-label {
-  color: var(--md-sys-color-on-surface-variant, #cac4d0);
-}
-
-:global([data-theme="dark"]) .nav-drawer__arrow {
-  color: var(--md-sys-color-on-surface-variant, #cac4d0);
-}
-
 :global([data-theme="dark"]) .mobile-top-bar__menu-btn,
 :global([data-theme="dark"]) .mobile-top-bar__icon-btn {
   color: var(--md-sys-color-on-surface-variant, #cac4d0);
-}
-
-:global([data-theme="dark"]) .mobile-top-bar__menu-btn::before,
-:global([data-theme="dark"]) .mobile-top-bar__icon-btn::before {
-  background-color: var(--md-sys-color-on-surface-variant, #cac4d0);
 }
 
 :global([data-theme="dark"]) .theme-panel__header-icon {
@@ -1520,11 +1369,5 @@ const bodyMarginLeft = computed(() => {
 
 :global([data-theme="dark"]) .theme-mode-btn {
   color: var(--md-sys-color-on-surface-variant, #cac4d0);
-  border-color: var(--md-sys-color-outline, #938f99);
-}
-
-:global([data-theme="dark"]) .theme-mode-btn.selected {
-  background-color: var(--md-sys-color-secondary-container, #4a4458);
-  color: var(--md-sys-color-on-secondary-container, #e8def8);
 }
 </style>
