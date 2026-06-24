@@ -85,7 +85,6 @@ function onItemLeave() {
         <md-fab
           :aria-label="fab.label"
           @click="emit('fab-click')"
-          size="small"
         >
           <span class="material-symbols-rounded" slot="icon">{{ fab.icon }}</span>
         </md-fab>
@@ -180,18 +179,15 @@ function onItemLeave() {
 }
 
 /* ======== FAB ======== */
+/* m3 官网实测: .section-fab margin: -2px 16px 24px, 56x56dp 标准 FAB */
 .nav-rail__fab-container {
   display: flex;
   justify-content: center;
-  margin-bottom: 24px;
+  margin: -2px 16px 24px;
 }
 
 .nav-rail__fab-spacer {
   height: 20px;
-}
-
-.nav-rail__fab-container md-fab {
-  --md-fab-container-shape: 16px;
 }
 
 /* ======== 导航目标项 ======== */
@@ -403,6 +399,7 @@ function onItemLeave() {
 }
 
 /* ======== 底部操作按钮 ======== */
+/* GitHub <a> 链接：简洁图标样式，无额外 state layer */
 .nav-rail__github-btn {
   width: 48px;
   height: 48px;
@@ -412,30 +409,15 @@ function onItemLeave() {
   justify-content: center;
   color: var(--md-sys-color-on-surface-variant, #49454f);
   text-decoration: none;
-  position: relative;
-  overflow: hidden;
 }
 
-.nav-rail__github-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 24px;
-  background-color: var(--md-sys-color-on-surface-variant, #49454f);
-  opacity: 0;
-  transition: opacity 0.2s;
-  pointer-events: none;
-}
-
-.nav-rail__github-btn:hover::before {
-  opacity: 0.08;
+.nav-rail__github-btn:hover {
+  color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
 .nav-rail__github-btn svg {
   width: 24px;
   height: 24px;
-  position: relative;
-  z-index: 1;
 }
 
 .nav-rail__action-btn {
@@ -476,8 +458,8 @@ function onItemLeave() {
   color: var(--md-sys-color-on-surface-variant, #cac4d0);
 }
 
-:global([data-theme="dark"]) .nav-rail__github-btn::before {
-  background-color: var(--md-sys-color-on-surface-variant, #cac4d0);
+:global([data-theme="dark"]) .nav-rail__github-btn:hover {
+  color: var(--md-sys-color-on-surface, #e6e1e5);
 }
 
 :global([data-theme="dark"]) .nav-rail__action-btn {
