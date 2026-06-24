@@ -56,6 +56,9 @@ function initThemePanel() {
   function updatePreview() {
     const previewHex = hctToHex(hue, chroma)
     if (sourceColorPicker) sourceColorPicker.value = previewHex
+    // 同步色块 div 背景色
+    const swatchDiv = document.getElementById('source-color-swatch')
+    if (swatchDiv) swatchDiv.style.backgroundColor = previewHex
     if (sourceColorText && sourceColorText.shadowRoot) {
       const input = sourceColorText.shadowRoot.querySelector('input')
       if (input) input.value = previewHex
@@ -94,6 +97,31 @@ function initThemePanel() {
           items.style.maxHeight = 'calc(100vh - 96px)'
         }
       }
+      // 修复 md-slider Shadow DOM 内部 .container 宽度不跟随 flex 的问题
+      // md-slider 是 Web Component，内部固有尺寸 200px 不受 flex 影响
+      // 需要手动计算目标宽度并强制设定
+      const sliders = menuEl.querySelectorAll('md-slider')
+      sliders.forEach(s => {
+        const row = s.closest('.theme-panel__slider-row')
+        if (!row) return
+        const valueEl = row.querySelector('.theme-panel__slider-value')
+        const rowWidth = row.getBoundingClientRect().width
+        const valueWidth = valueEl ? valueEl.getBoundingClientRect().width : 28
+        const gap = parseFloat(getComputedStyle(row).gap) || 8
+        const targetWidth = rowWidth - valueWidth - gap
+        if (targetWidth > 0) {
+          s.style.setProperty('width', targetWidth + 'px', 'important')
+          s.style.setProperty('flex', 'none', 'important')
+        }
+        const container = s.shadowRoot?.querySelector('.container')
+        if (container) {
+          container.style.setProperty('width', '100%', 'important')
+        }
+        const input = s.shadowRoot?.querySelector('input[type=range]')
+        if (input) {
+          input.style.setProperty('width', '100%', 'important')
+        }
+      })
     })
   }
 
@@ -137,6 +165,9 @@ function initThemePanel() {
   if (sourceColorPicker) {
     sourceColorPicker.addEventListener('input', (e) => {
       const hex = e.target.value
+      // 同步色块 div 背景色
+      const swatchDiv = document.getElementById('source-color-swatch')
+      if (swatchDiv) swatchDiv.style.backgroundColor = hex
       const hsl = applyThemeFromHex(hex, darkMode)
       hue = hsl.h
       chroma = hsl.s

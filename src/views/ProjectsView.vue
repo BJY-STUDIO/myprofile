@@ -99,6 +99,7 @@ import { useRoute } from 'vue-router'
 import '@material/web/chips/chip-set'
 import '@material/web/chips/filter-chip'
 import '@material/web/iconbutton/icon-button'
+import '@material/web/divider/divider'
 
 const route = useRoute()
 const activeCategory = ref('all')

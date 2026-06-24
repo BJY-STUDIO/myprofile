@@ -73,6 +73,8 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
+import '@material/web/textfield/outlined-text-field'
+import '@material/web/button/filled-button'
 
 const form = reactive({
   name: '',

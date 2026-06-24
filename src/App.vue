@@ -4,6 +4,11 @@ import { useRoute, useRouter } from 'vue-router'
 import NavigationRail from '@/components/NavigationRail.vue'
 import { useNavItems } from '@/stores/blogStore'
 import store from '@/stores/blogStore'
+import '@material/web/iconbutton/icon-button'
+import '@material/web/menu/menu'
+import '@material/web/divider/divider'
+import '@material/web/textfield/filled-text-field'
+import '@material/web/slider/slider'
 
 const route = useRoute()
 const router = useRouter()
@@ -240,7 +245,7 @@ function navigateDrawerSubItem(child) {
 
 // 抽屉主菜单项点击逻辑
 function onDrawerItemClick(item) {
-  if (item.children) {
+  if (item.children?.length) {
     openDrawerSubMenu(item)
   } else {
     navigateTo(item)
@@ -346,7 +351,7 @@ const bodyMarginLeft = computed(() => {
           </a>
           <md-icon-button
             id="theme-btn-mobile"
-            class="mobile-top-bar__icon-btn"
+            class="mobile-top-bar__theme-btn"
             aria-label="Toggle theme"
             title="Toggle theme"
           >
@@ -404,7 +409,7 @@ const bodyMarginLeft = computed(() => {
                 >
                   <span class="material-symbols-rounded nav-drawer__icon">{{ item.icon }}</span>
                   <span class="nav-drawer__label">{{ item.label }}</span>
-                  <span v-if="item.children" class="material-symbols-rounded nav-drawer__arrow">arrow_forward</span>
+                  <span v-if="item.children?.length" class="material-symbols-rounded nav-drawer__arrow">arrow_forward</span>
                 </a>
               </nav>
             </div>
@@ -450,11 +455,13 @@ const bodyMarginLeft = computed(() => {
         <div class="theme-panel__section">
           <label class="theme-panel__label">Hex Source Color</label>
           <div class="theme-panel__color-input">
-            <input
-              id="source-color-picker"
-              type="color"
-              class="theme-panel__color-swatch"
-            />
+            <div class="theme-panel__color-swatch-wrap" id="source-color-swatch" title="Pick color">
+              <input
+                id="source-color-picker"
+                type="color"
+                class="theme-panel__color-swatch"
+              />
+            </div>
             <md-filled-text-field
               id="source-color-text"
               label=""
@@ -499,15 +506,15 @@ const bodyMarginLeft = computed(() => {
         <div class="theme-panel__section">
           <label class="theme-panel__label">Color Scheme</label>
           <div class="theme-panel__mode-buttons">
-            <md-icon-button class="theme-mode-btn" data-mode="dark" aria-label="dark color scheme" title="Dark">
+            <button class="theme-mode-btn" data-mode="dark" aria-label="dark color scheme" title="Dark">
               <span class="material-symbols-rounded">dark_mode</span>
-            </md-icon-button>
-            <md-icon-button class="theme-mode-btn" data-mode="system" aria-label="auto color scheme" title="Auto">
+            </button>
+            <button class="theme-mode-btn" data-mode="system" aria-label="auto color scheme" title="Auto">
               <span class="material-symbols-rounded">brightness_medium</span>
-            </md-icon-button>
-            <md-icon-button class="theme-mode-btn" data-mode="light" aria-label="light color scheme" title="Light">
+            </button>
+            <button class="theme-mode-btn" data-mode="light" aria-label="light color scheme" title="Light">
               <span class="material-symbols-rounded">light_mode</span>
-            </md-icon-button>
+            </button>
           </div>
         </div>
       </div>
@@ -640,6 +647,15 @@ const bodyMarginLeft = computed(() => {
   font-size: 24px;
   position: relative;
   z-index: 1;
+}
+
+/* 主题按钮：使用 md-icon-button CSS 变量覆盖，避免与 WC 交互冲突 */
+.mobile-top-bar__theme-btn {
+  --md-icon-button-icon-size: 24px;
+  --md-icon-button-state-layer-width: 48px;
+  --md-icon-button-state-layer-height: 48px;
+  --md-icon-button-state-layer-shape: 24px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
 /* ======== Navigation Drawer（移动端，严格对照 m3.material.io） ======== */
@@ -995,7 +1011,7 @@ const bodyMarginLeft = computed(() => {
   --md-menu-container-elevation: 3;
 }
 
-.theme-panel {
+:global(.theme-panel) {
   padding: 16px;
   min-width: 300px;
   max-width: 340px;
@@ -1004,31 +1020,31 @@ const bodyMarginLeft = computed(() => {
   gap: 12px;
 }
 
-.theme-panel__header {
+:global(.theme-panel__header) {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 4px;
 }
 
-.theme-panel__header-icon {
+:global(.theme-panel__header-icon) {
   font-size: 24px;
   color: var(--md-sys-color-primary, #6750a4);
 }
 
-.theme-panel__header-title {
+:global(.theme-panel__header-title) {
   font-size: 16px;
   font-weight: 500;
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
-.theme-panel__section {
+:global(.theme-panel__section) {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.theme-panel__label {
+:global(.theme-panel__label) {
   font-size: 12px;
   font-weight: 500;
   color: var(--md-sys-color-on-surface-variant, #49454f);
@@ -1036,51 +1052,57 @@ const bodyMarginLeft = computed(() => {
   letter-spacing: 0.4px;
 }
 
-.theme-panel__color-input {
+:global(.theme-panel__color-input) {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.theme-panel__color-swatch {
+:global(.theme-panel__color-swatch-wrap) {
   width: 48px;
   height: 48px;
-  border: none;
   border-radius: 12px;
-  cursor: pointer;
-  padding: 0;
-  background: none;
-}
-
-.theme-panel__color-swatch::-webkit-color-swatch-wrapper {
-  padding: 0;
-}
-
-.theme-panel__color-swatch::-webkit-color-swatch {
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  border-radius: 12px;
+  flex-shrink: 0;
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
 }
 
-.theme-panel__slider-row {
+:global(.theme-panel__color-swatch) {
+  position: absolute;
+  inset: -8px;
+  width: calc(100% + 16px);
+  height: calc(100% + 16px);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0;
+}
+
+:global(.theme-panel__slider-row) {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  width: 100%;
 }
 
-.theme-panel__slider-row md-slider {
+:global(.theme-panel__slider-row) md-slider {
   flex: 1;
+  min-width: 0;
 }
 
-.theme-panel__slider-value {
+:global(.theme-panel__slider-value) {
   font-size: 12px;
   color: var(--md-sys-color-on-surface-variant, #49454f);
   min-width: 28px;
   text-align: right;
   font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
 }
 
 /* 明暗模式按钮组 */
-.theme-panel__mode-buttons {
+:global(.theme-panel__mode-buttons) {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1088,18 +1110,44 @@ const bodyMarginLeft = computed(() => {
   border: 1px solid var(--md-sys-color-outline, #79747e);
   border-radius: 20px;
   overflow: hidden;
+  position: relative;
 }
 
-.theme-mode-btn {
+:global(.theme-mode-btn) {
   flex: 1;
-  height: 100%;
-  --md-icon-button-icon-size: 20px;
-  --md-icon-button-state-layer-height: 40px;
-  --md-icon-button-state-layer-width: 40px;
+  height: 40px;
+  border: none;
+  background: none;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  transition: background-color 0.2s, color 0.2s;
+  overflow: hidden;
 }
 
-.theme-mode-btn.selected {
+:global(.theme-mode-btn) .material-symbols-rounded {
+  font-size: 20px;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+}
+
+:global(.theme-mode-btn:hover) {
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1c1b1f) 8%, transparent);
+}
+
+:global(.theme-mode-btn:active) {
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1c1b1f) 12%, transparent);
+}
+
+:global(.theme-mode-btn.selected) {
   color: var(--md-sys-color-on-secondary-container, #1d192b);
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
 }
 
 /* ======== 二级子菜单面板（严格参照 m3.material.io Shadow DOM 样式） ======== */
@@ -1353,7 +1401,8 @@ const bodyMarginLeft = computed(() => {
 }
 
 :global([data-theme="dark"]) .mobile-top-bar__menu-btn,
-:global([data-theme="dark"]) .mobile-top-bar__icon-btn {
+:global([data-theme="dark"]) .mobile-top-bar__icon-btn,
+:global([data-theme="dark"]) .mobile-top-bar__theme-btn {
   color: var(--md-sys-color-on-surface-variant, #cac4d0);
 }
 
@@ -1375,5 +1424,18 @@ const bodyMarginLeft = computed(() => {
 
 :global([data-theme="dark"]) .theme-mode-btn {
   color: var(--md-sys-color-on-surface-variant, #cac4d0);
+}
+
+:global([data-theme="dark"]) .theme-mode-btn:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #e6e1e5) 8%, transparent);
+}
+
+:global([data-theme="dark"]) .theme-mode-btn:active {
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #e6e1e5) 12%, transparent);
+}
+
+:global([data-theme="dark"]) .theme-mode-btn.selected {
+  color: var(--md-sys-color-on-secondary-container, #e8def8);
+  background-color: var(--md-sys-color-secondary-container, #4a4458);
 }
 </style>

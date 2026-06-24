@@ -102,3 +102,15 @@ a:not(.sub-panel__item):not(.nav-rail__destination):not(.nav-rail__fab):not(.nav
   -webkit-font-smoothing: antialiased;
   font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
 }
+
+/* 
+  当 material-symbols-rounded 被放入 md-* 按钮的 slot="icon" 时，
+  全局的 font-size: 24px / display: inline-block 等属性优先级高于
+  Shadow DOM 内的 ::slotted() 规则，导致图标字型溢出 18px 容器。
+  此规则让 slotted icon 遵从 MD 组件设定的尺寸（--_icon-size）。
+*/
+.material-symbols-rounded[slot="icon"] {
+  font-size: var(--_icon-size, 18px);
+  line-height: var(--_icon-size, 18px);
+  display: inline-flex;
+}

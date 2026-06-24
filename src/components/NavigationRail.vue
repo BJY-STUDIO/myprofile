@@ -28,6 +28,8 @@
  */
 import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import '@material/web/divider/divider'
+import '@material/web/iconbutton/icon-button'
 
 const props = defineProps({
   items: {
@@ -178,6 +180,7 @@ function onItemLeave() {
   flex-direction: column;
   align-items: center;
   margin-top: 20px;
+  padding-top: 2px;
 }
 
 /* ======== FAB ======== */
