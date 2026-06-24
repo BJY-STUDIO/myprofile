@@ -438,7 +438,7 @@ function onItemLeave() {
 }
 
 /* ======== 底部操作按钮 ======== */
-/* GitHub <a> 链接：简洁图标样式，无额外 state layer */
+/* GitHub <a> 链接：icon-button 风格，hover 有 state layer */
 .nav-rail__github-btn {
   width: 48px;
   height: 48px;
@@ -448,6 +448,24 @@ function onItemLeave() {
   justify-content: center;
   color: var(--md-sys-color-on-surface-variant, #49454f);
   text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+/* State layer — ::before（m3 icon-button hover 8%） */
+.nav-rail__github-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background-color: var(--md-sys-color-on-surface-variant, #49454f);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.nav-rail__github-btn:hover::before {
+  opacity: 0.08;
 }
 
 .nav-rail__github-btn:hover {
@@ -457,6 +475,8 @@ function onItemLeave() {
 .nav-rail__github-btn svg {
   width: 24px;
   height: 24px;
+  position: relative;
+  z-index: 1;
 }
 
 .nav-rail__action-btn {
@@ -495,6 +515,10 @@ function onItemLeave() {
 
 :global([data-theme="dark"]) .nav-rail__github-btn {
   color: var(--md-sys-color-on-surface-variant, #cac4d0);
+}
+
+:global([data-theme="dark"]) .nav-rail__github-btn::before {
+  background-color: var(--md-sys-color-on-surface-variant, #cac4d0);
 }
 
 :global([data-theme="dark"]) .nav-rail__github-btn:hover {
