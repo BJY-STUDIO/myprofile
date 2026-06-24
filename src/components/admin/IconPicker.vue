@@ -7,7 +7,7 @@
       :value="search"
       @input="search = $event.target.value"
     >
-      <md-icon slot="leading-icon">search</md-icon>
+      <span class="material-symbols-rounded" slot="leading-icon">search</span>
     </md-outlined-text-field>
     <div class="icon-picker__grid">
       <button
@@ -27,7 +27,6 @@
 <script setup>
 import { ref, computed } from 'vue'
 import '@material/web/textfield/outlined-text-field'
-import '@material/web/icon/icon'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },

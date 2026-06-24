@@ -26,7 +26,7 @@ const PERSISTENT_THRESHOLD = 1200 // 常驻模式的最小宽度
 
 const activeSubItems = computed(() => {
   const activeItem = navItems.value.find(item => item.id === activeNavId.value)
-  return activeItem?.children || null
+  return activeItem?.children?.length ? activeItem.children : null
 })
 
 // 当前活跃一级菜单项的完整数据
@@ -85,7 +85,7 @@ const displaySubItems = computed(() => {
   // hover 优先（悬停模式，浮动不压缩页面）
   if (hoveredNavId.value) {
     const hoverItem = navItems.value.find(i => i.id === hoveredNavId.value)
-    if (hoverItem?.children) return hoverItem.children
+    if (hoverItem?.children?.length) return hoverItem.children
   }
   // 常驻模式：显示 active 项的子菜单
   if (isPersistentPanel.value) return activeSubItems.value
@@ -96,7 +96,7 @@ const displaySubItems = computed(() => {
 const displayParentId = computed(() => {
   if (hoveredNavId.value) {
     const hoverItem = navItems.value.find(i => i.id === hoveredNavId.value)
-    if (hoverItem?.children) return hoveredNavId.value
+    if (hoverItem?.children?.length) return hoveredNavId.value
   }
   if (isPersistentPanel.value) return activeNavId.value
   return null
@@ -108,7 +108,7 @@ const subPanelVisible = computed(() => {
   // hover 触发：任何有 children 的项被悬停时都显示
   if (hoveredNavId.value) {
     const hoverItem = navItems.value.find(i => i.id === hoveredNavId.value)
-    if (hoverItem?.children) return true
+    if (hoverItem?.children?.length) return true
   }
   // 常驻触发：仅在 persistent 模式下自动显示 active 项的子菜单
   return isPersistentPanel.value
@@ -120,7 +120,7 @@ const isHoverMode = computed(() => {
   // 如果是因为 hover 而显示的 → hover 模式
   if (hoveredNavId.value) {
     const hoverItem = navItems.value.find(i => i.id === hoveredNavId.value)
-    if (hoverItem?.children) return true
+    if (hoverItem?.children?.length) return true
   }
   // 如果 active 就是当前显示的内容，但屏幕不够宽做常驻 → 也算 hover 模式
   // （中等宽度下即使选中了有子菜单的项，也用悬浮效果）
@@ -160,7 +160,7 @@ function onRailItemHover(itemId) {
 function onRailItemLeave() {
   // 只有当前 hover 项有 children 时才延迟，否则立即清除
   const item = navItems.value.find(i => i.id === hoveredNavId.value)
-  if (item?.children) {
+  if (item?.children?.length) {
     hoverLeaveTimer.value = setTimeout(() => {
       hoveredNavId.value = null
     }, 150)

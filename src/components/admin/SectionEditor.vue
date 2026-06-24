@@ -56,10 +56,10 @@
           </div>
           <div class="section-block__actions">
             <md-icon-button @click="editSectionIdx = si; showSectionDialog = true">
-              <md-icon>edit</md-icon>
+              <span class="material-symbols-rounded">edit</span>
             </md-icon-button>
             <md-icon-button @click="removeSection(si)">
-              <md-icon>delete</md-icon>
+              <span class="material-symbols-rounded">delete</span>
             </md-icon-button>
           </div>
         </div>
@@ -70,10 +70,10 @@
             <span class="card-block__badge card-block__badge--feature">Feature Card</span>
             <div class="card-block__actions">
               <md-icon-button @click="openCardEditor(si, 'feature', 0)">
-                <md-icon>edit</md-icon>
+                <span class="material-symbols-rounded">edit</span>
               </md-icon-button>
               <md-icon-button @click="removeCard(si, 'feature', 0)">
-                <md-icon>delete</md-icon>
+                <span class="material-symbols-rounded">delete</span>
               </md-icon-button>
             </div>
           </div>
@@ -85,7 +85,7 @@
         </div>
         <div v-else class="card-block card-block--add-feature">
           <md-text-button @click="addFeatureCard(si)">
-            <md-icon slot="icon">add</md-icon>
+            <span class="material-symbols-rounded" slot="icon">add</span>
             添加 Feature Card
           </md-text-button>
         </div>
@@ -101,10 +101,10 @@
               <span class="card-block__badge">Card</span>
               <div class="card-block__actions">
                 <md-icon-button @click="openCardEditor(si, 'regular', ci)">
-                  <md-icon>edit</md-icon>
+                  <span class="material-symbols-rounded">edit</span>
                 </md-icon-button>
                 <md-icon-button @click="removeCard(si, 'regular', ci)">
-                  <md-icon>delete</md-icon>
+                  <span class="material-symbols-rounded">delete</span>
                 </md-icon-button>
               </div>
             </div>
@@ -116,7 +116,7 @@
           </div>
 
           <md-text-button class="add-card-btn" @click="addRegularCard(si)">
-            <md-icon slot="icon">add</md-icon>
+            <span class="material-symbols-rounded" slot="icon">add</span>
             添加卡片
           </md-text-button>
         </div>
@@ -124,7 +124,7 @@
 
       <!-- 添加区块 -->
       <md-filled-tonal-button @click="onAddSection" class="add-section-btn">
-        <md-icon slot="icon">add</md-icon>
+        <span class="material-symbols-rounded" slot="icon">add</span>
         添加区块
       </md-filled-tonal-button>
     </div>
@@ -201,14 +201,14 @@
           :value="editingCard?.date || ''"
           id="card-date"
         >
-          <md-icon slot="leading-icon">calendar_today</md-icon>
+          <span class="material-symbols-rounded" slot="leading-icon">calendar_today</span>
         </md-outlined-text-field>
         <md-outlined-text-field
           label="路由 (如 /blog/tech)"
           :value="editingCard?.route || ''"
           id="card-route"
         >
-          <md-icon slot="leading-icon">link</md-icon>
+          <span class="material-symbols-rounded" slot="leading-icon">link</span>
         </md-outlined-text-field>
         <div class="icon-field">
           <label class="field-label">图标</label>
@@ -227,7 +227,7 @@
           :value="editingCard?.image || ''"
           id="card-image"
         >
-          <md-icon slot="leading-icon">image</md-icon>
+          <span class="material-symbols-rounded" slot="leading-icon">image</span>
         </md-outlined-text-field>
       </form>
       <div slot="actions">
@@ -248,7 +248,6 @@ import '@material/web/button/filled-tonal-button'
 import '@material/web/button/outlined-button'
 import '@material/web/button/text-button'
 import '@material/web/iconbutton/icon-button'
-import '@material/web/icon/icon'
 import '@material/web/dialog/dialog'
 import '@material/web/textfield/outlined-text-field'
 import '@material/web/switch/switch'

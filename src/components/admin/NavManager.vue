@@ -3,7 +3,7 @@
     <div class="section-title">
       <h2>导航菜单管理</h2>
       <md-filled-tonal-button @click="onAddNav">
-        <md-icon slot="icon">add</md-icon>
+        <span class="material-symbols-rounded" slot="icon">add</span>
         添加一级菜单
       </md-filled-tonal-button>
     </div>
@@ -24,10 +24,10 @@
           </div>
           <div class="nav-card__actions">
             <md-icon-button @click="editNav = i; showNavDialog = true">
-              <md-icon>edit</md-icon>
+              <span class="material-symbols-rounded">edit</span>
             </md-icon-button>
             <md-icon-button @click="removeNav(i)">
-              <md-icon>delete</md-icon>
+              <span class="material-symbols-rounded">delete</span>
             </md-icon-button>
           </div>
         </div>
@@ -43,16 +43,16 @@
             <span class="sub-item__route">{{ sub.route }}</span>
             <div class="sub-item__actions">
               <md-icon-button @click="editSub = { p: i, s: j }; showSubDialog = true">
-                <md-icon>edit</md-icon>
+                <span class="material-symbols-rounded">edit</span>
               </md-icon-button>
               <md-icon-button @click="removeSub(i, j)">
-                <md-icon>delete</md-icon>
+                <span class="material-symbols-rounded">delete</span>
               </md-icon-button>
             </div>
           </div>
         </div>
         <md-text-button class="add-sub-btn" @click="parentForSub = i; showSubDialog = true">
-          <md-icon slot="icon">add</md-icon>
+          <span class="material-symbols-rounded" slot="icon">add</span>
           添加子菜单
         </md-text-button>
       </div>
@@ -103,7 +103,6 @@ import '@material/web/button/filled-tonal-button'
 import '@material/web/button/outlined-button'
 import '@material/web/button/text-button'
 import '@material/web/iconbutton/icon-button'
-import '@material/web/icon/icon'
 import '@material/web/dialog/dialog'
 import '@material/web/textfield/outlined-text-field'
 

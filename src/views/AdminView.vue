@@ -3,7 +3,7 @@
     <div class="admin-view__header">
       <h1 class="admin-view__title">管理后台</h1>
       <md-outlined-button @click="onReset" title="重置为默认数据">
-        <md-icon slot="icon">restart_alt</md-icon>
+        <span class="material-symbols-rounded" slot="icon">restart_alt</span>
         重置数据
       </md-outlined-button>
     </div>
@@ -38,7 +38,6 @@ import NavManager from '@/components/admin/NavManager.vue'
 import PageEditor from '@/components/admin/PageEditor.vue'
 import SectionEditor from '@/components/admin/SectionEditor.vue'
 import '@material/web/button/outlined-button'
-import '@material/web/icon/icon'
 
 const activeTab = ref('nav')
 

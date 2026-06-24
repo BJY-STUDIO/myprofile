@@ -100,12 +100,11 @@ function onItemLeave() {
         class="nav-rail__destination"
         :class="{
           'nav-rail__destination--active': activeId === item.id,
-          'nav-rail__destination--has-children': item.children,
-          'nav-rail__destination--animate-indicator': transitionsReady,
+          'nav-rail__destination--has-children': item.children?.length,
         }"
         role="link"
         :aria-selected="activeId === item.id"
-        :aria-expanded="item.children ? activeId === item.id : undefined"
+        :aria-expanded="item.children?.length ? activeId === item.id : undefined"
         :aria-label="item.label"
         :aria-controls="item.id"
         tabindex="0"

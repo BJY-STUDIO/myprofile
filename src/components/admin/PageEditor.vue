@@ -50,7 +50,7 @@
         class="field"
         placeholder="https://example.com/image.jpg"
       >
-        <md-icon slot="leading-icon">image</md-icon>
+        <span class="material-symbols-rounded" slot="leading-icon">image</span>
       </md-outlined-text-field>
 
       <!-- 封面预览 -->
@@ -71,7 +71,6 @@ import { ref, computed, watch } from 'vue'
 import { usePage } from '@/stores/blogStore'
 import store from '@/stores/blogStore'
 import '@material/web/textfield/outlined-text-field'
-import '@material/web/icon/icon'
 
 const pages = computed(() => store.pages)
 const selectedPageId = ref(Object.keys(store.pages)[0] || '')

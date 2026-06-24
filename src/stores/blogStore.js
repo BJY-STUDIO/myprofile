@@ -30,7 +30,6 @@ function createDefaultData() {
         ],
       },
       { id: 'contact', label: '联系', icon: 'mail_outline', route: '/contact', children: [] },
-      { id: 'admin', label: '管理', icon: 'admin_panel_settings', route: '/admin', children: [] },
     ],
 
     // 页面数据（按 pageId 索引）
