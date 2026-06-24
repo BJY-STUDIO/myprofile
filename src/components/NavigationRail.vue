@@ -80,15 +80,17 @@ function onItemLeave() {
   <nav class="nav-rail" role="navigation" aria-label="Main navigation">
     <!-- 上半部分（可滚动）：FAB + 导航项 -->
     <div class="nav-rail__top">
-      <!-- FAB 区域 -->
-      <div v-if="fab" class="nav-rail__fab-container">
-        <md-fab
-          :aria-label="fab.label"
-          @click="emit('fab-click')"
-        >
-          <span class="material-symbols-rounded" slot="icon">{{ fab.icon }}</span>
-        </md-fab>
-      </div>
+      <!-- FAB 区域（参照 m3 官网 .section-fab: <a> + 圆角方块 + 图标） -->
+      <a
+        v-if="fab"
+        class="nav-rail__fab"
+        href="#"
+        :aria-label="fab.label"
+        role="link"
+        @click.prevent="emit('fab-click')"
+      >
+        <span class="material-symbols-rounded nav-rail__fab-icon">{{ fab.icon }}</span>
+      </a>
 
       <div v-else class="nav-rail__fab-spacer"></div>
 
@@ -179,11 +181,48 @@ function onItemLeave() {
 }
 
 /* ======== FAB ======== */
-/* m3 官网实测: .section-fab margin: -2px 16px 24px, 56x56dp 标准 FAB */
-.nav-rail__fab-container {
+/* m3 官网 .section-fab 实际实现:
+ *   display:flex; align-items:center; justify-content:center;
+ *   width:56px; height:56px; margin:-2px auto 24px; padding:2px;
+ *   border-radius:16px; background:tertiary-container; color:on-surface-variant;
+ *   hover: color:on-tertiary-container;
+ *   focus-visible: border:2px solid on-surface; box-shadow:inset 0 0 0 2px surface;
+ */
+.nav-rail__fab {
   display: flex;
+  align-items: center;
   justify-content: center;
-  margin: -2px 16px 24px;
+  width: 56px;
+  height: 56px;
+  margin: -2px auto 24px;
+  padding: 2px;
+  border-radius: 16px;
+  background-color: var(--md-sys-color-tertiary-container, #e8def8);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  transition: color 0.2s;
+}
+
+.nav-rail__fab:hover {
+  color: var(--md-sys-color-on-tertiary-container, #1d192b);
+}
+
+.nav-rail__fab:focus-visible {
+  border: 2px solid var(--md-sys-color-on-surface, #1c1b1f);
+  outline: 0;
+  box-shadow: inset 0 0 0 2px var(--md-sys-color-surface, #fffbfe);
+}
+
+.nav-rail__fab-icon {
+  font-family: 'Material Symbols Rounded';
+  font-size: 24px;
+  font-variation-settings: "opsz" 24, "wght" 400;
+  line-height: 24px;
+  margin-bottom: 0;
 }
 
 .nav-rail__fab-spacer {
@@ -460,6 +499,20 @@ function onItemLeave() {
 
 :global([data-theme="dark"]) .nav-rail__github-btn:hover {
   color: var(--md-sys-color-on-surface, #e6e1e5);
+}
+
+:global([data-theme="dark"]) .nav-rail__fab {
+  background-color: var(--md-sys-color-tertiary-container, #4a4458);
+  color: var(--md-sys-color-on-surface-variant, #cac4d0);
+}
+
+:global([data-theme="dark"]) .nav-rail__fab:hover {
+  color: var(--md-sys-color-on-tertiary-container, #e8def8);
+}
+
+:global([data-theme="dark"]) .nav-rail__fab:focus-visible {
+  border-color: var(--md-sys-color-on-surface, #e6e1e5);
+  box-shadow: inset 0 0 0 2px var(--md-sys-color-surface, #1c1b1f);
 }
 
 :global([data-theme="dark"]) .nav-rail__action-btn {
