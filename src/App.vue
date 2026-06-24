@@ -1082,6 +1082,9 @@ const bodyMarginLeft = computed(() => {
 /* 明暗模式按钮组 */
 .theme-panel__mode-buttons {
   display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
   border: 1px solid var(--md-sys-color-outline, #79747e);
   border-radius: 20px;
   overflow: hidden;
@@ -1089,7 +1092,10 @@ const bodyMarginLeft = computed(() => {
 
 .theme-mode-btn {
   flex: 1;
+  height: 100%;
   --md-icon-button-icon-size: 20px;
+  --md-icon-button-state-layer-height: 40px;
+  --md-icon-button-state-layer-width: 40px;
 }
 
 .theme-mode-btn.selected {
