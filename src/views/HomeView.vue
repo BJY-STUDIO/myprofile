@@ -794,17 +794,17 @@ onBeforeUnmount(() => {
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0;
   font-variation-settings: "GRAD" 0;
-  transition: font-variation-settings 0.3s cubic-bezier(0.2, 0, 0, 1),
-              font-weight 0.3s cubic-bezier(0.2, 0, 0, 1);
+  /* 只对 GRAD 轴做过渡（可变字体平滑插值）；font-weight 不加入过渡（静态字体无法插值会导致延迟） */
+  transition: font-variation-settings 0.3s cubic-bezier(0.2, 0, 0, 1);
 }
 
-/* 对照 m3: hover 时 GRAD 0→50（Latin） + font-weight 475→500（CJK fallback），标题视觉加重 */
+/* 对照 m3: hover 时 GRAD 0→50（Latin 可变字体平滑加粗）+ font-weight 瞬间提升（CJK 静态字体即时生效） */
 .thumbnail:hover > .content-container .title {
   font-variation-settings: "GRAD" 50;
-  font-weight: 500;
+  font-weight: 600;
 }
 
-/* 对照 m3: active/pressed 时 GRAD -50（Latin） + font-weight 475→400（CJK fallback），标题视觉变细 */
+/* 对照 m3: active/pressed 时 GRAD -50（Latin 变细）+ font-weight 瞬间降至 400（CJK 即时生效，400 已预加载） */
 .thumbnail:active > .content-container .title {
   font-variation-settings: "GRAD" -50;
   font-weight: 400;
