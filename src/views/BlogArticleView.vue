@@ -114,43 +114,56 @@
       </div>
     </div>
 
-    <!-- ======== Footer（对照 m3.material.io footer 结构，Teleport 到 main 外部） ======== -->
-    <Teleport to="#page-footer-target">
-      <div class="mio-footer">
-        <div class="squiggle" aria-hidden="true"></div>
-        <footer class="mio-footer-inner">
-          <section class="about">
-            <div class="about-material">
-              <a class="about-logo" @click.prevent="$router.push('/')" aria-label="Kernel's Blog">
-                <span class="material-symbols-rounded">edit_note</span>
-              </a>
-              <p>Kernel's Blog 是基于 Vue 3 + Material Web 的个人博客站点，严格遵循 Material Design 3 规范。探索技术，记录生活。</p>
-            </div>
-            <ul class="social-links">
-              <li><h3>Social</h3></li>
-              <li><a href="https://github.com/BJY-STUDIO/myprofile" target="_blank" rel="noopener">GitHub</a></li>
-            </ul>
-            <ul class="site-links">
-              <li><h3>Site</h3></li>
-              <li><a @click.prevent="$router.push('/')">首页</a></li>
-              <li><a @click.prevent="$router.push('/blog')">博客</a></li>
-              <li><a @click.prevent="$router.push('/projects')">项目</a></li>
-              <li><a @click.prevent="$router.push('/about')">关于</a></li>
-              <li><a @click.prevent="$router.push('/contact')">联系</a></li>
-            </ul>
-          </section>
-          <section class="legal">
-            <div class="brand-logo" @click.prevent="$router.push('/')" aria-label="Kernel's Blog">
-              <span class="brand-logo-text">BJY-STUDIO</span>
-            </div>
-            <ul>
-              <li><a href="https://github.com/BJY-STUDIO/myprofile" target="_blank" rel="noopener">GitHub</a></li>
-              <li><a @click.prevent="$router.push('/about')">关于</a></li>
-            </ul>
-          </section>
-        </footer>
+    <!-- ======== Footer（对照 m3.material.io mio-footer 结构，在 main 内部随内容滚动） ======== -->
+    <div class="mio-footer" :data-theme-squiggle="isDark ? 'dark' : 'light'">
+      <div class="squiggle" aria-hidden="true">
+        <!-- 亮色 squiggle（M3 官方 stroke: #E1E3E1） -->
+        <svg v-if="!isDark" width="100%" height="8" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <pattern id="squiggle-pattern" width="91" height="8" patternUnits="userSpaceOnUse">
+            <path d="M114 4c-5.067 4.667-10.133 4.667-15.2 0S88.667-.667 83.6 4 73.467 8.667 68.4 4 58.267-.667 53.2 4 43.067 8.667 38 4 27.867-.667 22.8 4 12.667 8.667 7.6 4-2.533-.667-7.6 4s-10.133 4.667-15.2 0S-32.933-.667-38 4s-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0" stroke="#E1E3E1" stroke-width="2" stroke-linecap="square" />
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#squiggle-pattern)" />
+        </svg>
+        <!-- 暗色 squiggle（M3 官方 stroke: #49454f） -->
+        <svg v-else width="100%" height="8" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <pattern id="squiggle-pattern" width="91" height="8" patternUnits="userSpaceOnUse">
+            <path d="M114 4c-5.067 4.667-10.133 4.667-15.2 0S88.667-.667 83.6 4 73.467 8.667 68.4 4 58.267-.667 53.2 4 43.067 8.667 38 4 27.867-.667 22.8 4 12.667 8.667 7.6 4-2.533-.667-7.6 4s-10.133 4.667-15.2 0S-32.933-.667-38 4s-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0" stroke="#49454f" stroke-width="2" stroke-linecap="square" />
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#squiggle-pattern)" />
+        </svg>
       </div>
-    </Teleport>
+      <footer class="mio-footer-inner">
+        <section class="about">
+          <div class="about-material">
+            <a class="about-logo" @click.prevent="$router.push('/')" aria-label="Kernel's Blog">
+              <span class="material-symbols-rounded">edit_note</span>
+            </a>
+            <p>Kernel's Blog 是基于 Vue 3 + Material Web 的个人博客站点，严格遵循 Material Design 3 规范。探索技术，记录生活。</p>
+          </div>
+          <ul class="social-links">
+            <li><h3>Social</h3></li>
+            <li><a href="https://github.com/BJY-STUDIO/myprofile" target="_blank" rel="noopener">GitHub</a></li>
+          </ul>
+          <ul class="site-links">
+            <li><h3>Site</h3></li>
+            <li><a @click.prevent="$router.push('/')">首页</a></li>
+            <li><a @click.prevent="$router.push('/blog')">博客</a></li>
+            <li><a @click.prevent="$router.push('/projects')">项目</a></li>
+            <li><a @click.prevent="$router.push('/about')">关于</a></li>
+            <li><a @click.prevent="$router.push('/contact')">联系</a></li>
+          </ul>
+        </section>
+        <section class="legal">
+          <div class="brand-logo" @click.prevent="$router.push('/')" aria-label="Kernel's Blog">
+            <span class="brand-logo-text">BJY-STUDIO</span>
+          </div>
+          <ul>
+            <li><a href="https://github.com/BJY-STUDIO/myprofile" target="_blank" rel="noopener">GitHub</a></li>
+            <li><a @click.prevent="$router.push('/about')">关于</a></li>
+          </ul>
+        </section>
+      </footer>
+    </div>
   </div>
 </template>
 
@@ -159,6 +172,20 @@ import { ref, computed, onMounted, onUnmounted, nextTick, watch, defineAsyncComp
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
+
+// ======== 主题状态（用于 squiggle 颜色切换） ========
+const isDark = ref(document.documentElement.getAttribute('data-theme') === 'dark')
+
+function updateThemeState() {
+  isDark.value = document.documentElement.getAttribute('data-theme') === 'dark'
+}
+
+onMounted(() => {
+  // 监听 data-theme 变化
+  const observer = new MutationObserver(updateThemeState)
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+  onUnmounted(() => observer.disconnect())
+})
 
 // ======== 文章数据 ========
 const articles = {
@@ -811,14 +838,14 @@ watch(() => route.params.slug, () => {
   margin: 80px 24px 56px;
 }
 
-/* squiggle（对照 m3: SVG wavy line above footer, 在 .mio-footer 内部） */
-/* 使用 CSS background-image + SVG data URI 实现波浪线，确保颜色跟随主题切换 */
+/* squiggle（对照 m3: SVG pattern 方案，亮暗色通过 v-if 切换）
+   M3 官方使用内联 SVG + <pattern> 实现无缝波浪线 */
 .mio-footer .squiggle {
-  height: 8px;
-  overflow: hidden;
-  background-image: url("data:image/svg+xml,%3Csvg width='45.5' height='8' viewBox='0 0 45.5 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M45.5 4c-2.533 4.667-5.067 4.667-7.6 0S32.733-.667 30.2 4 25.133 8.667 22.6 4 17.533-.667 15 4 9.933 8.667 7.4 4 2.333-.667-.2 4' stroke='%23cac4d0' stroke-width='2' stroke-linecap='square'/%3E%3C/svg%3E");
-  background-repeat: repeat-x;
-  background-size: 45.5px 8px;
+  position: relative;
+}
+
+.mio-footer .squiggle svg {
+  display: block;
 }
 
 /* ================================================================
@@ -907,6 +934,13 @@ watch(() => route.params.slug, () => {
   content: counter(item);
 }
 
+/* ── 移动端 ≤600px: ol pill badge font 12px（对照 M3: label-m） ── */
+@media screen and (max-width: 600px) {
+  .blog-content :deep(ol > li::before) {
+    font-size: 12px;
+  }
+}
+
 .blog-content :deep(ul) {
   list-style: none;
   padding-left: 0;
@@ -927,7 +961,7 @@ watch(() => route.params.slug, () => {
   width: 8px;
   height: 8px;
   transform: rotate(calc(var(--rotation, 0) * 36deg));
-  background-image: url("data:image/svg+xml,%3Csvg width='8' height='8' viewBox='0 0 8 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.95843 0.279933C5.5378 -0.353974 6.58452 0.173492 6.41974 1.01632L6.05454 2.88412C5.99767 3.17501 6.09646 3.47451 6.31525 3.67447L7.72007 4.95843C8.35397 5.5378 7.82651 6.58452 6.98368 6.41974L5.11588 6.05454C4.82499 5.99767 4.52549 6.09646 4.32553 6.31525L3.04157 7.72007C2.4622 8.35397 1.41548 7.82651 1.58026 6.98368L1.94545 5.11588C2.00233 4.82499 1.90354 4.52549 1.68475 4.32553L0.279933 3.04157C-0.353974 2.4622 0.173492 1.41548 1.01632 1.58026L2.88412 1.94545C3.17501 2.00233 3.47451 1.90354 3.67447 1.68475L4.95843 0.279933Z' fill='%2349454f'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg width='8' height='8' viewBox='0 0 8 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.95843 0.279933C5.5378 -0.353974 6.58452 0.173492 6.41974 1.01632L6.05454 2.88412C5.99767 3.17501 6.09646 3.47451 6.31525 3.67447L7.72007 4.95843C8.35397 5.5378 7.82651 6.58452 6.98368 6.41974L5.11588 6.05454C4.82499 5.99767 4.52549 6.09646 4.32553 6.31525L3.04157 7.72007C2.4622 8.35397 1.41548 7.82651 1.58026 6.98368L1.94545 5.11588C2.00233 4.82499 1.90354 4.52549 1.68475 4.32553L0.279933 3.04157C-0.353974 2.4622 0.173492 1.41548 1.01632 1.58026L2.88412 1.94545C3.17501 2.00233 3.47451 1.90354 3.67447 1.68475L4.95843 0.279933Z' fill='%231E1E1C'/%3E%3C/svg%3E");
   line-height: 0;
   text-align: center;
   content: "";
@@ -1212,9 +1246,9 @@ watch(() => route.params.slug, () => {
 
 /* ================================================================
    Footer（对照 m3.material.io footer 结构）
-   mio-footer (外层 wrapper): margin-top 120px, 在 main 外部
+   mio-footer (外层 wrapper): margin-top 120px, position static
    mio-footer-inner (footer): padding 64px 40px, 无背景色
-   section.about: grid, max-width 1200px, 4列, gap 20px
+   section.about: grid, max-width 1200px, 3列, gap 20px, justify-content: space-between
    section.legal: margin-top 64px, flex row, logo + 法律链接
    ================================================================ */
 .mio-footer {
@@ -1226,13 +1260,14 @@ watch(() => route.params.slug, () => {
   font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
 }
 
-/* section.about — 对照 m3: grid, max-width 1200px */
+/* section.about — 对照 m3: grid, max-width 1200px, justify-content: space-between */
 .mio-footer-inner .about {
   display: grid;
   grid-template-columns: auto;
   gap: 0 20px;
   max-width: 1200px;
   margin: 0 auto;
+  justify-content: space-between;
 }
 
 @media screen and (min-width: 960px) {
@@ -1268,7 +1303,8 @@ watch(() => route.params.slug, () => {
   margin: 24px 64px 16px 0;
 }
 
-/* social-links / site-links — 对照 m3: ul, flex column, gap 20px */
+/* social-links / site-links — 对照 m3: ul, flex column, gap 20px, margin-top 24px */
+/* h3 在第一个 li 中，与下方链接左对齐（同列） */
 .mio-footer-inner .social-links,
 .mio-footer-inner .site-links {
   display: flex;
@@ -1286,7 +1322,7 @@ watch(() => route.params.slug, () => {
   font-weight: 500;
   line-height: 20px;
   margin: 0;
-  color: var(--md-sys-color-on-surface, #1c1b1f);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
 .mio-footer-inner .social-links li a,
@@ -1298,9 +1334,11 @@ watch(() => route.params.slug, () => {
   color: var(--md-sys-color-primary, #6750a4);
   text-decoration: underline !important;
   cursor: pointer;
+  display: flex;
+  padding: 1px;
 }
 
-/* section.legal — 对照 m3: margin-top 64px, flex row, brand logo + 链接 */
+/* section.legal — 对照 m3: margin-top 64px, flex row, brand logo + 链接, max-width 1200px */
 .mio-footer-inner .legal {
   display: flex;
   align-items: center;
@@ -1347,8 +1385,30 @@ watch(() => route.params.slug, () => {
   color: var(--md-sys-color-primary, #6750a4);
   text-decoration: none !important;
   cursor: pointer;
+  display: inline;
+  padding: 1px;
 }
 
+/* ── 平板端 601-960px ── 对照 M3: footer padding 32px, about 3-col, about-material span 3 */
+@media screen and (max-width: 960px) and (min-width: 601px) {
+  .mio-footer-inner {
+    padding: 64px 32px;
+  }
+
+  .mio-footer-inner .about {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .about-material {
+    grid-column: span 3;
+  }
+
+  .about-material p {
+    margin-right: 0;
+  }
+}
+
+/* ── 移动端 ≤600px ── 对照 M3: footer padding 24px, about 1-col, legal column, ul gap 24px */
 @media screen and (max-width: 600px) {
   .mio-footer-inner {
     padding: 64px 24px;
@@ -1360,6 +1420,20 @@ watch(() => route.params.slug, () => {
 
   .about-material p {
     margin-right: 0;
+  }
+
+  .mio-footer-inner .social-links,
+  .mio-footer-inner .site-links {
+    row-gap: 24px;
+  }
+
+  .mio-footer-inner .legal {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .mio-footer-inner .legal ul {
+    margin-top: 24px;
   }
 }
 
@@ -1429,9 +1503,7 @@ watch(() => route.params.slug, () => {
   border-top-color: var(--md-sys-color-outline-variant, #49454f);
 }
 
-:global([data-theme="dark"]) .mio-footer .squiggle {
-  background-image: url("data:image/svg+xml,%3Csvg width='45.5' height='8' viewBox='0 0 45.5 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M45.5 4c-2.533 4.667-5.067 4.667-7.6 0S32.733-.667 30.2 4 25.133 8.667 22.6 4 17.533-.667 15 4 9.933 8.667 7.4 4 2.333-.667-.2 4' stroke='%2349454f' stroke-width='2' stroke-linecap='square'/%3E%3C/svg%3E");
-}
+/* 暗色主题 — squiggle: 已通过 v-if 切换 SVG（stroke 硬编码为 #49454f），无需额外 CSS */
 
 /* 暗色主题 — ol 药丸徽章：inverse-surface/inverse-on-surface 切换 */
 :global([data-theme="dark"]) .blog-content ol > li::before {
@@ -1439,9 +1511,9 @@ watch(() => route.params.slug, () => {
   color: var(--md-sys-color-inverse-on-surface, #323032);
 }
 
-/* 暗色主题 — ul bullet SVG（更亮的颜色） */
+/* 暗色主题 — ul bullet SVG（M3 官方暗色 #E3E3E3） */
 :global([data-theme="dark"]) .blog-content ul li::before {
-  background-image: url("data:image/svg+xml,%3Csvg width='8' height='8' viewBox='0 0 8 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.95843 0.279933C5.5378 -0.353974 6.58452 0.173492 6.41974 1.01632L6.05454 2.88412C5.99767 3.17501 6.09646 3.47451 6.31525 3.67447L7.72007 4.95843C8.35397 5.5378 7.82651 6.58452 6.98368 6.41974L5.11588 6.05454C4.82499 5.99767 4.52549 6.09646 4.32553 6.31525L3.04157 7.72007C2.4622 8.35397 1.41548 7.82651 1.58026 6.98368L1.94545 5.11588C2.00233 4.82499 1.90354 4.52549 1.68475 4.32553L0.279933 3.04157C-0.353974 2.4622 0.173492 1.41548 1.01632 1.58026L2.88412 1.94545C3.17501 2.00233 3.47451 1.90354 3.67447 1.68475L4.95843 0.279933Z' fill='%23cac4d0'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg width='8' height='8' viewBox='0 0 8 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.95843 0.279933C5.5378 -0.353974 6.58452 0.173492 6.41974 1.01632L6.05454 2.88412C5.99767 3.17501 6.09646 3.47451 6.31525 3.67447L7.72007 4.95843C8.35397 5.5378 7.82651 6.58452 6.98368 6.41974L5.11588 6.05454C4.82499 5.99767 4.52549 6.09646 4.32553 6.31525L3.04157 7.72007C2.4622 8.35397 1.41548 7.82651 1.58026 6.98368L1.94545 5.11588C2.00233 4.82499 1.90354 4.52549 1.68475 4.32553L0.279933 3.04157C-0.353974 2.4622 0.173492 1.41548 1.01632 1.58026L2.88412 1.94545C3.17501 2.00233 3.47451 1.90354 3.67447 1.68475L4.95843 0.279933Z' fill='%23E3E3E3'/%3E%3C/svg%3E");
 }
 
 </style>
