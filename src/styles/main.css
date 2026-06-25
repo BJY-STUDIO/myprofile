@@ -114,3 +114,13 @@ a:not(.sub-panel__item):not(.nav-rail__destination):not(.nav-rail__fab):not(.nav
   line-height: var(--_icon-size, 18px);
   display: inline-flex;
 }
+
+/*
+  base.css 的 *, *::before, *::after { margin: 0 } 将 md-dialog 的 margin 清零，
+  而 Shadow DOM 内部 <dialog> 使用 margin: inherit 继承了这个 0px，
+  导致浏览器原生 showModal() 的居中机制失效，dialog 左上角对齐。
+  恢复 margin: auto 让内部 <dialog> 重新居中。
+*/
+md-dialog {
+  margin: auto;
+}
