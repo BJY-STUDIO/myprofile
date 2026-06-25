@@ -114,7 +114,15 @@
       </div>
     </div>
 
-    <!-- ======== Footer（对照 m3.material.io footer） ======== -->
+    <!-- ======== Squiggle + Footer（对照 m3.material.io footer） ======== -->
+    <div class="squiggle">
+      <svg aria-hidden="true" width="100%" height="8" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <pattern id="squiggle-pattern" width="91" height="8" patternUnits="userSpaceOnUse">
+          <path d="M114 4c-5.067 4.667-10.133 4.667-15.2 0S88.667-.667 83.6 4 73.467 8.667 68.4 4 58.267-.667 53.2 4 43.067 8.667 38 4 27.867-.667 22.8 4 12.667 8.667 7.6 4-2.533-.667-7.6 4s-10.133 4.667-15.2 0S-32.933-.667-38 4s-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0" stroke-linecap="square"></path>
+        </pattern>
+        <rect width="100%" height="100%" fill="url(#squiggle-pattern)"></rect>
+      </svg>
+    </div>
     <footer class="mio-footer">
       <section class="about">
         <div class="about-material">
@@ -271,10 +279,11 @@ function setupScrollObserver() {
           }
         }
       })
-      // 无 section 在视口上半区时，默认选中第一个（M3 官方行为）
-      if (active < 0) active = 0
-      activeTocIndex.value = active
-      updateIndicatorPosition(active)
+      // 无 section 在视口上半区时，保持 hidden 状态（indicator hide + fade-in）
+      if (active >= 0) {
+        activeTocIndex.value = active
+        updateIndicatorPosition(active)
+      }
     })
   })
 }
@@ -711,11 +720,14 @@ watch(() => route.params.slug, () => {
   border-radius: 4px;
   font-variation-settings: "GRAD" 0;
   transition: color 200ms cubic-bezier(0.2, 0, 0, 1),
-              font-variation-settings 200ms cubic-bezier(0.2, 0, 0, 1);
+              font-variation-settings 200ms cubic-bezier(0.2, 0, 0, 1),
+              font-weight 200ms cubic-bezier(0.2, 0, 0, 1);
 }
 
+/* 对照 m3: .toc-item.toc-item-selected — color on-secondary-container, GRAD 125, font-weight 500 */
 .toc__link--selected {
   color: var(--md-sys-color-on-secondary-container, #1d192b);
+  font-weight: 500;
   font-variation-settings: "GRAD" 125;
 }
 
@@ -800,6 +812,16 @@ watch(() => route.params.slug, () => {
   border: none;
   border-top: 1px solid var(--md-sys-color-outline-variant, #e8e0e8);
   margin: 80px 24px 56px;
+}
+
+/* squiggle（对照 m3: SVG wavy line above footer, stroke outline-variant） */
+.squiggle {
+  height: 8px;
+  overflow: hidden;
+}
+
+.squiggle path {
+  stroke: var(--md-sys-color-outline-variant, #cac4d0);
 }
 
 /* ================================================================
@@ -1353,6 +1375,10 @@ watch(() => route.params.slug, () => {
 
 :global([data-theme="dark"]) .separator {
   border-top-color: var(--md-sys-color-outline-variant, #49454f);
+}
+
+:global([data-theme="dark"]) .squiggle path {
+  stroke: var(--md-sys-color-outline-variant, #49454f);
 }
 
 </style>
