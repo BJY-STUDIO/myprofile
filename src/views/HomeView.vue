@@ -801,30 +801,29 @@ onBeforeUnmount(() => {
   line-height: 32px;
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0;
-  font-variation-settings: "GRAD" 0;
+  /* M3 官方格式：GRAD 轴 + opsz 光学尺寸轴 */
+  font-variation-settings: "GRAD" 0, "opsz" 18;
   /* 可变字体：GRAD 轴 + font-weight（仅 CJK 标题）均支持平滑插值过渡 */
   transition: font-variation-settings 0.3s cubic-bezier(0.2, 0, 0, 1),
               font-weight 0.3s cubic-bezier(0.2, 0, 0, 1);
 }
 
-/* 对照 m3: a:hover .title { GRAD 50 } — 标题视觉加重 */
-/* 实测 Google Sans Flex 在 fw475/24px 下 GRAD 50 几乎不可见，需增大到 100 才有明显效果 */
+/* 对照 m3: a:hover .title { GRAD 50 } — 标题视觉加重（M3 官方值） */
 /* 必须显式声明 font-weight: 475，否则 unset 会继承父元素 normal(400) 抵消 GRAD 效果 */
 /* CJK 标题：GRAD 轴对中文无效，额外用 font-weight 插值补偿 */
 .thumbnail:hover > .content-container .title {
-  font-variation-settings: "GRAD" 100;
+  font-variation-settings: "GRAD" 50, "opsz" 18;
   font-weight: 475;
 }
 .thumbnail:hover > .content-container .title.title--cjk {
   font-weight: 525;
 }
 
-/* 对照 m3: a:active .title { GRAD -50 } — 标题视觉变细 */
-/* 实测 Google Sans Flex 在 fw475/24px 下 GRAD -50 几乎不可见，需增大到 -75 才有明显效果 */
+/* 对照 m3: a:active .title { GRAD -50 } — 标题视觉变细（M3 官方值） */
 /* 必须显式声明 font-weight: 475，否则 unset 会继承父元素 normal(400) 抵消 GRAD 效果 */
 /* CJK 标题：GRAD 轴对中文无效，额外用 font-weight 插值补偿 */
 .thumbnail:active > .content-container .title {
-  font-variation-settings: "GRAD" -75;
+  font-variation-settings: "GRAD" -50, "opsz" 18;
   font-weight: 475;
 }
 .thumbnail:active > .content-container .title.title--cjk {
