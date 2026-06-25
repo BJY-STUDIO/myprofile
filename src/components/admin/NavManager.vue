@@ -68,9 +68,9 @@
           <label class="icon-field__label">图标</label>
           <div class="icon-field__preview">
             <span class="material-symbols-rounded">{{ pickedIcon || (editNav >= 0 ? navItems[editNav]?.icon : 'article') }}</span>
-            <md-outlined-button @click="showIconPicker = !showIconPicker" type="button">选择图标</md-outlined-button>
+            <md-outlined-button @click="toggleIconPicker" type="button">选择图标</md-outlined-button>
           </div>
-          <IconPicker v-if="showIconPicker" :modelValue="pickedIcon || (editNav >= 0 ? navItems[editNav]?.icon : 'article')" @update:modelValue="onPickIcon" />
+          <IconPicker v-if="showIconPicker" :modelValue="pickedIcon || (editNav >= 0 ? navItems[editNav]?.icon : 'article')" @update:modelValue="onPickIcon" class="icon-field__picker" />
         </div>
       </form>
       <div slot="actions">
@@ -95,7 +95,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { useNavItems } from '@/stores/blogStore'
 import IconPicker from './IconPicker.vue'
 import '@material/web/button/filled-button'
@@ -135,6 +135,22 @@ function onAddNav() {
 
 function onPickIcon(icon) {
   pickedIcon.value = icon
+}
+
+function toggleIconPicker() {
+  showIconPicker.value = !showIconPicker.value
+  if (showIconPicker.value) {
+    nextTick(() => {
+      requestAnimationFrame(() => {
+        const dialog = document.querySelector('md-dialog[open]')
+        if (!dialog) return
+        const scroller = dialog.shadowRoot?.querySelector('.scroller')
+        if (scroller) {
+          scroller.scrollTo({ top: scroller.scrollHeight, behavior: 'smooth' })
+        }
+      })
+    })
+  }
 }
 
 function onSaveNav() {
@@ -292,10 +308,16 @@ function removeSub(p, s) {
   min-width: 320px;
 }
 
+.icon-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .icon-field__label {
   font-size: 13px;
+  font-weight: 500;
   color: var(--md-sys-color-on-surface-variant, #49454f);
-  margin-bottom: 4px;
   display: block;
 }
 

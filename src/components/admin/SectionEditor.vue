@@ -208,12 +208,13 @@
           <label class="field-label">图标</label>
           <div class="icon-field__preview">
             <span class="material-symbols-rounded">{{ pickedCardIcon || editingCard?.icon || 'article' }}</span>
-            <md-outlined-button type="button" @click="showCardIconPicker = !showCardIconPicker">选择图标</md-outlined-button>
+            <md-outlined-button type="button" @click="toggleCardIconPicker">选择图标</md-outlined-button>
           </div>
           <IconPicker
             v-if="showCardIconPicker"
             :modelValue="pickedCardIcon || editingCard?.icon || 'article'"
             @update:modelValue="onPickCardIcon"
+            class="icon-field__picker"
           />
         </div>
         <md-outlined-text-field
@@ -233,7 +234,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { usePage } from '@/stores/blogStore'
 import store from '@/stores/blogStore'
 import IconPicker from './IconPicker.vue'
@@ -335,6 +336,24 @@ function onPickCardIcon(icon) {
   pickedCardIcon.value = icon
   if (editingCard.value) {
     editingCard.value = { ...editingCard.value, icon }
+  }
+}
+
+function toggleCardIconPicker() {
+  showCardIconPicker.value = !showCardIconPicker.value
+  if (showCardIconPicker.value) {
+    nextTick(() => {
+      requestAnimationFrame(() => {
+        const dialogs = document.querySelectorAll('md-dialog[open]')
+        for (const d of dialogs) {
+          const scroller = d.shadowRoot?.querySelector('.scroller')
+          if (scroller && scroller.scrollHeight > scroller.clientHeight) {
+            scroller.scrollTo({ top: scroller.scrollHeight, behavior: 'smooth' })
+            break
+          }
+        }
+      })
+    })
   }
 }
 
@@ -602,7 +621,7 @@ function removeCard(si, type, ci) {
 .icon-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 }
 
 .icon-field__preview {

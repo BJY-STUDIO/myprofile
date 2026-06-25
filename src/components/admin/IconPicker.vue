@@ -10,15 +10,19 @@
       <span class="material-symbols-rounded" slot="leading-icon">search</span>
     </md-outlined-text-field>
     <div class="icon-picker__grid">
-      <md-chip-set>
-        <md-filter-chip
-          v-for="icon in filteredIcons"
-          :key="icon"
-          :selected="modelValue === icon"
-          @click="$emit('update:modelValue', icon)"
-          :label="icon"
-        ></md-filter-chip>
-      </md-chip-set>
+      <button
+        v-for="icon in filteredIcons"
+        :key="icon"
+        class="icon-picker__item"
+        :class="{ 'icon-picker__item--selected': modelValue === icon }"
+        :title="icon"
+        @click="$emit('update:modelValue', icon)"
+      >
+        <span class="material-symbols-rounded">{{ icon }}</span>
+      </button>
+    </div>
+    <div v-if="filteredIcons.length === 0" class="icon-picker__empty">
+      未找到匹配图标
     </div>
   </div>
 </template>
@@ -26,8 +30,6 @@
 <script setup>
 import { ref, computed } from 'vue'
 import '@material/web/textfield/outlined-text-field'
-import '@material/web/chips/chip-set'
-import '@material/web/chips/filter-chip'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -40,7 +42,7 @@ const search = ref('')
 const icons = [
   'home', 'person', 'person_outline', 'description', 'article', 'code',
   'mail', 'mail_outline', 'search', 'settings', 'dashboard', 'favorite',
-  'favorite_outline', 'star', 'star_outline', 'bookmark', 'bookmark_outline',
+  'favorite_border', 'star', 'star_border', 'bookmark', 'bookmark_border',
   'folder', 'folder_open', 'cloud', 'download', 'upload', 'share',
   'link', 'public', 'language', 'web', 'wifi', 'bluetooth',
   'phone', 'camera', 'photo', 'image', 'videocam', 'mic',
@@ -62,7 +64,7 @@ const icons = [
   'analytics', 'bar_chart', 'pie_chart', 'trending_up', 'assessment',
   'storage', 'database', 'dns', 'memory', 'developer_board',
   'terminal', 'data_object', 'integration_instructions', 'source',
-  'smart_toy', 'robotics', 'extension', 'api', 'hub',
+  'smart_toy', 'extension', 'api', 'hub',
   'flag', 'outlined_flag', 'label', 'label_outline', 'category',
   'tag', 'local_offer', 'sell', 'shopping_cart', 'store',
   'inventory', 'work', 'business', 'apartment', 'domain',
@@ -84,18 +86,87 @@ const filteredIcons = computed(() => {
 </script>
 
 <style scoped>
+.icon-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .icon-picker__search {
   width: 100%;
-  margin-bottom: 12px;
 }
 
 .icon-picker__grid {
-  max-height: 280px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 40px);
+  gap: 4px;
+  max-height: 200px;
   overflow-y: auto;
   padding: 4px;
+  /* M3 shape: extra-small */
+  border-radius: 8px;
 }
 
-.icon-picker__grid md-chip-set {
-  flex-wrap: wrap;
+.icon-picker__item {
+  /* 40px touch target per M3 spec */
+  inline-size: 40px;
+  block-size: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: none;
+  cursor: pointer;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+  padding: 0;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.icon-picker__item .material-symbols-rounded {
+  font-size: 24px;
+  line-height: 24px;
+}
+
+/* Hover */
+.icon-picker__item:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface, #1c1b1f) 8%,
+    transparent
+  );
+}
+
+/* Pressed */
+.icon-picker__item:active {
+  background-color: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface, #1c1b1f) 12%,
+    transparent
+  );
+}
+
+/* Selected */
+.icon-picker__item--selected {
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+  border-color: transparent;
+}
+
+.icon-picker__item--selected:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--md-sys-color-on-secondary-container, #1d192b) 8%,
+    var(--md-sys-color-secondary-container, #e8def8)
+  );
+}
+
+.icon-picker__empty {
+  padding: 16px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 </style>
