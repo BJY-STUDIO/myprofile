@@ -53,9 +53,10 @@ const activeSubItemId = computed(() => {
   const exact = activeSubItems.value.find(child => route.path === child.route)
   if (exact) return exact.id
   const prefix = activeSubItems.value.find(
-    child => route.path.startsWith(child.route + '/') || (child.route !== '/' && route.path.startsWith(child.route))
+    child => child.route !== '/' && route.path.startsWith(child.route + '/')
   )
-  return prefix ? prefix.id : activeSubItems.value[0]?.id
+  // 只在当前路由匹配某个子项时高亮，三级深页面不高亮任何子项
+  return prefix ? prefix.id : null
 })
 
 // 响应式断点
@@ -87,9 +88,17 @@ onUnmounted(() => {
   window.removeEventListener('resize', updateScreenWidth)
 })
 
-// 是否处于常驻模式：当前激活的一级菜单有子菜单 且 屏幕足够宽
+// 当前路由是否直接匹配某个二级子菜单项（非三级深页面）
+const isOnSubItemPage = computed(() => {
+  if (!activeSubItems.value) return false
+  return activeSubItems.value.some(child =>
+    route.path === child.route || route.path.startsWith(child.route + '/')
+  )
+})
+
+// 是否处于常驻模式：当前激活的一级菜单有子菜单 且 屏幕足够宽 且 在二级页面（非三级深页面）
 const isPersistentPanel = computed(() => {
-  return isPersistentScreen.value && !!activeSubItems.value
+  return isPersistentScreen.value && !!activeSubItems.value && isOnSubItemPage.value
 })
 
 // 计算当前要显示在子面板中的子菜单项
