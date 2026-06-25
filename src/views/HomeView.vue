@@ -808,18 +808,22 @@ onBeforeUnmount(() => {
 }
 
 /* 对照 m3: a:hover .title { GRAD 50 } — 标题视觉加重 */
+/* 必须显式声明 font-weight: 475，否则 unset 会继承父元素 normal(400) 抵消 GRAD 效果 */
 /* CJK 标题：GRAD 轴对中文无效，额外用 font-weight 插值补偿 */
 .thumbnail:hover > .content-container .title {
   font-variation-settings: "GRAD" 50;
+  font-weight: 475;
 }
 .thumbnail:hover > .content-container .title.title--cjk {
   font-weight: 525;
 }
 
 /* 对照 m3: a:active .title { GRAD -50 } — 标题视觉变细 */
+/* 必须显式声明 font-weight: 475，否则 unset 会继承父元素 normal(400) 抵消 GRAD 效果 */
 /* CJK 标题：GRAD 轴对中文无效，额外用 font-weight 插值补偿 */
 .thumbnail:active > .content-container .title {
   font-variation-settings: "GRAD" -50;
+  font-weight: 475;
 }
 .thumbnail:active > .content-container .title.title--cjk {
   font-weight: 425;
