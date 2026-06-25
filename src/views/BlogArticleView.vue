@@ -67,8 +67,11 @@
             :key="i"
             class="byline"
           >
-            <span class="author-name">{{ author.name }}</span>
-            <span class="author-role">{{ author.role }}</span>
+            <img class="author-avatar" :src="author.avatar || '/favicon.ico'" :alt="author.name" />
+            <div class="author-info">
+              <span class="author-name">{{ author.name }}</span>
+              <span class="author-role">{{ author.role }}</span>
+            </div>
           </div>
         </div>
 
@@ -754,10 +757,24 @@ watch(() => route.params.slug, () => {
 
 .byline {
   display: flex;
-  align-items: baseline;
-  gap: 0;
+  align-items: center;
+  gap: 12px;
   margin-top: 8px;
   font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
+}
+
+.author-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.author-info {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
 }
 
 .author-name {
@@ -778,10 +795,10 @@ watch(() => route.params.slug, () => {
   content: ', ';
 }
 
-/* separator（对照 m3: hr, 1px inset, margin 80px 24px 56px） */
+/* separator（对照 m3: hr, 1px solid, margin 80px 24px 56px） */
 .separator {
   border: none;
-  border-top: 1px inset var(--md-sys-color-outline-variant, #e8e0e8);
+  border-top: 1px solid var(--md-sys-color-outline-variant, #e8e0e8);
   margin: 80px 24px 56px;
 }
 
@@ -817,6 +834,16 @@ watch(() => route.params.slug, () => {
   font-variation-settings: "GRAD" 0, "opsz" 18;
 }
 
+.blog-content :deep(h4) {
+  font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
+  font-size: 24px;
+  font-weight: 475;
+  line-height: 32px;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 32px 0 12px 0;
+  font-variation-settings: "GRAD" 0, "opsz" 18;
+}
+
 .blog-content :deep(p) {
   font-size: 16px;
   font-weight: 400;
@@ -829,6 +856,14 @@ watch(() => route.params.slug, () => {
 .blog-content :deep(ol) {
   padding-left: 24px;
   margin-bottom: 24px;
+}
+
+.blog-content :deep(ol) {
+  list-style-type: decimal;
+}
+
+.blog-content :deep(ul) {
+  list-style-type: disc;
 }
 
 .blog-content :deep(li) {
@@ -1319,4 +1354,5 @@ watch(() => route.params.slug, () => {
 :global([data-theme="dark"]) .separator {
   border-top-color: var(--md-sys-color-outline-variant, #49454f);
 }
+
 </style>

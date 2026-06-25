@@ -84,16 +84,22 @@
       GRAD（Grade）轴来实现标题的 hover/active 视觉反馈——悬停时 GRAD 从 0 变为 50，
       按压时变为 -50，产生明显的粗细变化效果。
     </p>
+    <h4 id="grad-axis">GRAD 轴的差异</h4>
     <p>
       然而，Google Fonts API 返回的标准 Google Sans 字体文件的 GRAD 轴响应极弱，
       几乎无法感知 ±50 的变化。经过深入排查，我们发现 M3 官方页面使用的字体文件
       具有完全不同的编译版本（文件哈希前缀 <code>4UaRrE...</code> 与 API 返回的
       <code>4UasrE...</code> 不同），GRAD 轴的响应强度有天壤之别。
     </p>
+    <h4 id="font-face-inline">@font-face 内联方案</h4>
     <p>
       最终方案是直接从 M3 官方页面提取完整的 25 个 <code>@font-face</code> 声明
       （全部 <code>font-weight: 475</code>、<code>font-display: block</code>），
       内联到 <code>index.html</code> 中，绕过 Google Fonts API 的弱响应版本。
+    </p>
+    <p>
+      这种方式虽然增加了首屏加载的 CSS 体积，但保证了字体效果与 M3 官方完全一致。
+      每个字重切片独立声明，确保浏览器只下载当前渲染所需的子集。
     </p>
 
     <h3 id="cjk-handling">中文字体的双轨方案</h3>
@@ -101,11 +107,19 @@
       GRAD 轴对中文汉字无效——无论值设为 -100 还是 200，视觉上完全一样。
       这是 Google Sans 字体本身的限制，CJK 字形不支持该变体轴。
     </p>
+    <h4 id="dual-track">双轨策略</h4>
     <p>
       我们的解决方案是 <strong>双轨方案</strong>：纯英文标题仅使用 GRAD 轴变化（与 M3 官方一致），
       包含中文的标题则额外使用 <code>font-weight</code> 插值作为补偿——
       默认 475，hover 时加粗到 525，active 时变细到 425。
       JavaScript 通过 Unicode 范围检测标题是否包含汉字，动态添加 <code>.title--cjk</code> 类名。
+    </p>
+    <h4 id="cjk-font">中文字体选择</h4>
+    <p>
+      中文排版使用 <strong>Noto Sans SC</strong> 可变字体（字重范围 100–900），
+      确保与 Google Sans 在相近的字重值下视觉协调。
+      通过 <code>font-variation-settings</code> 控制拉丁字符的 GRAD 轴，
+      <code>font-weight</code> 控制中文字符的字重，两者互不干扰。
     </p>
 
     <div class="block" id="theme-engine">
@@ -166,6 +180,15 @@
       样式使用 <code>&lt;style scoped&gt;</code> 隔离，但 Teleport 内容通过
       <code>:global()</code> 选择器突破 Shadow DOM 限制。
     </p>
+    <p>从零搭建到完整上线的典型开发流程如下：</p>
+    <ol>
+      <li><strong>环境初始化</strong> — 使用 Vite 创建 Vue 3 项目，安装 <code>@material/web</code> 及字体依赖</li>
+      <li><strong>主题系统搭建</strong> — 实现 HCT 色彩引擎，支持亮暗模式和自定义源色</li>
+      <li><strong>核心布局开发</strong> — Navigation Rail 骨架 + 路由配置 + 子面板交互</li>
+      <li><strong>页面内容填充</strong> — 首页编辑式布局、文章页 M3 复刻、项目页卡片系统</li>
+      <li><strong>细节打磨</strong> — 字体 GRAD 轴效果、涟漪动效、暗色主题适配、移动端响应式</li>
+      <li><strong>部署上线</strong> — GitHub Pages 部署，配置自定义域名与 HTTPS</li>
+    </ol>
 
     <div class="block" id="challenges">
       <div class="copy-button-container focusable">
