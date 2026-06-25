@@ -111,23 +111,37 @@
       </div>
     </div>
 
-    <!-- ======== Footer（M3 about 风格） ======== -->
+    <!-- ======== Footer（对照 m3.material.io footer） ======== -->
     <footer class="mio-footer">
       <section class="about">
         <div class="about-material">
-          <a class="about-logo" @click.prevent="$router.push('/')">
+          <a class="about-logo" @click.prevent="$router.push('/')" aria-label="Kernel's Blog">
             <span class="material-symbols-rounded">edit_note</span>
           </a>
           <p>Kernel's Blog 是基于 Vue 3 + Material Web 的个人博客站点，严格遵循 Material Design 3 规范。探索技术，记录生活。</p>
         </div>
+        <ul class="social-links">
+          <li><h3>Social</h3></li>
+          <li><a href="https://github.com/BJY-STUDIO/myprofile" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+        <ul class="site-links">
+          <li><h3>Site</h3></li>
+          <li><a @click.prevent="$router.push('/')">首页</a></li>
+          <li><a @click.prevent="$router.push('/blog')">博客</a></li>
+          <li><a @click.prevent="$router.push('/projects')">项目</a></li>
+          <li><a @click.prevent="$router.push('/about')">关于</a></li>
+          <li><a @click.prevent="$router.push('/contact')">联系</a></li>
+        </ul>
       </section>
-      <div class="footer-links">
-        <a class="footer-link" @click.prevent="$router.push('/')">首页</a>
-        <a class="footer-link" @click.prevent="$router.push('/blog')">博客</a>
-        <a class="footer-link" @click.prevent="$router.push('/projects')">项目</a>
-        <a class="footer-link" @click.prevent="$router.push('/about')">关于</a>
-        <a class="footer-link" href="https://github.com/BJY-STUDIO/myprofile" target="_blank" rel="noopener">GitHub</a>
-      </div>
+      <section class="legal">
+        <a class="about-logo" @click.prevent="$router.push('/')" aria-label="Kernel's Blog">
+          <span class="material-symbols-rounded">edit_note</span>
+        </a>
+        <ul>
+          <li><a href="https://github.com/BJY-STUDIO/myprofile" target="_blank" rel="noopener">GitHub</a></li>
+          <li><a @click.prevent="$router.push('/about')">关于</a></li>
+        </ul>
+      </section>
     </footer>
   </div>
 </template>
@@ -1095,66 +1109,149 @@ watch(() => route.params.slug, () => {
 }
 
 /* ================================================================
-   Footer（M3 about 风格，对照 m3: footer > section.about）
+   Footer（对照 m3.material.io footer 结构）
+   footer: padding 64px 40px, 无背景色
+   section.about: grid, max-width 1200px, 4列 (570px 190px 190px 190px), gap 20px
+   section.legal: margin-top 64px, flex row, Google logo + 法律链接
    ================================================================ */
 .mio-footer {
-  margin-top: 120px;
-  background: var(--md-sys-color-surface-container-low, #f8f1f6);
+  padding: 64px 40px;
+  font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
 }
 
-.about {
-  max-width: 840px;
+/* section.about — 对照 m3: grid, max-width 1200px */
+.mio-footer .about {
+  display: grid;
+  grid-template-columns: auto;
+  gap: 0 20px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 56px 24px 32px;
 }
 
+@media screen and (min-width: 960px) {
+  .mio-footer .about {
+    grid-template-columns: 570px 190px 190px;
+  }
+}
+
+/* about-material — 对照 m3: logo (Google Symbols 40px) + description */
 .about-material {
+  display: block;
+}
+
+.about-material .about-logo {
   display: flex;
-  gap: 24px;
-  align-items: flex-start;
-}
-
-.about-logo {
   cursor: pointer;
-  flex-shrink: 0;
+  padding: 1px;
+  width: max-content;
 }
 
-.about-logo .material-symbols-rounded {
-  font-size: 32px;
-  color: var(--md-sys-color-primary, #6750a4);
+.about-material .about-logo .material-symbols-rounded {
+  font-size: 40px;
+  line-height: 40px;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
 .about-material p {
-  font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
+  font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
   font-size: 16px;
   font-weight: 400;
   line-height: 24px;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  margin: 0;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 24px 64px 16px 0;
 }
 
-.footer-links {
-  max-width: 840px;
-  margin: 0 auto;
-  padding: 24px 24px 56px;
+/* social-links / site-links — 对照 m3: ul, flex column, gap 20px */
+.mio-footer .social-links,
+.mio-footer .site-links {
   display: flex;
-  gap: 24px;
+  flex-direction: column;
+  gap: 20px;
+  list-style: none;
+  padding: 0;
+  margin: 24px 0 0;
+}
+
+.mio-footer .social-links h3,
+.mio-footer .site-links h3 {
+  font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  margin: 0;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.mio-footer .social-links li a,
+.mio-footer .site-links li a {
+  font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: var(--md-sys-color-primary, #6750a4);
+  text-decoration: underline !important;
+  cursor: pointer;
+}
+
+/* section.legal — 对照 m3: margin-top 64px, flex row, Google logo + 链接 */
+.mio-footer .legal {
+  display: flex;
+  align-items: center;
+  margin: 64px 0 0;
+  max-width: 1200px;
+}
+
+.mio-footer .legal .about-logo {
+  display: flex;
+  cursor: pointer;
+  padding: 1px;
+  margin-right: 32px;
+  flex-shrink: 0;
+}
+
+.mio-footer .legal .about-logo .material-symbols-rounded {
+  font-size: 40px;
+  line-height: 40px;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.mio-footer .legal ul {
+  display: flex;
+  flex-direction: row;
+  gap: 16px 24px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
   flex-wrap: wrap;
 }
 
-.footer-link {
-  font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 20px;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  text-decoration: none;
-  cursor: pointer;
-  transition: color 0.15s ease;
+.mio-footer .legal li {
+  margin: 0;
+  padding: 0;
 }
 
-.footer-link:hover {
+.mio-footer .legal li a {
+  font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
   color: var(--md-sys-color-primary, #6750a4);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+@media screen and (max-width: 600px) {
+  .mio-footer {
+    padding: 64px 24px;
+  }
+
+  .mio-footer .about {
+    grid-template-columns: 1fr;
+  }
+
+  .about-material p {
+    margin-right: 0;
+  }
 }
 
 /* ================================================================
@@ -1209,8 +1306,14 @@ watch(() => route.params.slug, () => {
   color: var(--md-sys-color-on-secondary-container, #e8def8);
 }
 
-:global([data-theme="dark"]) .mio-footer {
-  background: var(--md-sys-color-surface-container-low, #1d1b20);
+:global([data-theme="dark"]) .about-material .about-logo .material-symbols-rounded,
+:global([data-theme="dark"]) .mio-footer .legal .about-logo .material-symbols-rounded {
+  color: var(--md-sys-color-on-surface, #e6e1e5);
+}
+
+:global([data-theme="dark"]) .mio-footer .social-links h3,
+:global([data-theme="dark"]) .mio-footer .site-links h3 {
+  color: var(--md-sys-color-on-surface, #e6e1e5);
 }
 
 :global([data-theme="dark"]) .separator {
