@@ -30,6 +30,7 @@
       <aside class="toc" v-show="tocItems.length > 0">
         <nav aria-label="page content">
           <div class="toc__overline">On this page</div>
+          <h2 class="toc__title">{{ article.title }}</h2>
           <div
             class="toc__indicator"
             :class="{ 'toc__indicator--hide': activeTocIndex < 0 }"
@@ -42,7 +43,6 @@
               role="link"
               tabindex="0"
               class="toc__item"
-              :class="{ 'toc__item--sub': item.level === 'H3' }"
               :aria-current="activeTocIndex === i ? 'true' : 'false'"
               @click="scrollToHeading(item.id)"
               @keydown.enter="scrollToHeading(item.id)"
@@ -187,12 +187,14 @@ function updateIndicatorPosition(idx) {
 
 function buildToc() {
   if (!blogContentRef.value) return
-  const headings = blogContentRef.value.querySelectorAll('h2, h3')
+  const headings = blogContentRef.value.querySelectorAll('h2.linkable')
   if (!headings.length) return false
   tocItems.value = Array.from(headings).map((h, i) => {
-    const id = h.id || `section-${i}`
-    if (!h.id) h.id = id
-    return { id, text: h.textContent, level: h.tagName }
+    // id 优先取 .block 父级的 id，其次取 h2 自身的 id
+    const block = h.closest('.block')
+    const id = (block?.id) || h.id || `section-${i}`
+    if (!h.id && !block?.id) h.id = id
+    return { id, text: h.textContent, level: 'H2' }
   })
   return true
 }
@@ -258,12 +260,20 @@ function setupScrollObserver() {
 }
 
 function scrollToHeading(id) {
-  const el = blogContentRef.value?.querySelector(`#${CSS.escape(id)}`)
-  if (el) {
+  // 优先找 .block 容器（id 在 block 上），其次找 h2（id 在 h2 上）
+  let el = blogContentRef.value?.querySelector(`#${CSS.escape(id)}`)
+  if (!el) {
+    el = blogContentRef.value?.querySelector(`h2[id="${CSS.escape(id)}"]`)
+  }
+  // 如果找到的是 h2，尝试定位到 .block 的 scroll-target
+  const block = el?.closest('.block') || el
+  const scrollTarget = block?.querySelector('.scroll-target') || el
+  if (scrollTarget || el) {
+    const target = scrollTarget || el
     const sr = document.querySelector('.app-main')
-    if (sr) {
+    if (sr && target) {
       const rootRect = sr.getBoundingClientRect()
-      const elRect = el.getBoundingClientRect()
+      const elRect = target.getBoundingClientRect()
       sr.scrollTo({
         top: sr.scrollTop + elRect.top - rootRect.top - 24,
         behavior: 'smooth',
@@ -326,6 +336,16 @@ function onCardDown(e) {
   window.addEventListener('mouseup', onUp)
 }
 
+function recalcIndicatorTop() {
+  const nav = document.querySelector('.editorial .toc nav')
+  const firstItem = document.querySelector('.editorial .toc__item')
+  if (nav && firstItem) {
+    const navRect = nav.getBoundingClientRect()
+    const itemRect = firstItem.getBoundingClientRect()
+    indicatorTop.value = Math.round(itemRect.top - navRect.top)
+  }
+}
+
 onMounted(() => {
   // 监听 blog-content DOM 变化，异步组件加载完时再构建 TOC
   contentMutationObserver = new MutationObserver(() => {
@@ -333,6 +353,7 @@ onMounted(() => {
     if (built) {
       setupScrollObserver()
       contentMutationObserver?.disconnect()
+      nextTick(recalcIndicatorTop)
     }
   })
   nextTick(() => {
@@ -342,17 +363,12 @@ onMounted(() => {
       if (built) {
         setupScrollObserver()
         contentMutationObserver.disconnect()
+        nextTick(recalcIndicatorTop)
       }
     }
 
     // 计算 indicator top 基准位置
-    const nav = document.querySelector('.editorial .toc nav')
-    const firstItem = document.querySelector('.editorial .toc__item')
-    if (nav && firstItem) {
-      const navRect = nav.getBoundingClientRect()
-      const itemRect = firstItem.getBoundingClientRect()
-      indicatorTop.value = Math.round(itemRect.top - navRect.top)
-    }
+    recalcIndicatorTop()
   })
 })
 
@@ -372,6 +388,7 @@ watch(() => route.params.slug, () => {
         if (built) {
           setupScrollObserver()
           contentMutationObserver?.disconnect()
+          nextTick(recalcIndicatorTop)
         }
       })
       contentMutationObserver.observe(blogContentRef.value, { childList: true, subtree: true })
@@ -379,6 +396,7 @@ watch(() => route.params.slug, () => {
       if (built) {
         setupScrollObserver()
         contentMutationObserver.disconnect()
+        nextTick(recalcIndicatorTop)
       }
     }
   })
@@ -571,6 +589,16 @@ watch(() => route.params.slug, () => {
   margin: 0 16px 8px;
 }
 
+.toc__title {
+  font-size: 24px;
+  font-weight: 475;
+  line-height: 32px;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0 16px 8px;
+  font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
+  font-variation-settings: "GRAD" 0, "opsz" 18;
+}
+
 /* indicator: border-only pill（与首页完全一致） */
 .toc__indicator {
   position: absolute;
@@ -606,11 +634,6 @@ watch(() => route.params.slug, () => {
   border-radius: 18px;
   cursor: pointer;
   align-items: center;
-}
-
-/* H3 子项缩进 */
-.toc__item--sub {
-  padding-left: 32px;
 }
 
 .toc__item:hover {
@@ -715,15 +738,17 @@ watch(() => route.params.slug, () => {
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
-.blog-content :deep(h2) {
+.blog-content :deep(h2.linkable) {
   font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
   font-size: 45px;
   font-weight: 475;
   line-height: 52px;
   color: var(--md-sys-color-on-surface, #1c1b1f);
-  margin: 64px 0 24px 0;
+  margin: 0;
   font-variation-settings: "GRAD" 0, "opsz" 18;
 }
+
+/* block 容器中 h2 的 margin 由 .block 控制，不在 h2 上 */
 
 .blog-content :deep(h3) {
   font-family: 'Google Sans', 'Noto Sans SC', sans-serif;

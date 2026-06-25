@@ -1,6 +1,19 @@
 <template>
   <div class="article-content">
-    <h2 id="project-overview">项目概述</h2>
+    <div class="block" id="project-overview">
+      <div class="copy-button-container focusable">
+        <span class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to 项目概述 section">link</span>
+        <div class="copy-button-background"></div>
+        <div class="tooltip">
+          <span class="deactivated">Copy link</span>
+          <span aria-live="polite" class="activated">Link copied</span>
+        </div>
+      </div>
+      <div class="scroll-target"></div>
+      <div class="text-chunk">
+        <h2 class="linkable" tabindex="-1">项目概述</h2>
+      </div>
+    </div>
     <p>
       Kernel's Blog 是一个基于 <strong>Vue 3</strong> 和 <strong>Material Web Components</strong> 构建的个人博客站点，
       严格遵循 <strong>Material Design 3</strong> 设计规范。项目从零搭建，不依赖任何现成的 M3 UI 框架，
@@ -12,7 +25,20 @@
       打造一个既美观又实用的个人博客？答案是肯定的——但过程远比想象中复杂。
     </p>
 
-    <h2 id="tech-stack">技术栈</h2>
+    <div class="block" id="tech-stack">
+      <div class="copy-button-container focusable">
+        <span class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to 技术栈 section">link</span>
+        <div class="copy-button-background"></div>
+        <div class="tooltip">
+          <span class="deactivated">Copy link</span>
+          <span aria-live="polite" class="activated">Link copied</span>
+        </div>
+      </div>
+      <div class="scroll-target"></div>
+      <div class="text-chunk">
+        <h2 class="linkable" tabindex="-1">技术栈</h2>
+      </div>
+    </div>
     <p>项目采用以下核心技术和工具：</p>
     <ul>
       <li><strong>Vue 3.4</strong> — Composition API + Script Setup，无 Options API</li>
@@ -24,7 +50,20 @@
       <li><strong>Noto Sans SC</strong> — 中文可变字体，字重范围 100–900</li>
     </ul>
 
-    <h2 id="m3-implementation">M3 规范实现</h2>
+    <div class="block" id="m3-implementation">
+      <div class="copy-button-container focusable">
+        <span class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to M3 规范实现 section">link</span>
+        <div class="copy-button-background"></div>
+        <div class="tooltip">
+          <span class="deactivated">Copy link</span>
+          <span aria-live="polite" class="activated">Link copied</span>
+        </div>
+      </div>
+      <div class="scroll-target"></div>
+      <div class="text-chunk">
+        <h2 class="linkable" tabindex="-1">M3 规范实现</h2>
+      </div>
+    </div>
 
     <h3 id="navigation-rail">Navigation Rail 导航栏</h3>
     <p>
@@ -69,7 +108,20 @@
       JavaScript 通过 Unicode 范围检测标题是否包含汉字，动态添加 <code>.title--cjk</code> 类名。
     </p>
 
-    <h2 id="theme-engine">主题引擎</h2>
+    <div class="block" id="theme-engine">
+      <div class="copy-button-container focusable">
+        <span class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to 主题引擎 section">link</span>
+        <div class="copy-button-background"></div>
+        <div class="tooltip">
+          <span class="deactivated">Copy link</span>
+          <span aria-live="polite" class="activated">Link copied</span>
+        </div>
+      </div>
+      <div class="scroll-target"></div>
+      <div class="text-chunk">
+        <h2 class="linkable" tabindex="-1">主题引擎</h2>
+      </div>
+    </div>
     <p>
       主题系统基于 <strong>HCT 色彩空间</strong>（Hue-Chroma-Tone）构建，
       这是 M3 规范的核心创新。用户可以通过颜色选择器选取任意颜色，
@@ -87,7 +139,20 @@
       <code>color-mix(in srgb, ...)</code> 处理状态层（hover/pressed/focused）的透明度叠加。
     </p>
 
-    <h2 id="architecture">架构设计</h2>
+    <div class="block" id="architecture">
+      <div class="copy-button-container focusable">
+        <span class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to 架构设计 section">link</span>
+        <div class="copy-button-background"></div>
+        <div class="tooltip">
+          <span class="deactivated">Copy link</span>
+          <span aria-live="polite" class="activated">Link copied</span>
+        </div>
+      </div>
+      <div class="scroll-target"></div>
+      <div class="text-chunk">
+        <h2 class="linkable" tabindex="-1">架构设计</h2>
+      </div>
+    </div>
     <p>项目的组件层级清晰，职责分明：</p>
     <ul>
       <li><strong>App.vue</strong> — 顶层布局：Navigation Rail + 可折叠子面板 + 移动端抽屉 + 主题面板</li>
@@ -102,7 +167,20 @@
       <code>:global()</code> 选择器突破 Shadow DOM 限制。
     </p>
 
-    <h2 id="challenges">遇到的挑战</h2>
+    <div class="block" id="challenges">
+      <div class="copy-button-container focusable">
+        <span class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to 遇到的挑战 section">link</span>
+        <div class="copy-button-background"></div>
+        <div class="tooltip">
+          <span class="deactivated">Copy link</span>
+          <span aria-live="polite" class="activated">Link copied</span>
+        </div>
+      </div>
+      <div class="scroll-target"></div>
+      <div class="text-chunk">
+        <h2 class="linkable" tabindex="-1">遇到的挑战</h2>
+      </div>
+    </div>
 
     <h3 id="shadow-dom">Shadow DOM 样式穿透</h3>
     <p>
@@ -126,7 +204,20 @@
       确保不被通配符规则覆盖。这类由全局重置引发的局部样式失效是最难定位的 CSS 问题之一。
     </p>
 
-    <h2 id="lessons">经验总结</h2>
+    <div class="block" id="lessons">
+      <div class="copy-button-container focusable">
+        <span class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to 经验总结 section">link</span>
+        <div class="copy-button-background"></div>
+        <div class="tooltip">
+          <span class="deactivated">Copy link</span>
+          <span aria-live="polite" class="activated">Link copied</span>
+        </div>
+      </div>
+      <div class="scroll-target"></div>
+      <div class="text-chunk">
+        <h2 class="linkable" tabindex="-1">经验总结</h2>
+      </div>
+    </div>
     <p>在构建这个项目的过程中，我们总结出以下关键经验：</p>
     <ol>
       <li><strong>Web Components 与框架的协作需要额外注意</strong>——Shadow DOM 的封装是特性也是障碍，scoped 样式遇上 <code>::slotted()</code> 需要仔细处理优先级</li>
@@ -143,11 +234,169 @@
 </template>
 
 <script setup>
-// 纯内容组件，无需额外逻辑
+// Copy link 交互逻辑 — 使用事件委托，避免异步组件加载后找不到 DOM 元素
+import { onMounted, onUnmounted } from 'vue'
+
+function handleClick(e) {
+  const btn = e.target.closest('.copy-button')
+  if (!btn) return
+  const block = btn.closest('.block')
+  if (!block) return
+  const id = block.id
+  if (!id) return
+
+  const url = window.location.origin + window.location.pathname + '#' + id
+  navigator.clipboard.writeText(url).catch(() => {})
+
+  // 显示 "Link copied" 提示
+  const container = btn.closest('.copy-button-container')
+  const activated = container?.querySelector('.activated')
+  const deactivated = container?.querySelector('.deactivated')
+  if (activated && deactivated) {
+    deactivated.style.display = 'none'
+    activated.style.display = 'block'
+    container.classList.add('copied')
+    setTimeout(() => {
+      deactivated.style.display = ''
+      activated.style.display = ''
+      container.classList.remove('copied')
+    }, 2000)
+  }
+}
+
+onMounted(() => {
+  document.querySelector('.article-content')?.addEventListener('click', handleClick)
+})
+
+onUnmounted(() => {
+  document.querySelector('.article-content')?.removeEventListener('click', handleClick)
+})
 </script>
 
 <style scoped>
+/* ================================================================
+   M3 linkable heading block structure
+   对照 m3: .block (grid: 68px text-width auto, gap 20px)
+   ================================================================ */
+.block {
+  position: relative;
+  padding-left: 88px;
+  margin: 64px 0 24px 0;
+}
+
+/* copy-button-container — absolutely positioned to the left */
+.copy-button-container {
+  position: absolute;
+  left: 0;
+  top: 2px;
+  display: flex;
+  width: 48px;
+  height: 48px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  cursor: auto;
+}
+
+.block:hover .copy-button-container,
+.copy-button-container:focus-within,
+.copy-button-container.copied {
+  opacity: 1;
+  cursor: pointer;
+}
+
+/* copy-button */
+.copy-button {
+  font-size: 24px;
+  line-height: 48px;
+  text-align: center;
+  width: 48px;
+  height: 48px;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  border-radius: 24px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease;
+}
+
+.copy-button:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface, #1c1b1f) 8%, transparent);
+}
+
+/* copy-button-background */
+.copy-button-background {
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;
+  background-color: rgba(0, 0, 0, 0);
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* scroll-target (对照 m3: position absolute, 0x0, 用于锚点定位偏移) */
+.scroll-target {
+  display: block;
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+/* tooltip */
+.tooltip {
+  position: absolute;
+  top: -36px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(48, 48, 48, 0.8);
+  color: #f2f2f2;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  padding: 4px 11px;
+  border-radius: 6px;
+  opacity: 0;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.copy-button:hover .tooltip,
+.copy-button-container:hover .tooltip {
+  opacity: 1;
+}
+
+.tooltip .activated {
+  display: none;
+}
+
+.copy-button-container.copied .tooltip .deactivated {
+  display: none;
+}
+
+.copy-button-container.copied .tooltip .activated {
+  display: block;
+}
+
+/* text-chunk */
+.text-chunk {
+  display: block;
+}
+
 .article-content {
   /* 排版由 BlogArticleView 的 .blog-content :deep() 控制 */
+}
+
+/* 移动端：隐藏 copy-button 区域，不需要 padding-left */
+@media screen and (max-width: 1294px) {
+  .block {
+    padding-left: 0;
+    margin: 64px 0 24px 0;
+  }
+
+  .copy-button-container {
+    display: none;
+  }
 }
 </style>
