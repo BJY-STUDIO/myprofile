@@ -794,23 +794,18 @@ onBeforeUnmount(() => {
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0;
   font-variation-settings: "GRAD" 0;
-  /* 可变字体：GRAD 轴 + font-weight 均支持平滑插值过渡 */
-  transition: font-variation-settings 0.3s cubic-bezier(0.2, 0, 0, 1),
-              font-weight 0.3s cubic-bezier(0.2, 0, 0, 1);
+  /* 可变字体：GRAD 轴支持平滑插值过渡 */
+  transition: font-variation-settings 0.3s cubic-bezier(0.2, 0, 0, 1);
 }
 
 /* 对照 m3: a:hover .title { GRAD 50 } — 标题视觉加重 */
-/* Noto Sans SC VF 通过 font-weight 插值实现同样的加粗效果 */
 .thumbnail:hover > .content-container .title {
   font-variation-settings: "GRAD" 50;
-  font-weight: 600;
 }
 
 /* 对照 m3: a:active .title { GRAD -50 } — 标题视觉变细 */
-/* Noto Sans SC VF 通过 font-weight 插值实现同样的变细效果 */
 .thumbnail:active > .content-container .title {
   font-variation-settings: "GRAD" -50;
-  font-weight: 400;
 }
 
 .thumbnail > .content-container .description {
