@@ -86,7 +86,7 @@ function createDefaultData() {
                 title: "Kernel's Blog",
                 excerpt: '基于 Vue 3 + Material Web 的个人博客站点，严格遵循 M3 规范。',
                 icon: 'web',
-                route: '/projects/web',
+                route: '/article/kernels-blog',
                 image: '',
                 date: '',
               },

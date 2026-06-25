@@ -1,0 +1,153 @@
+<template>
+  <div class="article-content">
+    <h2 id="project-overview">项目概述</h2>
+    <p>
+      Kernel's Blog 是一个基于 <strong>Vue 3</strong> 和 <strong>Material Web Components</strong> 构建的个人博客站点，
+      严格遵循 <strong>Material Design 3</strong> 设计规范。项目从零搭建，不依赖任何现成的 M3 UI 框架，
+      而是直接使用 Google 官方的 <code>@material/web</code> Web Components 包，
+      确保与 M3 规范的完全一致性。
+    </p>
+    <p>
+      这个项目起源于一个简单的问题：在 2026 年，能不能完全用 Material Design 3 的原生组件和交互规范，
+      打造一个既美观又实用的个人博客？答案是肯定的——但过程远比想象中复杂。
+    </p>
+
+    <h2 id="tech-stack">技术栈</h2>
+    <p>项目采用以下核心技术和工具：</p>
+    <ul>
+      <li><strong>Vue 3.4</strong> — Composition API + Script Setup，无 Options API</li>
+      <li><strong>@material/web 1.4</strong> — Google 官方 M3 Web Components（md-button, md-dialog, md-slider 等）</li>
+      <li><strong>Vue Router 4</strong> — HTML5 History 模式，支持导航持久化</li>
+      <li><strong>Vite</strong> — 极速开发服务器和构建工具</li>
+      <li><strong>Material Symbols Rounded</strong> — 可变字体图标，支持 FILL/wght/GRAD/opsz 四轴</li>
+      <li><strong>Google Sans</strong> — M3 官方展示字体，通过直接内联 @font-face 声明实现完整 GRAD 轴响应</li>
+      <li><strong>Noto Sans SC</strong> — 中文可变字体，字重范围 100–900</li>
+    </ul>
+
+    <h2 id="m3-implementation">M3 规范实现</h2>
+
+    <h3 id="navigation-rail">Navigation Rail 导航栏</h3>
+    <p>
+      左侧 80px 宽的 Navigation Rail 是整个应用的骨架。它实现了 M3 规范中的所有交互状态：
+      指示器药丸（indicator pill）的 <code>scaleX(0.32)</code> → <code>scaleX(1)</code> 过渡、
+      FAB 的涟漪效果、图标在 hover/active 时的 <code>font-variation-settings</code> 变化——
+      wght 从 400 到 600（hover）再到 300（active），GRAD 从 0 到 50 再到 -50。
+    </p>
+    <p>
+      子面板（sub-panel）的交互更加复杂：在窄屏下以浮动模式出现（hover 触发，不压缩布局），
+      在宽屏（≥1200px）下切换为常驻模式（persist 在布局中占据空间）。
+      两种模式之间的切换使用 CSS transition 平滑过渡。
+    </p>
+
+    <h3 id="typography-system">字体排版系统</h3>
+    <p>
+      这是整个项目中最具挑战性的部分之一。M3 官方使用 <strong>Google Sans</strong> 字体的
+      GRAD（Grade）轴来实现标题的 hover/active 视觉反馈——悬停时 GRAD 从 0 变为 50，
+      按压时变为 -50，产生明显的粗细变化效果。
+    </p>
+    <p>
+      然而，Google Fonts API 返回的标准 Google Sans 字体文件的 GRAD 轴响应极弱，
+      几乎无法感知 ±50 的变化。经过深入排查，我们发现 M3 官方页面使用的字体文件
+      具有完全不同的编译版本（文件哈希前缀 <code>4UaRrE...</code> 与 API 返回的
+      <code>4UasrE...</code> 不同），GRAD 轴的响应强度有天壤之别。
+    </p>
+    <p>
+      最终方案是直接从 M3 官方页面提取完整的 25 个 <code>@font-face</code> 声明
+      （全部 <code>font-weight: 475</code>、<code>font-display: block</code>），
+      内联到 <code>index.html</code> 中，绕过 Google Fonts API 的弱响应版本。
+    </p>
+
+    <h3 id="cjk-handling">中文字体的双轨方案</h3>
+    <p>
+      GRAD 轴对中文汉字无效——无论值设为 -100 还是 200，视觉上完全一样。
+      这是 Google Sans 字体本身的限制，CJK 字形不支持该变体轴。
+    </p>
+    <p>
+      我们的解决方案是 <strong>双轨方案</strong>：纯英文标题仅使用 GRAD 轴变化（与 M3 官方一致），
+      包含中文的标题则额外使用 <code>font-weight</code> 插值作为补偿——
+      默认 475，hover 时加粗到 525，active 时变细到 425。
+      JavaScript 通过 Unicode 范围检测标题是否包含汉字，动态添加 <code>.title--cjk</code> 类名。
+    </p>
+
+    <h2 id="theme-engine">主题引擎</h2>
+    <p>
+      主题系统基于 <strong>HCT 色彩空间</strong>（Hue-Chroma-Tone）构建，
+      这是 M3 规范的核心创新。用户可以通过颜色选择器选取任意颜色，
+      系统自动生成完整的 M3 色彩方案——包括 Primary、Secondary、Tertiary、Error、
+      Surface 等全部色彩令牌。
+    </p>
+    <p>
+      由于浏览器尚不原生支持 HCT，我们使用 HSL 作为近似实现，
+      并在关键转换点进行色相偏移校正。生成的色彩变量通过
+      <code>CSS.registerProperty</code> 或直接设置 <code>document.documentElement.style</code>
+      注入页面，实现全局即时主题切换。
+    </p>
+    <p>
+      暗色模式会在现有色彩方案基础上做 Tone 值的反转，并通过
+      <code>color-mix(in srgb, ...)</code> 处理状态层（hover/pressed/focused）的透明度叠加。
+    </p>
+
+    <h2 id="architecture">架构设计</h2>
+    <p>项目的组件层级清晰，职责分明：</p>
+    <ul>
+      <li><strong>App.vue</strong> — 顶层布局：Navigation Rail + 可折叠子面板 + 移动端抽屉 + 主题面板</li>
+      <li><strong>HomeView.vue</strong> — 首页：M3 编辑式布局，TOC 侧栏 + 分区卡片</li>
+      <li><strong>BlogArticleView.vue</strong> — 文章页：严格复刻 m3.material.io/blog 的布局结构</li>
+      <li><strong>blogStore.js</strong> — 响应式数据层，localStorage 持久化</li>
+      <li><strong>theme.js</strong> — HCT 色彩引擎</li>
+    </ul>
+    <p>
+      每个 Vue 文件遵循自包含原则：独立导入其使用的 Material Web Components，
+      样式使用 <code>&lt;style scoped&gt;</code> 隔离，但 Teleport 内容通过
+      <code>:global()</code> 选择器突破 Shadow DOM 限制。
+    </p>
+
+    <h2 id="challenges">遇到的挑战</h2>
+
+    <h3 id="shadow-dom">Shadow DOM 样式穿透</h3>
+    <p>
+      Material Web Components 基于 Shadow DOM 实现，内部样式无法被外部 CSS 直接修改。
+      例如 <code>md-slider</code> 的轨道宽度、<code>md-dialog</code> 的滚动条、
+      <code>input[type=color]</code> 的原生样式等，都需要针对性的 JS 补丁或 CSS 变量覆盖。
+    </p>
+    <p>
+      对话框内所有 <code>&lt;form&gt;</code> 必须添加 <code>@submit.prevent</code> 防止页面刷新——
+      这是 Shadow DOM 内表单提交行为与 Vue 事件系统不兼容导致的隐蔽 bug。
+    </p>
+
+    <h3 id="font-weight-global">全局 font-weight 重置</h3>
+    <p>
+      <code>base.css</code> 中的 <code>* { font-weight: normal }</code> 重置规则
+      导致 hover 时 <code>font-weight</code> 从 475 回退到 400（normal 的计算值），
+      完全抵消 Google Sans 的 GRAD 轴效果。
+    </p>
+    <p>
+      修复方案是在所有 hover/active 规则中显式声明 <code>font-weight: 475</code>，
+      确保不被通配符规则覆盖。这类由全局重置引发的局部样式失效是最难定位的 CSS 问题之一。
+    </p>
+
+    <h2 id="lessons">经验总结</h2>
+    <p>在构建这个项目的过程中，我们总结出以下关键经验：</p>
+    <ol>
+      <li><strong>Web Components 与框架的协作需要额外注意</strong>——Shadow DOM 的封装是特性也是障碍，scoped 样式遇上 <code>::slotted()</code> 需要仔细处理优先级</li>
+      <li><strong>可变字体的轴支持因编译版本而异</strong>——同一字体族的不同 woff2 编译可能有截然不同的轴响应特性</li>
+      <li><strong>M3 规范的细节远超视觉</strong>——从触摸目标的 48px 最小尺寸到 state layer 的精确透明度，每处都经过可访问性考量</li>
+      <li><strong>全局重置是定时炸弹</strong>——<code>* { font-weight: normal }</code> 这种规则在与可变字体配合时会产生意想不到的连锁效应</li>
+      <li><strong>渐进式适配比一次性响应式更可靠</strong>——从移动端基础布局逐步增强到桌面端完整体验</li>
+    </ol>
+    <p>
+      这个项目仍在持续迭代中。未来计划添加更多博客文章、完善可访问性、
+      并探索 M3 的 Dynamic Color 在个人博客场景下的更多可能。
+    </p>
+  </div>
+</template>
+
+<script setup>
+// 纯内容组件，无需额外逻辑
+</script>
+
+<style scoped>
+.article-content {
+  /* 排版由 BlogArticleView 的 .blog-content :deep() 控制 */
+}
+</style>

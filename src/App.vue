@@ -18,8 +18,17 @@ const navItems = computed(() => navApi.navItems())
 
 const fabConfig = { icon: 'create', label: '新建' }
 
+// 特殊路由映射：/article/* 归属于 blog 导航项
+const ROUTE_TO_NAV_MAP = { '/article': 'blog' }
+
 const activeNavId = computed(() => {
   const items = navItems.value
+  // 先检查特殊路由映射
+  for (const [prefix, navId] of Object.entries(ROUTE_TO_NAV_MAP)) {
+    if (route.path === prefix || route.path.startsWith(prefix + '/')) {
+      return navId
+    }
+  }
   const matched = items.find(
     (item) => route.path === item.route || route.path.startsWith(item.route + '/')
   )

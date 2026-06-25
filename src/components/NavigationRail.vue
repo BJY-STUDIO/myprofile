@@ -48,7 +48,16 @@ const emit = defineEmits(['fab-click', 'item-hover', 'item-leave'])
 const route = useRoute()
 const router = useRouter()
 
+// 特殊路由映射：/article/* 归属于 blog 导航项
+const ROUTE_TO_NAV_MAP = { '/article': 'blog' }
+
 const activeId = computed(() => {
+  // 先检查特殊路由映射
+  for (const [prefix, navId] of Object.entries(ROUTE_TO_NAV_MAP)) {
+    if (route.path === prefix || route.path.startsWith(prefix + '/')) {
+      return navId
+    }
+  }
   const matched = props.items.find((item) => {
     if (item.route) return route.path === item.route || route.path.startsWith(item.route + '/')
     return false
