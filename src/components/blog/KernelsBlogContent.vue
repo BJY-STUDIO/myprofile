@@ -271,6 +271,7 @@ onUnmounted(() => {
    ================================================================ */
 .block {
   display: grid;
+  position: relative;
   grid-template-columns: 68px auto 0px 0px;
   gap: 20px;
   margin: 80px 0 24px -90px;
@@ -283,8 +284,11 @@ onUnmounted(() => {
   align-items: flex-start;
   justify-content: center;
   height: max-content;
+  /* margin-top 对齐：M3 官方 h2 line-height=64px，按钮中心=h2Top+8+24=h2Top+32=h2Center ✓
+     我们的 h2 line-height=52px，按钮中心=h2Top+8+24=h2Top+32，而 h2Center=h2Top+26，差 6px
+     修正：margin-top = h2Center - 24 = 26 - 24 = 2px */
   margin-left: 20px;
-  margin-top: 8px;
+  margin-top: 2px;
   cursor: auto;
 }
 

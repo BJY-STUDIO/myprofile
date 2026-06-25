@@ -202,6 +202,7 @@ function buildToc() {
 let observer = null
 let contentMutationObserver = null
 let scrollRoot = null
+let programmaticScrolling = false
 
 function setupScrollObserver() {
   if (observer) observer.disconnect()
@@ -210,6 +211,8 @@ function setupScrollObserver() {
   scrollRoot = document.querySelector('.app-main')
   observer = new IntersectionObserver(
     (entries) => {
+      // 如果正在程序化滚动（scrollToHeading），跳过 IntersectionObserver 更新
+      if (programmaticScrolling) return
       for (const entry of entries) {
         if (entry.isIntersecting) {
           const idx = tocItems.value.findIndex(t => t.id === entry.target.id)
@@ -234,7 +237,7 @@ function setupScrollObserver() {
       if (el) observer.observe(el)
     })
 
-    // 初始检测
+    // 初始检测：找到视口上半区内最靠近顶部的 section，若无则默认第一个
     requestAnimationFrame(() => {
       if (!scrollRoot) return
       const rootRect = scrollRoot.getBoundingClientRect()
@@ -251,10 +254,10 @@ function setupScrollObserver() {
           }
         }
       })
-      if (active >= 0) {
-        activeTocIndex.value = active
-        updateIndicatorPosition(active)
-      }
+      // 无 section 在视口上半区时，默认选中第一个（M3 官方行为）
+      if (active < 0) active = 0
+      activeTocIndex.value = active
+      updateIndicatorPosition(active)
     })
   })
 }
@@ -271,18 +274,35 @@ function scrollToHeading(id) {
   if (scrollTarget || el) {
     const target = scrollTarget || el
     const sr = document.querySelector('.app-main')
+    const idx = tocItems.value.findIndex(t => t.id === id)
     if (sr && target) {
+      // 立即更新 indicator 到目标位置
+      if (idx >= 0) {
+        activeTocIndex.value = idx
+        updateIndicatorPosition(idx)
+      }
+      // 标记程序化滚动，防止 IntersectionObserver 在滚动过程中更新 indicator
+      programmaticScrolling = true
       const rootRect = sr.getBoundingClientRect()
       const elRect = target.getBoundingClientRect()
       sr.scrollTo({
         top: sr.scrollTop + elRect.top - rootRect.top - 24,
         behavior: 'smooth',
       })
-    }
-    const idx = tocItems.value.findIndex(t => t.id === id)
-    if (idx >= 0) {
-      activeTocIndex.value = idx
-      updateIndicatorPosition(idx)
+      // 滚动结束后恢复 IntersectionObserver 响应
+      const onScrollEnd = () => {
+        sr.removeEventListener('scrollend', onScrollEnd)
+        clearTimeout(fallbackTimer)
+        programmaticScrolling = false
+        // 确保最终位置正确
+        if (idx >= 0) {
+          activeTocIndex.value = idx
+          updateIndicatorPosition(idx)
+        }
+      }
+      sr.addEventListener('scrollend', onScrollEnd, { once: true })
+      // 降级：scrollend 兼容性不足时用超时
+      const fallbackTimer = setTimeout(onScrollEnd, 2000)
     }
   }
 }
