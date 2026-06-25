@@ -124,3 +124,10 @@ a:not(.sub-panel__item):not(.nav-rail__destination):not(.nav-rail__fab):not(.nav
 md-dialog {
   margin: auto;
 }
+
+/*
+  隐藏 md-dialog 内部 scroller 的滚动条，
+  释放宽度并保持内容区左右对齐美观。
+  滚动功能不受影响（鼠标滚轮 / 触控板 / 键盘仍可滚动）。
+  md-dialog 未暴露 ::part()，需通过全局样式表注入 Shadow DOM。
+*/

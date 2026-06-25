@@ -105,6 +105,12 @@ const filteredIcons = computed(() => {
   padding: 4px;
   /* M3 shape: extra-small */
   border-radius: 8px;
+  /* 隐藏滚动条，释放宽度并保持对齐 */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.icon-picker__grid::-webkit-scrollbar {
+  display: none;
 }
 
 .icon-picker__item {

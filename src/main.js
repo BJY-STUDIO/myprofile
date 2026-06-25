@@ -13,6 +13,37 @@ const app = createApp(App)
 app.use(router)
 app.mount('#app')
 
+// ====== 隐藏 md-dialog 内部滚动条 ======
+// md-dialog 未暴露 ::part()，通过 adoptedStyleSheet 注入到 Shadow DOM
+// 需等组件完成自身样式初始化后再追加
+function patchDialogScrollbar(dialog) {
+  if (dialog._scrollbarPatched) return
+  dialog._scrollbarPatched = true
+  try {
+    const sheet = new CSSStyleSheet()
+    sheet.replaceSync(
+      '.scroller { scrollbar-width: none !important; -ms-overflow-style: none !important; }' +
+      '.scroller::-webkit-scrollbar { display: none !important; }'
+    )
+    dialog.shadowRoot.adoptedStyleSheets = [...dialog.shadowRoot.adoptedStyleSheets, sheet]
+  } catch (_) {}
+}
+
+// 用 MutationObserver 监听 md-dialog 出现，确保在组件初始化完成后 patch
+const _dialogObserver = new MutationObserver(() => {
+  document.querySelectorAll('md-dialog').forEach(d => {
+    if (d.shadowRoot && !d._scrollbarPatched) patchDialogScrollbar(d)
+  })
+})
+_dialogObserver.observe(document.body, { childList: true, subtree: true })
+
+// 初始检查
+requestAnimationFrame(() => {
+  document.querySelectorAll('md-dialog').forEach(d => {
+    if (d.shadowRoot && !d._scrollbarPatched) patchDialogScrollbar(d)
+  })
+})
+
 // ====== 主题面板交互逻辑 ======
 // 等待 Vue 挂载完成后绑定事件
 setTimeout(initThemePanel, 100)
