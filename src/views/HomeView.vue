@@ -273,6 +273,12 @@ function onCardDown(e) {
   // 创建 ripple DOM
   const ripple = document.createElement('div')
   ripple.className = 'ripple'
+  // 复制 Vue scoped data-v- 属性，使 scoped CSS 规则能匹配动态创建的元素
+  for (const attr of card.attributes) {
+    if (attr.name.startsWith('data-v-')) {
+      ripple.setAttribute(attr.name, '')
+    }
+  }
   ripple.style.width = size + 'px'
   ripple.style.height = size + 'px'
   ripple.style.left = (x - size / 2) + 'px'
@@ -705,6 +711,7 @@ onBeforeUnmount(() => {
 }
 
 /* ripple 涟漪动效（对照 m3 mioripple 指令：动态创建 DOM） */
+/* z-index: 0 使 ripple 画在 content-container(2) 和 thumb-container(1) 下方 */
 .thumbnail > .ripple {
   position: absolute;
   border-radius: 50%;
@@ -712,6 +719,7 @@ onBeforeUnmount(() => {
   opacity: 0;
   pointer-events: none;
   transform: scale(0);
+  z-index: 0;
   /* 对照 m3: blur(4px) 使涟漪边缘柔和 */
   filter: blur(4px);
 }
@@ -756,7 +764,7 @@ onBeforeUnmount(() => {
   gap: 8px;
   margin: 24px;
   position: relative;
-  z-index: auto;
+  z-index: 2;
   min-width: 0;
   flex-shrink: 0;
   max-width: none;
@@ -786,17 +794,20 @@ onBeforeUnmount(() => {
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0;
   font-variation-settings: "GRAD" 0;
-  transition: font-variation-settings 0.3s cubic-bezier(0.2, 0, 0, 1);
+  transition: font-variation-settings 0.3s cubic-bezier(0.2, 0, 0, 1),
+              font-weight 0.3s cubic-bezier(0.2, 0, 0, 1);
 }
 
-/* 对照 m3: hover 时 GRAD 0→50，标题视觉加重 */
+/* 对照 m3: hover 时 GRAD 0→50（Latin） + font-weight 475→500（CJK fallback），标题视觉加重 */
 .thumbnail:hover > .content-container .title {
   font-variation-settings: "GRAD" 50;
+  font-weight: 500;
 }
 
-/* 对照 m3: active/pressed 时 GRAD -50，标题视觉变细 */
+/* 对照 m3: active/pressed 时 GRAD -50（Latin） + font-weight 475→400（CJK fallback），标题视觉变细 */
 .thumbnail:active > .content-container .title {
   font-variation-settings: "GRAD" -50;
+  font-weight: 400;
 }
 
 .thumbnail > .content-container .description {
