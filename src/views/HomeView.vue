@@ -79,7 +79,7 @@
                 </span>
                 <span class="description">{{ section.feature.excerpt }}</span>
               </div>
-              <div class="thumb-container" :style="{ background: gradient(section.feature.id) }">
+              <div class="thumb-container" :style="{ background: thumbBg }">
                 <span class="material-symbols-rounded thumb-icon">{{ section.feature.icon || 'article' }}</span>
               </div>
               <div class="ripple"></div>
@@ -100,7 +100,7 @@
                 </span>
                 <span v-if="post.excerpt" class="description">{{ post.excerpt }}</span>
               </div>
-              <div class="thumb-container" :style="{ background: gradient(post.id + 10) }">
+              <div class="thumb-container" :style="{ background: thumbBg }">
                 <span class="material-symbols-rounded thumb-icon">{{ post.icon || 'article' }}</span>
               </div>
               <div class="ripple"></div>
@@ -273,16 +273,7 @@ function onCardClick(e) {
   }
 }
 
-const gradients = [
-  'linear-gradient(135deg, var(--md-sys-color-primary-container, #eaddff) 0%, var(--md-sys-color-secondary-container, #e8def8) 50%, var(--md-sys-color-tertiary-container, #ffd8e4) 100%)',
-  'linear-gradient(135deg, var(--md-sys-color-secondary-container, #e8def8) 0%, var(--md-sys-color-tertiary-container, #ffd8e4) 50%, var(--md-sys-color-primary-container, #eaddff) 100%)',
-  'linear-gradient(135deg, var(--md-sys-color-tertiary-container, #ffd8e4) 0%, var(--md-sys-color-primary-container, #eaddff) 50%, var(--md-sys-color-secondary-container, #e8def8) 100%)',
-  'linear-gradient(135deg, var(--md-sys-color-primary-container, #eaddff) 30%, var(--md-sys-color-surface-container-high, #ece6f0) 100%)',
-]
-
-function gradient(id) {
-  return gradients[id % gradients.length]
-}
+const thumbBg = 'color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 8%, var(--md-sys-color-surface-container-low, #f8f1f6))'
 
 // 日期格式化（对照 m3: "Jun 18, 2026"）
 function formatDate(dateStr) {
@@ -762,6 +753,18 @@ onBeforeUnmount(() => {
   line-height: 32px;
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0;
+  font-variation-settings: "GRAD" 0;
+  transition: font-variation-settings 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* 对照 m3: hover 时 GRAD 0→50，标题视觉加重 */
+.thumbnail:hover > .content-container .title {
+  font-variation-settings: "GRAD" 50;
+}
+
+/* 对照 m3: pressed 时保持 GRAD 50 */
+.thumbnail:active > .content-container .title {
+  font-variation-settings: "GRAD" 50;
 }
 
 .thumbnail > .content-container .description {
