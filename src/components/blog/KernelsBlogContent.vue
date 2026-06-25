@@ -2,7 +2,7 @@
   <div class="article-content">
     <div class="block" id="project-overview">
       <div class="copy-button-container focusable">
-        <span class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to 项目概述 section">link</span>
+        <div class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to 项目概述 section">link</div>
         <div class="copy-button-background"></div>
         <div class="tooltip">
           <span class="deactivated">Copy link</span>
@@ -27,7 +27,7 @@
 
     <div class="block" id="tech-stack">
       <div class="copy-button-container focusable">
-        <span class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to 技术栈 section">link</span>
+        <div class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to 技术栈 section">link</div>
         <div class="copy-button-background"></div>
         <div class="tooltip">
           <span class="deactivated">Copy link</span>
@@ -52,7 +52,7 @@
 
     <div class="block" id="m3-implementation">
       <div class="copy-button-container focusable">
-        <span class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to M3 规范实现 section">link</span>
+        <div class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to M3 规范实现 section">link</div>
         <div class="copy-button-background"></div>
         <div class="tooltip">
           <span class="deactivated">Copy link</span>
@@ -110,7 +110,7 @@
 
     <div class="block" id="theme-engine">
       <div class="copy-button-container focusable">
-        <span class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to 主题引擎 section">link</span>
+        <div class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to 主题引擎 section">link</div>
         <div class="copy-button-background"></div>
         <div class="tooltip">
           <span class="deactivated">Copy link</span>
@@ -141,7 +141,7 @@
 
     <div class="block" id="architecture">
       <div class="copy-button-container focusable">
-        <span class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to 架构设计 section">link</span>
+        <div class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to 架构设计 section">link</div>
         <div class="copy-button-background"></div>
         <div class="tooltip">
           <span class="deactivated">Copy link</span>
@@ -169,7 +169,7 @@
 
     <div class="block" id="challenges">
       <div class="copy-button-container focusable">
-        <span class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to 遇到的挑战 section">link</span>
+        <div class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to 遇到的挑战 section">link</div>
         <div class="copy-button-background"></div>
         <div class="tooltip">
           <span class="deactivated">Copy link</span>
@@ -206,7 +206,7 @@
 
     <div class="block" id="lessons">
       <div class="copy-button-container focusable">
-        <span class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to 经验总结 section">link</span>
+        <div class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to 经验总结 section">link</div>
         <div class="copy-button-background"></div>
         <div class="tooltip">
           <span class="deactivated">Copy link</span>
@@ -248,20 +248,11 @@ function handleClick(e) {
   const url = window.location.origin + window.location.pathname + '#' + id
   navigator.clipboard.writeText(url).catch(() => {})
 
-  // 显示 "Link copied" 提示
-  const container = btn.closest('.copy-button-container')
-  const activated = container?.querySelector('.activated')
-  const deactivated = container?.querySelector('.deactivated')
-  if (activated && deactivated) {
-    deactivated.style.display = 'none'
-    activated.style.display = 'block'
-    container.classList.add('copied')
-    setTimeout(() => {
-      deactivated.style.display = ''
-      activated.style.display = ''
-      container.classList.remove('copied')
-    }, 2000)
-  }
+  // M3 官方：给 .copy-button 添加 .activated class
+  btn.classList.add('activated')
+  setTimeout(() => {
+    btn.classList.remove('activated')
+  }, 2000)
 }
 
 onMounted(() => {
@@ -276,63 +267,98 @@ onUnmounted(() => {
 <style scoped>
 /* ================================================================
    M3 linkable heading block structure
-   对照 m3: .block (grid: 68px text-width auto, gap 20px)
+   对照 m3: .block (grid: 68px auto 0px 0px, gap 20px, margin-left -90px)
    ================================================================ */
 .block {
-  position: relative;
-  padding-left: 88px;
-  margin: 64px 0 24px 0;
+  display: grid;
+  grid-template-columns: 68px auto 0px 0px;
+  gap: 20px;
+  margin: 80px 0 24px -90px;
 }
 
-/* copy-button-container — absolutely positioned to the left */
+/* copy-button-container — 对照 m3: display flex, relative, margin 8px 0 0 20px */
 .copy-button-container {
-  position: absolute;
-  left: 0;
-  top: 2px;
   display: flex;
-  width: 48px;
-  height: 48px;
-  opacity: 0;
-  transition: opacity 0.2s ease;
+  position: relative;
+  align-items: flex-start;
+  justify-content: center;
+  height: max-content;
+  margin-left: 20px;
+  margin-top: 8px;
   cursor: auto;
 }
 
-.block:hover .copy-button-container,
-.copy-button-container:focus-within,
-.copy-button-container.copied {
-  opacity: 1;
-  cursor: pointer;
-}
-
-/* copy-button */
+/* copy-button — 对照 m3: flex, relative, 48x48, opacity 0, z-index 2, border-radius 24px */
 .copy-button {
+  display: flex;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
+  border-radius: 24px;
+  opacity: 0;
+  z-index: 2;
   font-size: 24px;
-  line-height: 48px;
-  text-align: center;
-  width: 48px;
-  height: 48px;
+  line-height: 24px;
   color: var(--md-sys-color-on-surface, #1c1b1f);
-  border-radius: 24px;
   cursor: pointer;
+  overflow: hidden;
   user-select: none;
-  transition: background-color 0.15s ease;
 }
 
+/* block:hover 时显示 copy-button */
+.block:hover .copy-button {
+  opacity: 1;
+}
+
+/* copy-button 自身 focus-visible / hover 时也显示 */
+.copy-button:focus-visible,
 .copy-button:hover {
-  background: color-mix(in srgb, var(--md-sys-color-on-surface, #1c1b1f) 8%, transparent);
+  opacity: 1;
 }
 
-/* copy-button-background */
+/* copy-button hover/focus-visible 时显示 background + tooltip */
+.copy-button:focus-visible + .copy-button-background,
+.copy-button:focus-visible ~ .tooltip,
+.copy-button:hover + .copy-button-background,
+.copy-button:hover ~ .tooltip {
+  opacity: 1;
+}
+
+/* copy-button.activated 时 background 变色 */
+.copy-button.activated + .copy-button-background {
+  background: var(--md-sys-color-tertiary-container, #ffd8e4);
+}
+
+/* copy-button.activated 时 tooltip 宽度变化 */
+.copy-button.activated ~ .tooltip {
+  width: 86px;
+}
+
+/* copy-button.activated 时 tooltip 文字切换 */
+.copy-button.activated ~ .tooltip .deactivated {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.copy-button.activated ~ .tooltip .activated {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* copy-button-background — 对照 m3: absolute, 48x48, z-index 1, bg on-surface-variant-2 */
 .copy-button-background {
+  position: absolute;
   width: 48px;
   height: 48px;
+  transition: 0.2s cubic-bezier(0.2, 0, 0, 1);
   border-radius: 24px;
-  background-color: rgba(0, 0, 0, 0);
-  position: absolute;
-  top: 0;
-  left: 0;
+  background: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent);
   opacity: 0;
   pointer-events: none;
+  z-index: 1;
 }
 
 /* scroll-target (对照 m3: position absolute, 0x0, 用于锚点定位偏移) */
@@ -343,40 +369,40 @@ onUnmounted(() => {
   height: 0;
 }
 
-/* tooltip */
+/* tooltip — 对照 m3: absolute, bottom -28px, width 74px, height 24px, padding 4px 11px */
 .tooltip {
+  display: block;
   position: absolute;
-  top: -36px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: rgba(48, 48, 48, 0.8);
-  color: #f2f2f2;
+  bottom: -28px;
+  width: 74px;
+  height: 24px;
+  padding: 4px 11px;
+  transition: 0.2s cubic-bezier(0.2, 0, 0, 1);
+  border-radius: 6px;
+  background: rgba(48, 48, 48, 0.8);
+  color: var(--md-sys-color-inverse-on-surface, #f2f2f2);
   font-size: 12px;
   font-weight: 400;
   line-height: 16px;
-  padding: 4px 11px;
-  border-radius: 6px;
+  letter-spacing: 0.1px;
   opacity: 0;
-  white-space: nowrap;
   pointer-events: none;
-  transition: opacity 0.15s ease;
+  white-space: nowrap;
 }
 
-.copy-button:hover .tooltip,
-.copy-button-container:hover .tooltip {
+/* tooltip 文字切换 — 对照 m3: position absolute, opacity+visibility */
+.tooltip .deactivated {
+  position: absolute;
+  transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
   opacity: 1;
+  visibility: visible;
 }
 
 .tooltip .activated {
-  display: none;
-}
-
-.copy-button-container.copied .tooltip .deactivated {
-  display: none;
-}
-
-.copy-button-container.copied .tooltip .activated {
-  display: block;
+  position: absolute;
+  transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
+  opacity: 0;
+  visibility: hidden;
 }
 
 /* text-chunk */
@@ -388,10 +414,10 @@ onUnmounted(() => {
   /* 排版由 BlogArticleView 的 .blog-content :deep() 控制 */
 }
 
-/* 移动端：隐藏 copy-button 区域，不需要 padding-left */
+/* 移动端：隐藏 copy-button 区域，block 回退到无 grid */
 @media screen and (max-width: 1294px) {
   .block {
-    padding-left: 0;
+    display: block;
     margin: 64px 0 24px 0;
   }
 
