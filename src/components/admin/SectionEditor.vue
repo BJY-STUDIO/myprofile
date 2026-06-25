@@ -135,7 +135,7 @@
     <!-- 区块编辑对话框 -->
     <md-dialog :open="showSectionDialog" @close="showSectionDialog = false">
       <div slot="headline">{{ editSectionIdx >= 0 ? '编辑区块' : '添加区块' }}</div>
-      <form slot="content" class="dialog-form" id="section-form">
+      <form slot="content" class="dialog-form" id="section-form" @submit.prevent>
         <md-outlined-text-field
           label="区块标题"
           :value="editSectionIdx >= 0 ? page?.sections?.[editSectionIdx]?.label : ''"
@@ -177,7 +177,7 @@
       <div slot="headline">
         {{ cardEditType === 'feature' ? 'Feature' : 'Regular' }} Card 编辑
       </div>
-      <form slot="content" class="dialog-form" id="card-form">
+      <form slot="content" class="dialog-form" id="card-form" @submit.prevent>
         <md-outlined-text-field
           label="标题"
           :value="editingCard?.title || ''"

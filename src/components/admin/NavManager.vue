@@ -61,7 +61,7 @@
     <!-- 一级菜单编辑对话框 -->
     <md-dialog :open="showNavDialog" @close="showNavDialog = false">
       <div slot="headline">{{ editNav >= 0 ? '编辑菜单' : '添加菜单' }}</div>
-      <form slot="content" class="dialog-form" id="nav-form">
+      <form slot="content" class="dialog-form" id="nav-form" @submit.prevent>
         <md-outlined-text-field label="名称" :value="editNav >= 0 ? navItems[editNav]?.label : ''" id="nav-label"></md-outlined-text-field>
         <md-outlined-text-field label="路由" :value="editNav >= 0 ? navItems[editNav]?.route : ''" id="nav-route"></md-outlined-text-field>
         <div class="icon-field">
@@ -82,7 +82,7 @@
     <!-- 二级菜单编辑对话框 -->
     <md-dialog :open="showSubDialog" @close="showSubDialog = false">
       <div slot="headline">{{ editSub ? '编辑' : '添加' }}子菜单</div>
-      <form slot="content" class="dialog-form" id="sub-form">
+      <form slot="content" class="dialog-form" id="sub-form" @submit.prevent>
         <md-outlined-text-field label="名称" :value="editSub ? navItems[editSub.p]?.children?.[editSub.s]?.label : ''" id="sub-label"></md-outlined-text-field>
         <md-outlined-text-field label="路由" :value="editSub ? navItems[editSub.p]?.children?.[editSub.s]?.route : ''" id="sub-route"></md-outlined-text-field>
       </form>
