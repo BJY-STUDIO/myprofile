@@ -386,6 +386,9 @@ const bodyMarginLeft = computed(() => {
           </Transition>
         </router-view>
       </main>
+
+      <!-- 页面级 Footer 容器（接收 Teleport，在 main 外部） -->
+      <div id="page-footer-target"></div>
     </div>
 
     <!-- 移动端：Navigation Drawer + 遮罩 -->

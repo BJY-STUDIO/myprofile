@@ -279,7 +279,13 @@ function handleClick(e) {
 }
 
 onMounted(() => {
-  document.querySelector('.article-content')?.addEventListener('click', handleClick)
+  const container = document.querySelector('.article-content')
+  container?.addEventListener('click', handleClick)
+
+  // M3 官方：ul li 的 bullet 每个有随机旋转角度 (0-9 * 36deg)
+  container?.querySelectorAll('ul > li').forEach(li => {
+    li.style.setProperty('--rotation', String(Math.floor(Math.random() * 10)))
+  })
 })
 
 onUnmounted(() => {

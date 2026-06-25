@@ -114,46 +114,43 @@
       </div>
     </div>
 
-    <!-- ======== Squiggle + Footer（对照 m3.material.io footer） ======== -->
-    <div class="squiggle">
-      <svg aria-hidden="true" width="100%" height="8" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <pattern id="squiggle-pattern" width="91" height="8" patternUnits="userSpaceOnUse">
-          <path d="M114 4c-5.067 4.667-10.133 4.667-15.2 0S88.667-.667 83.6 4 73.467 8.667 68.4 4 58.267-.667 53.2 4 43.067 8.667 38 4 27.867-.667 22.8 4 12.667 8.667 7.6 4-2.533-.667-7.6 4s-10.133 4.667-15.2 0S-32.933-.667-38 4s-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0" stroke-linecap="square"></path>
-        </pattern>
-        <rect width="100%" height="100%" fill="url(#squiggle-pattern)"></rect>
-      </svg>
-    </div>
-    <footer class="mio-footer">
-      <section class="about">
-        <div class="about-material">
-          <a class="about-logo" @click.prevent="$router.push('/')" aria-label="Kernel's Blog">
-            <span class="material-symbols-rounded">edit_note</span>
-          </a>
-          <p>Kernel's Blog 是基于 Vue 3 + Material Web 的个人博客站点，严格遵循 Material Design 3 规范。探索技术，记录生活。</p>
-        </div>
-        <ul class="social-links">
-          <li><h3>Social</h3></li>
-          <li><a href="https://github.com/BJY-STUDIO/myprofile" target="_blank" rel="noopener">GitHub</a></li>
-        </ul>
-        <ul class="site-links">
-          <li><h3>Site</h3></li>
-          <li><a @click.prevent="$router.push('/')">首页</a></li>
-          <li><a @click.prevent="$router.push('/blog')">博客</a></li>
-          <li><a @click.prevent="$router.push('/projects')">项目</a></li>
-          <li><a @click.prevent="$router.push('/about')">关于</a></li>
-          <li><a @click.prevent="$router.push('/contact')">联系</a></li>
-        </ul>
-      </section>
-      <section class="legal">
-        <a class="about-logo" @click.prevent="$router.push('/')" aria-label="Kernel's Blog">
-          <span class="material-symbols-rounded">edit_note</span>
-        </a>
-        <ul>
-          <li><a href="https://github.com/BJY-STUDIO/myprofile" target="_blank" rel="noopener">GitHub</a></li>
-          <li><a @click.prevent="$router.push('/about')">关于</a></li>
-        </ul>
-      </section>
-    </footer>
+    <!-- ======== Footer（对照 m3.material.io footer 结构，Teleport 到 main 外部） ======== -->
+    <Teleport to="#page-footer-target">
+      <div class="mio-footer">
+        <div class="squiggle" aria-hidden="true"></div>
+        <footer class="mio-footer-inner">
+          <section class="about">
+            <div class="about-material">
+              <a class="about-logo" @click.prevent="$router.push('/')" aria-label="Kernel's Blog">
+                <span class="material-symbols-rounded">edit_note</span>
+              </a>
+              <p>Kernel's Blog 是基于 Vue 3 + Material Web 的个人博客站点，严格遵循 Material Design 3 规范。探索技术，记录生活。</p>
+            </div>
+            <ul class="social-links">
+              <li><h3>Social</h3></li>
+              <li><a href="https://github.com/BJY-STUDIO/myprofile" target="_blank" rel="noopener">GitHub</a></li>
+            </ul>
+            <ul class="site-links">
+              <li><h3>Site</h3></li>
+              <li><a @click.prevent="$router.push('/')">首页</a></li>
+              <li><a @click.prevent="$router.push('/blog')">博客</a></li>
+              <li><a @click.prevent="$router.push('/projects')">项目</a></li>
+              <li><a @click.prevent="$router.push('/about')">关于</a></li>
+              <li><a @click.prevent="$router.push('/contact')">联系</a></li>
+            </ul>
+          </section>
+          <section class="legal">
+            <div class="brand-logo" @click.prevent="$router.push('/')" aria-label="Kernel's Blog">
+              <span class="brand-logo-text">BJY-STUDIO</span>
+            </div>
+            <ul>
+              <li><a href="https://github.com/BJY-STUDIO/myprofile" target="_blank" rel="noopener">GitHub</a></li>
+              <li><a @click.prevent="$router.push('/about')">关于</a></li>
+            </ul>
+          </section>
+        </footer>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -814,14 +811,14 @@ watch(() => route.params.slug, () => {
   margin: 80px 24px 56px;
 }
 
-/* squiggle（对照 m3: SVG wavy line above footer, stroke outline-variant） */
-.squiggle {
+/* squiggle（对照 m3: SVG wavy line above footer, 在 .mio-footer 内部） */
+/* 使用 CSS background-image + SVG data URI 实现波浪线，确保颜色跟随主题切换 */
+.mio-footer .squiggle {
   height: 8px;
   overflow: hidden;
-}
-
-.squiggle path {
-  stroke: var(--md-sys-color-outline-variant, #cac4d0);
+  background-image: url("data:image/svg+xml,%3Csvg width='45.5' height='8' viewBox='0 0 45.5 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M45.5 4c-2.533 4.667-5.067 4.667-7.6 0S32.733-.667 30.2 4 25.133 8.667 22.6 4 17.533-.667 15 4 9.933 8.667 7.4 4 2.333-.667-.2 4' stroke='%23cac4d0' stroke-width='2' stroke-linecap='square'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 45.5px 8px;
 }
 
 /* ================================================================
@@ -874,18 +871,66 @@ watch(() => route.params.slug, () => {
   margin-bottom: 24px;
 }
 
-.blog-content :deep(ul),
 .blog-content :deep(ol) {
-  padding-left: 24px;
+  padding-left: 0;
+  list-style: none;
+  counter-reset: item 0;
+  margin-top: 16px;
   margin-bottom: 24px;
 }
 
-.blog-content :deep(ol) {
-  list-style-type: decimal;
+.blog-content :deep(ol > li) {
+  margin-top: 4px;
+  margin-bottom: 20px;
+  margin-left: 36px;
+  counter-increment: item 1;
+}
+
+.blog-content :deep(ol > li::before) {
+  font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
+  font-variation-settings: "GRAD" 0, "opsz" 17;
+  display: block;
+  width: 24px;
+  height: 32px;
+  margin-top: -4px;
+  margin-right: 10px;
+  margin-left: -36px;
+  float: left;
+  border-radius: 12px;
+  background: var(--md-sys-color-inverse-surface, #323032);
+  color: var(--md-sys-color-inverse-on-surface, #f2f2f2);
+  line-height: 32px;
+  text-align: center;
+  content: counter(item);
 }
 
 .blog-content :deep(ul) {
-  list-style-type: disc;
+  list-style: none;
+  padding-left: 0;
+  margin-left: 22px;
+  margin-top: 56px;
+  margin-bottom: 24px;
+}
+
+.blog-content :deep(ul li) {
+  position: relative;
+}
+
+.blog-content :deep(ul li::before) {
+  display: inline-block;
+  position: absolute;
+  top: 8px;
+  left: -16px;
+  width: 8px;
+  height: 8px;
+  transform: rotate(calc(var(--rotation, 0) * 36deg));
+  background-image: url("data:image/svg+xml,%3Csvg width='8' height='8' viewBox='0 0 8 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.95843 0.279933C5.5378 -0.353974 6.58452 0.173492 6.41974 1.01632L6.05454 2.88412C5.99767 3.17501 6.09646 3.47451 6.31525 3.67447L7.72007 4.95843C8.35397 5.5378 7.82651 6.58452 6.98368 6.41974L5.11588 6.05454C4.82499 5.99767 4.52549 6.09646 4.32553 6.31525L3.04157 7.72007C2.4622 8.35397 1.41548 7.82651 1.58026 6.98368L1.94545 5.11588C2.00233 4.82499 1.90354 4.52549 1.68475 4.32553L0.279933 3.04157C-0.353974 2.4622 0.173492 1.41548 1.01632 1.58026L2.88412 1.94545C3.17501 2.00233 3.47451 1.90354 3.67447 1.68475L4.95843 0.279933Z' fill='%2349454f'/%3E%3C/svg%3E");
+  line-height: 0;
+  text-align: center;
+  content: "";
 }
 
 .blog-content :deep(li) {
@@ -1167,17 +1212,22 @@ watch(() => route.params.slug, () => {
 
 /* ================================================================
    Footer（对照 m3.material.io footer 结构）
-   footer: padding 64px 40px, 无背景色
-   section.about: grid, max-width 1200px, 4列 (570px 190px 190px 190px), gap 20px
-   section.legal: margin-top 64px, flex row, Google logo + 法律链接
+   mio-footer (外层 wrapper): margin-top 120px, 在 main 外部
+   mio-footer-inner (footer): padding 64px 40px, 无背景色
+   section.about: grid, max-width 1200px, 4列, gap 20px
+   section.legal: margin-top 64px, flex row, logo + 法律链接
    ================================================================ */
 .mio-footer {
+  margin-top: 120px;
+}
+
+.mio-footer-inner {
   padding: 64px 40px;
   font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
 }
 
 /* section.about — 对照 m3: grid, max-width 1200px */
-.mio-footer .about {
+.mio-footer-inner .about {
   display: grid;
   grid-template-columns: auto;
   gap: 0 20px;
@@ -1186,7 +1236,7 @@ watch(() => route.params.slug, () => {
 }
 
 @media screen and (min-width: 960px) {
-  .mio-footer .about {
+  .mio-footer-inner .about {
     grid-template-columns: 570px 190px 190px;
   }
 }
@@ -1219,8 +1269,8 @@ watch(() => route.params.slug, () => {
 }
 
 /* social-links / site-links — 对照 m3: ul, flex column, gap 20px */
-.mio-footer .social-links,
-.mio-footer .site-links {
+.mio-footer-inner .social-links,
+.mio-footer-inner .site-links {
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -1229,8 +1279,8 @@ watch(() => route.params.slug, () => {
   margin: 24px 0 0;
 }
 
-.mio-footer .social-links h3,
-.mio-footer .site-links h3 {
+.mio-footer-inner .social-links h3,
+.mio-footer-inner .site-links h3 {
   font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
   font-size: 14px;
   font-weight: 500;
@@ -1239,8 +1289,8 @@ watch(() => route.params.slug, () => {
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
-.mio-footer .social-links li a,
-.mio-footer .site-links li a {
+.mio-footer-inner .social-links li a,
+.mio-footer-inner .site-links li a {
   font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
   font-size: 16px;
   font-weight: 500;
@@ -1250,29 +1300,31 @@ watch(() => route.params.slug, () => {
   cursor: pointer;
 }
 
-/* section.legal — 对照 m3: margin-top 64px, flex row, Google logo + 链接 */
-.mio-footer .legal {
+/* section.legal — 对照 m3: margin-top 64px, flex row, brand logo + 链接 */
+.mio-footer-inner .legal {
   display: flex;
   align-items: center;
   margin: 64px 0 0;
   max-width: 1200px;
 }
 
-.mio-footer .legal .about-logo {
-  display: flex;
+.mio-footer-inner .legal .brand-logo {
+  display: block;
   cursor: pointer;
-  padding: 1px;
   margin-right: 32px;
   flex-shrink: 0;
 }
 
-.mio-footer .legal .about-logo .material-symbols-rounded {
-  font-size: 40px;
-  line-height: 40px;
+.mio-footer-inner .legal .brand-logo-text {
+  font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
   color: var(--md-sys-color-on-surface, #1c1b1f);
+  letter-spacing: 0.5px;
 }
 
-.mio-footer .legal ul {
+.mio-footer-inner .legal ul {
   display: flex;
   flex-direction: row;
   gap: 16px 24px;
@@ -1282,27 +1334,27 @@ watch(() => route.params.slug, () => {
   flex-wrap: wrap;
 }
 
-.mio-footer .legal li {
+.mio-footer-inner .legal li {
   margin: 0;
   padding: 0;
 }
 
-.mio-footer .legal li a {
+.mio-footer-inner .legal li a {
   font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
   font-size: 16px;
   font-weight: 500;
   line-height: 24px;
   color: var(--md-sys-color-primary, #6750a4);
-  text-decoration: none;
+  text-decoration: none !important;
   cursor: pointer;
 }
 
 @media screen and (max-width: 600px) {
-  .mio-footer {
+  .mio-footer-inner {
     padding: 64px 24px;
   }
 
-  .mio-footer .about {
+  .mio-footer-inner .about {
     grid-template-columns: 1fr;
   }
 
@@ -1364,12 +1416,12 @@ watch(() => route.params.slug, () => {
 }
 
 :global([data-theme="dark"]) .about-material .about-logo .material-symbols-rounded,
-:global([data-theme="dark"]) .mio-footer .legal .about-logo .material-symbols-rounded {
+:global([data-theme="dark"]) .mio-footer-inner .legal .brand-logo-text {
   color: var(--md-sys-color-on-surface, #e6e1e5);
 }
 
-:global([data-theme="dark"]) .mio-footer .social-links h3,
-:global([data-theme="dark"]) .mio-footer .site-links h3 {
+:global([data-theme="dark"]) .mio-footer-inner .social-links h3,
+:global([data-theme="dark"]) .mio-footer-inner .site-links h3 {
   color: var(--md-sys-color-on-surface, #e6e1e5);
 }
 
@@ -1377,8 +1429,19 @@ watch(() => route.params.slug, () => {
   border-top-color: var(--md-sys-color-outline-variant, #49454f);
 }
 
-:global([data-theme="dark"]) .squiggle path {
-  stroke: var(--md-sys-color-outline-variant, #49454f);
+:global([data-theme="dark"]) .mio-footer .squiggle {
+  background-image: url("data:image/svg+xml,%3Csvg width='45.5' height='8' viewBox='0 0 45.5 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M45.5 4c-2.533 4.667-5.067 4.667-7.6 0S32.733-.667 30.2 4 25.133 8.667 22.6 4 17.533-.667 15 4 9.933 8.667 7.4 4 2.333-.667-.2 4' stroke='%2349454f' stroke-width='2' stroke-linecap='square'/%3E%3C/svg%3E");
+}
+
+/* 暗色主题 — ol 药丸徽章：inverse-surface/inverse-on-surface 切换 */
+:global([data-theme="dark"]) .blog-content ol > li::before {
+  background: var(--md-sys-color-inverse-surface, #e6e1e3);
+  color: var(--md-sys-color-inverse-on-surface, #323032);
+}
+
+/* 暗色主题 — ul bullet SVG（更亮的颜色） */
+:global([data-theme="dark"]) .blog-content ul li::before {
+  background-image: url("data:image/svg+xml,%3Csvg width='8' height='8' viewBox='0 0 8 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.95843 0.279933C5.5378 -0.353974 6.58452 0.173492 6.41974 1.01632L6.05454 2.88412C5.99767 3.17501 6.09646 3.47451 6.31525 3.67447L7.72007 4.95843C8.35397 5.5378 7.82651 6.58452 6.98368 6.41974L5.11588 6.05454C4.82499 5.99767 4.52549 6.09646 4.32553 6.31525L3.04157 7.72007C2.4622 8.35397 1.41548 7.82651 1.58026 6.98368L1.94545 5.11588C2.00233 4.82499 1.90354 4.52549 1.68475 4.32553L0.279933 3.04157C-0.353974 2.4622 0.173492 1.41548 1.01632 1.58026L2.88412 1.94545C3.17501 2.00233 3.47451 1.90354 3.67447 1.68475L4.95843 0.279933Z' fill='%23cac4d0'/%3E%3C/svg%3E");
 }
 
 </style>
