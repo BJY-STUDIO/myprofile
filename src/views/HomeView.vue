@@ -75,7 +75,7 @@
               <div class="content-container">
                 <span v-if="section.feature.date" class="date">{{ formatDate(section.feature.date) }}</span>
                 <span class="mio-title-row">
-                  <span class="title">{{ section.feature.title }}</span>
+                  <span class="title" :class="{ 'title--cjk': isCjk(section.feature.title) }">{{ section.feature.title }}</span>
                 </span>
                 <span class="description">{{ section.feature.excerpt }}</span>
               </div>
@@ -95,7 +95,7 @@
               <div class="content-container">
                 <span v-if="post.date" class="date">{{ formatDate(post.date) }}</span>
                 <span class="mio-title-row">
-                  <span class="title">{{ post.title }}</span>
+                  <span class="title" :class="{ 'title--cjk': isCjk(post.title) }">{{ post.title }}</span>
                 </span>
                 <span v-if="post.excerpt" class="description">{{ post.excerpt }}</span>
               </div>
@@ -311,6 +311,14 @@ function formatDate(dateStr) {
   const d = new Date(dateStr)
   if (isNaN(d.getTime())) return dateStr // 不是合法日期则原样返回
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+// 检测文本是否包含 CJK 中文字符（用于决定是否启用 font-weight 插值补偿）
+// Noto Sans SC 的 GRAD 轴对 CJK 字形无视觉效果，需用 font-weight 补偿
+// 纯英文标题只需 GRAD 轴（与 M3 官方一致）
+function isCjk(text) {
+  if (!text) return false
+  return /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/.test(text)
 }
 
 onMounted(() => {
@@ -794,23 +802,27 @@ onBeforeUnmount(() => {
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0;
   font-variation-settings: "GRAD" 0;
-  /* 可变字体：font-weight 支持平滑插值过渡（GRAD 轴对中文字符无效，改用 weight） */
+  /* 可变字体：GRAD 轴 + font-weight（仅 CJK 标题）均支持平滑插值过渡 */
   transition: font-variation-settings 0.3s cubic-bezier(0.2, 0, 0, 1),
               font-weight 0.3s cubic-bezier(0.2, 0, 0, 1);
 }
 
 /* 对照 m3: a:hover .title { GRAD 50 } — 标题视觉加重 */
-/* 中文字体 GRAD 轴无效，改用 font-weight 插值实现同等效果 */
+/* CJK 标题：GRAD 轴对中文无效，额外用 font-weight 插值补偿 */
 .thumbnail:hover > .content-container .title {
   font-variation-settings: "GRAD" 50;
+}
+.thumbnail:hover > .content-container .title.title--cjk {
   font-weight: 525;
 }
 
 /* 对照 m3: a:active .title { GRAD -50 } — 标题视觉变细 */
-/* 中文字体 GRAD 轴无效，改用 font-weight 插值实现同等效果 */
+/* CJK 标题：GRAD 轴对中文无效，额外用 font-weight 插值补偿 */
 .thumbnail:active > .content-container .title {
   font-variation-settings: "GRAD" -50;
-  font-weight: 400;
+}
+.thumbnail:active > .content-container .title.title--cjk {
+  font-weight: 425;
 }
 
 .thumbnail > .content-container .description {
