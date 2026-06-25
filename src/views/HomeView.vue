@@ -475,7 +475,7 @@ onBeforeUnmount(() => {
   }
   .primary-container .wrapper .title .description {
     font-size: 16px;
-    font-weight: 400;
+  font-weight: 425;
     line-height: 24px;
   }
   .split-asset-image__foreground {
@@ -803,7 +803,7 @@ onBeforeUnmount(() => {
 /* 中文字体 GRAD 轴无效，改用 font-weight 插值实现同等效果 */
 .thumbnail:hover > .content-container .title {
   font-variation-settings: "GRAD" 50;
-  font-weight: 600;
+  font-weight: 525;
 }
 
 /* 对照 m3: a:active .title { GRAD -50 } — 标题视觉变细 */
