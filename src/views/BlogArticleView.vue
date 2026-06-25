@@ -436,21 +436,24 @@ watch(() => route.params.slug, () => {
   background-repeat: no-repeat;
   background-position: 0 50%;
   background-size: cover;
-  /* 文章页：minHeight auto（首页 544px） */
+  /* 对照 M3 官方博客文章页：min-height 544px */
+  min-height: 544px;
 }
 
 .primary-container,
 .split-asset-image {
-  min-height: auto;
+  min-height: 544px;
 }
 
 @media screen and (max-width: 1294px) {
   .primary-container {
     grid-column: span 2;
+    min-height: unset;
   }
   .split-asset-image {
     padding-bottom: 50%;
     grid-column: span 2;
+    min-height: unset;
   }
 }
 
@@ -462,10 +465,10 @@ watch(() => route.params.slug, () => {
   margin: 0;
 }
 
-/* 文章页 date 行（M3: 16px/400, margin-bottom 16px） */
+/* 文章页 date 行（对照 M3: title-m, 16px/500/24px, margin-bottom 16px） */
 .date {
   font-size: 16px;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 24px;
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0 0 16px;
@@ -473,23 +476,23 @@ watch(() => route.params.slug, () => {
   font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
 }
 
-/* 文章页 h1: 88px/475/96px（首页 96px/475/96px） */
+/* 文章页 h1: 对照 M3 wrapper.sm → hero-sm: 60px/475/65px */
 .primary-container .wrapper .title h1 {
   font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
-  font-size: 88px;
+  font-size: 60px;
   font-weight: 475;
-  line-height: 96px;
+  line-height: 65px;
   letter-spacing: normal;
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0 0 8px;
   font-variation-settings: "GRAD" 0, "opsz" 18;
 }
 
-/* 文章页 description: 16px/400/24px（首页 22px/400/30px） */
+/* 文章页 description: 对照 M3 wrapper.sm → title-m: 16px/500/24px */
 .primary-container .wrapper .title .description {
   font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
   font-size: 16px;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 24px;
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
@@ -524,20 +527,35 @@ watch(() => route.params.slug, () => {
   background-size: contain;
 }
 
-/* h1 响应式 */
+/* 对照 M3: 601-1294px, h1 → display-l: 57px/475/64px, desc → title-l: 22px/400/30px */
 @media screen and (min-width: 601px) and (max-width: 1294px) {
   .primary-container .wrapper .title h1 {
     font-size: 57px;
     line-height: 64px;
   }
+  .primary-container .wrapper .title .description {
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 30px;
+  }
+  .primary-container .wrapper .date {
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 30px;
+  }
 }
 
+/* 对照 M3: ≤600px, h1 → display-m: 45px/475/52px, desc → body-l: 16px/400/24px */
 @media screen and (max-width: 600px) {
   .mio-header {
     grid-template-columns: 1fr;
   }
   .primary-container {
     padding: 32px;
+    min-height: unset;
+  }
+  .split-asset-image {
+    min-height: unset;
   }
   .primary-container .wrapper .title h1 {
     font-size: 45px;
@@ -545,7 +563,12 @@ watch(() => route.params.slug, () => {
   }
   .primary-container .wrapper .title .description {
     font-size: 16px;
-    font-weight: 425;
+    font-weight: 400;
+    line-height: 24px;
+  }
+  .primary-container .wrapper .date {
+    font-size: 16px;
+    font-weight: 400;
     line-height: 24px;
   }
   .split-asset-image__foreground {
