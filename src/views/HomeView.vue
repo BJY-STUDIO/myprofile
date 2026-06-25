@@ -70,7 +70,7 @@
               v-if="section.feature"
               :href="section.feature.route"
               class="feature-card thumbnail"
-              @mousedown="onCardClick"
+              @mousedown="onCardDown"
             >
               <div class="content-container">
                 <span v-if="section.feature.date" class="date">{{ formatDate(section.feature.date) }}</span>
@@ -82,7 +82,6 @@
               <div class="thumb-container" :style="{ background: thumbBg }">
                 <span class="material-symbols-rounded thumb-icon">{{ section.feature.icon || 'article' }}</span>
               </div>
-              <div class="ripple"></div>
             </a>
 
             <!-- 中卡片（对照 m3: mio-card > a.thumbnail, inline-flex column-reverse） -->
@@ -91,7 +90,7 @@
               :key="post.id"
               :href="post.route"
               class="regular-card thumbnail"
-              @mousedown="onCardClick"
+              @mousedown="onCardDown"
             >
               <div class="content-container">
                 <span v-if="post.date" class="date">{{ formatDate(post.date) }}</span>
@@ -103,7 +102,6 @@
               <div class="thumb-container" :style="{ background: thumbBg }">
                 <span class="material-symbols-rounded thumb-icon">{{ post.icon || 'article' }}</span>
               </div>
-              <div class="ripple"></div>
             </a>
           </div>
         </div>
@@ -255,22 +253,48 @@ function scrollToSection(i) {
   }
 }
 
-// Ripple: 记录点击位置，触发涟漪动画（对照 m3: <div class="ripple">）
-function onCardClick(e) {
+// Ripple: 对照 m3 mioripple 指令 — mousedown 创建 ripple DOM, mouseup 移除
+// 每次点击创建全新 ripple 实例，避免长按取消后 class 残留导致下次失效
+function onCardDown(e) {
   const card = e.currentTarget
   const rect = card.getBoundingClientRect()
   const x = e.clientX - rect.left
   const y = e.clientY - rect.top
-  card.style.setProperty('--ripple-x', x + 'px')
-  card.style.setProperty('--ripple-y', y + 'px')
-  // 触发 ripple 动画：先移除再添加，确保可重复触发
-  const ripple = card.querySelector('.ripple')
-  if (ripple) {
-    ripple.classList.remove('ripple--active')
-    // 强制 reflow
-    void ripple.offsetWidth
+
+  // 计算涟漪半径：从点击位置到卡片四角的最大距离
+  const maxDist = Math.max(
+    Math.hypot(x, y),
+    Math.hypot(rect.width - x, y),
+    Math.hypot(x, rect.height - y),
+    Math.hypot(rect.width - x, rect.height - y)
+  )
+  const size = maxDist * 2
+
+  // 创建 ripple DOM
+  const ripple = document.createElement('div')
+  ripple.className = 'ripple'
+  ripple.style.width = size + 'px'
+  ripple.style.height = size + 'px'
+  ripple.style.left = (x - size / 2) + 'px'
+  ripple.style.top = (y - size / 2) + 'px'
+  card.appendChild(ripple)
+
+  // 触发动画（下一帧添加 active class）
+  requestAnimationFrame(() => {
     ripple.classList.add('ripple--active')
+  })
+
+  // 对照 m3: window mouseup 触发 deactivation
+  const onUp = () => {
+    window.removeEventListener('mouseup', onUp)
+    ripple.classList.remove('ripple--active')
+    ripple.classList.add('ripple--fade-out')
+    // fade-out 动画结束后移除 DOM
+    ripple.addEventListener('animationend', () => ripple.remove(), { once: true })
+    // 兜底：如果 animationend 未触发（如元素被移除），300ms 后强制清理
+    setTimeout(() => { if (ripple.parentNode) ripple.remove() }, 500)
   }
+  window.addEventListener('mouseup', onUp)
 }
 
 const thumbBg = 'color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 8%, var(--md-sys-color-surface-container-low, #f8f1f6))'
@@ -680,36 +704,44 @@ onBeforeUnmount(() => {
   background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 12%, var(--md-sys-color-surface-container-low, #f8f1f6));
 }
 
-/* ripple 涟漪动效（对照 m3: <div class="ripple"> 真实 DOM 元素） */
+/* ripple 涟漪动效（对照 m3 mioripple 指令：动态创建 DOM） */
 .thumbnail > .ripple {
   position: absolute;
-  left: var(--ripple-x, 50%);
-  top: var(--ripple-y, 50%);
-  width: 0;
-  height: 0;
   border-radius: 50%;
   background-color: var(--md-sys-color-primary, #6750a4);
   opacity: 0;
   pointer-events: none;
-  overflow: visible;
-  transform: translate(-50%, -50%);
+  transform: scale(0);
+  /* 对照 m3: blur(4px) 使涟漪边缘柔和 */
+  filter: blur(4px);
 }
 
-/* pressed 时触发 ripple（从点击位置扩散） */
-.thumbnail:active > .ripple,
+/* active: scale 从 0 展开到 1, opacity 0→0.12 */
 .thumbnail > .ripple.ripple--active {
   animation: ripple-expand 0.4s cubic-bezier(0.2, 0, 0, 1) forwards;
 }
 
+/* fade-out: scale 保持 1, opacity 0.12→0 */
+.thumbnail > .ripple.ripple--fade-out {
+  animation: ripple-fade 0.3s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
 @keyframes ripple-expand {
   0% {
-    width: 0;
-    height: 0;
-    opacity: 0.1;
+    transform: scale(0);
+    opacity: 0.12;
   }
   100% {
-    width: 400px;
-    height: 400px;
+    transform: scale(1);
+    opacity: 0.12;
+  }
+}
+
+@keyframes ripple-fade {
+  0% {
+    opacity: 0.12;
+  }
+  100% {
     opacity: 0;
   }
 }
@@ -762,9 +794,9 @@ onBeforeUnmount(() => {
   font-variation-settings: "GRAD" 50;
 }
 
-/* 对照 m3: pressed 时保持 GRAD 50 */
+/* 对照 m3: active/pressed 时 GRAD -50，标题视觉变细 */
 .thumbnail:active > .content-container .title {
-  font-variation-settings: "GRAD" 50;
+  font-variation-settings: "GRAD" -50;
 }
 
 .thumbnail > .content-container .description {
