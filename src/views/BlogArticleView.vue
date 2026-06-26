@@ -269,6 +269,33 @@ function setupScrollObserver() {
             activeTocIndex.value = idx
             updateIndicatorPosition(idx)
           }
+        } else {
+          // section 离开视口上半区：若离开的是当前 active，重新扫描判断是否应 fade out
+          const idx = tocItems.value.findIndex(t => t.id === entry.target.id)
+          if (idx === activeTocIndex.value) {
+            // 检查是否还有其他 section 在视口上半区
+            let foundActive = -1
+            let maxTop = -Infinity
+            const rootRect = scrollRoot.getBoundingClientRect()
+            const midPoint = rootRect.top + rootRect.height * 0.5
+            tocItems.value.forEach(t => {
+              const el = blogContentRef.value?.querySelector(`#${CSS.escape(t.id)}`)
+              if (el) {
+                const rect = el.getBoundingClientRect()
+                if (rect.top < midPoint && rect.bottom > rootRect.top && rect.top > maxTop) {
+                  maxTop = rect.top
+                  foundActive = tocItems.value.indexOf(t)
+                }
+              }
+            })
+            if (foundActive >= 0) {
+              activeTocIndex.value = foundActive
+              updateIndicatorPosition(foundActive)
+            } else {
+              // 无 section 在视口上半区 → indicator fade out
+              activeTocIndex.value = -1
+            }
+          }
         }
       }
     },
