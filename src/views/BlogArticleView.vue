@@ -1,5 +1,5 @@
 <template>
-  <div class="editorial">
+  <div class="editorial" v-if="article">
     <!-- ======== mio-header（复用 HomeView 的 header 结构，文章页多了 date + wrapper--article） ======== -->
     <header class="mio-header">
       <div class="primary-container">
@@ -176,7 +176,8 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { articles, defaultSlug } from '@/articles'
+import { articles as localArticles, defaultSlug as localDefaultSlug } from '@/articles'
+import { getArticle, getArticleSource } from '@/services/articleService'
 
 const route = useRoute()
 
@@ -194,12 +195,32 @@ onMounted(() => {
   onUnmounted(() => observer.disconnect())
 })
 
-// ======== 文章数据（来自 src/articles/ 自动发现注册表） ========
-// 新增文章只需创建 src/articles/xxx.js，无需修改此文件
+// ======== 文章数据 ========
+// Local 模式：同步使用 localArticles（保持原有行为，零延迟）
+// API 模式：异步从 articleService 获取，article 在 onMounted/watch 中按需加载
 
-const article = computed(() => {
-  const slug = route.params.slug
-  return articles[slug] || articles[defaultSlug] || Object.values(articles)[0]
+const articleSource = getArticleSource()
+
+const article = ref(null)
+
+function resolveArticle(slug) {
+  if (articleSource === 'api') {
+    // API 模式：异步获取，合并本地 contentComponent
+    getArticle(slug).then(data => {
+      article.value = data || localArticles[slug] || localArticles[localDefaultSlug] || Object.values(localArticles)[0]
+    })
+  } else {
+    // Local 模式：同步
+    article.value = localArticles[slug] || localArticles[localDefaultSlug] || Object.values(localArticles)[0]
+  }
+}
+
+// 初始解析
+resolveArticle(route.params.slug)
+
+// 路由变化时重新解析
+watch(() => route.params.slug, (slug) => {
+  if (slug) resolveArticle(slug)
 })
 
 // ======== TOC 目录（复用 HomeView 的 indicator 方案） ========
@@ -382,10 +403,13 @@ function scrollToHeading(id) {
   }
 }
 
-// Up Next 数据
+// Up Next 数据（Local 模式使用 localArticles，API 模式后续扩展）
 const upNextArticles = computed(() => {
   const currentSlug = route.params.slug
-  return Object.values(articles)
+  // API 模式下 articleService 的列表缓存尚不完善，暂用 localArticles
+  // 后续可通过 getArticleIndex() 异步获取
+  const source = articleSource === 'api' ? localArticles : localArticles
+  return Object.values(source)
     .filter(a => a.slug !== currentSlug)
     .slice(0, 2)
 })
