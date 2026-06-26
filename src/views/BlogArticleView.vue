@@ -262,40 +262,44 @@ function setupScrollObserver() {
     (entries) => {
       // 如果正在程序化滚动（scrollToHeading），跳过 IntersectionObserver 更新
       if (programmaticScrolling) return
-      for (const entry of entries) {
-        if (entry.isIntersecting) {
-          const idx = tocItems.value.findIndex(t => t.id === entry.target.id)
-          if (idx >= 0 && activeTocIndex.value !== idx) {
-            activeTocIndex.value = idx
-            updateIndicatorPosition(idx)
+
+      // 先处理「进入」再处理「离开」，避免两 section 交替时 indicator 误消失
+      const entering = entries.filter(e => e.isIntersecting)
+      const leaving  = entries.filter(e => !e.isIntersecting)
+
+      for (const entry of entering) {
+        const idx = tocItems.value.findIndex(t => t.id === entry.target.id)
+        if (idx >= 0 && activeTocIndex.value !== idx) {
+          activeTocIndex.value = idx
+          updateIndicatorPosition(idx)
+        }
+      }
+
+      for (const entry of leaving) {
+        const idx = tocItems.value.findIndex(t => t.id === entry.target.id)
+        if (idx !== activeTocIndex.value) continue   // 离开的不是当前 active → 忽略
+
+        // 当前 active section 离开视口上半区，重新扫描
+        // 找「top 已越过中点」的最后一个 section（即使已滚出视口），保证 indicator 不空窗
+        let foundActive = -1
+        let maxTop = -Infinity
+        const rootRect = scrollRoot.getBoundingClientRect()
+        const midPoint = rootRect.top + rootRect.height * 0.5
+        tocItems.value.forEach(t => {
+          const el = blogContentRef.value?.querySelector(`#${CSS.escape(t.id)}`)
+          if (!el) return
+          const rect = el.getBoundingClientRect()
+          if (rect.top < midPoint && rect.top > maxTop) {
+            maxTop = rect.top
+            foundActive = tocItems.value.indexOf(t)
           }
+        })
+        if (foundActive >= 0) {
+          activeTocIndex.value = foundActive
+          updateIndicatorPosition(foundActive)
         } else {
-          // section 离开视口上半区：若离开的是当前 active，重新扫描判断是否应 fade out
-          const idx = tocItems.value.findIndex(t => t.id === entry.target.id)
-          if (idx === activeTocIndex.value) {
-            // 检查是否还有其他 section 在视口上半区
-            let foundActive = -1
-            let maxTop = -Infinity
-            const rootRect = scrollRoot.getBoundingClientRect()
-            const midPoint = rootRect.top + rootRect.height * 0.5
-            tocItems.value.forEach(t => {
-              const el = blogContentRef.value?.querySelector(`#${CSS.escape(t.id)}`)
-              if (el) {
-                const rect = el.getBoundingClientRect()
-                if (rect.top < midPoint && rect.bottom > rootRect.top && rect.top > maxTop) {
-                  maxTop = rect.top
-                  foundActive = tocItems.value.indexOf(t)
-                }
-              }
-            })
-            if (foundActive >= 0) {
-              activeTocIndex.value = foundActive
-              updateIndicatorPosition(foundActive)
-            } else {
-              // 无 section 在视口上半区 → indicator fade out
-              activeTocIndex.value = -1
-            }
-          }
+          // 回到页面顶部，无 section 越过中点 → indicator fade out
+          activeTocIndex.value = -1
         }
       }
     },
@@ -313,7 +317,7 @@ function setupScrollObserver() {
       if (el) observer.observe(el)
     })
 
-    // 初始检测：找到视口上半区内最靠近顶部的 section，若无则默认第一个
+    // 初始检测：找「top 已越过中点」的最后一个 section，若无则保持 hidden
     requestAnimationFrame(() => {
       if (!scrollRoot) return
       const rootRect = scrollRoot.getBoundingClientRect()
@@ -324,13 +328,12 @@ function setupScrollObserver() {
         const el = blogContentRef.value?.querySelector(`#${CSS.escape(t.id)}`)
         if (el) {
           const rect = el.getBoundingClientRect()
-          if (rect.top < midPoint && rect.bottom > rootRect.top && rect.top > maxTop) {
+          if (rect.top < midPoint && rect.top > maxTop) {
             maxTop = rect.top
             active = tocItems.value.indexOf(t)
           }
         }
       })
-      // 无 section 在视口上半区时，保持 hidden 状态（indicator hide + fade-in）
       if (active >= 0) {
         activeTocIndex.value = active
         updateIndicatorPosition(active)
