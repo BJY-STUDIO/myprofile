@@ -1535,14 +1535,10 @@ watch(() => route.params.slug, () => {
 
 /* 暗色主题 — squiggle: 已通过 v-if 切换 SVG（stroke 硬编码为 #49454f），无需额外 CSS */
 
-/* 暗色主题 — ol 药丸徽章：inverse-surface/inverse-on-surface 切换 */
-:global([data-theme="dark"]) .blog-content ol > li::before {
-  background: var(--md-sys-color-inverse-surface, #e6e1e3);
-  color: var(--md-sys-color-inverse-on-surface, #323032);
-}
+/* 暗色主题 — ol 药丸徽章：CSS 变量 inverse-surface/inverse-on-surface 由 theme.js 自动切换，无需额外规则 */
 
 /* 暗色主题 — ul bullet SVG（M3 官方暗色 #E3E3E3） */
-:global([data-theme="dark"]) .blog-content ul li::before {
+:global([data-theme="dark"]) .blog-content :deep(ul li::before) {
   background-image: url("data:image/svg+xml,%3Csvg width='8' height='8' viewBox='0 0 8 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.95843 0.279933C5.5378 -0.353974 6.58452 0.173492 6.41974 1.01632L6.05454 2.88412C5.99767 3.17501 6.09646 3.47451 6.31525 3.67447L7.72007 4.95843C8.35397 5.5378 7.82651 6.58452 6.98368 6.41974L5.11588 6.05454C4.82499 5.99767 4.52549 6.09646 4.32553 6.31525L3.04157 7.72007C2.4622 8.35397 1.41548 7.82651 1.58026 6.98368L1.94545 5.11588C2.00233 4.82499 1.90354 4.52549 1.68475 4.32553L0.279933 3.04157C-0.353974 2.4622 0.173492 1.41548 1.01632 1.58026L2.88412 1.94545C3.17501 2.00233 3.47451 1.90354 3.67447 1.68475L4.95843 0.279933Z' fill='%23E3E3E3'/%3E%3C/svg%3E");
 }
 
