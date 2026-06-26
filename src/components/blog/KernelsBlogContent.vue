@@ -130,14 +130,50 @@
       通过 CSS class 模拟 CodeMirror 的语法高亮 token（<code>.cm-keyword</code>、
       <code>.cm-string</code>、<code>.cm-comment</code> 等）。
     </p>
+
+    <h4 id="syntax-coloring">语法着色原理</h4>
+    <p>
+      代码着色的核心是 <strong>token 分类 + CSS 选择器映射</strong>。
+      每个语法元素被包裹在带有 CodeMirror 命名约定的 <code>&lt;span&gt;</code> 标签中，
+      例如关键字用 <code>.cm-keyword</code>、字符串用 <code>.cm-string</code>、
+      注释用 <code>.cm-comment</code>、变量用 <code>.cm-variable</code>、
+      函数定义用 <code>.cm-def</code>、属性访问用 <code>.cm-property</code>、
+      布尔与 null 用 <code>.cm-atom</code>。
+      这种分类方式与 CodeMirror 编辑器的 token 系统完全对应，
+      但我们不需要引入 CodeMirror 的词法分析器——对于静态展示的代码片段，
+      手动标注 token class 不仅更轻量，还能精确控制每个 token 的归属。
+    </p>
+    <p>
+      颜色由两层 CSS 主题类驱动：亮色主题使用 <code>.cm-s-neo</code>，
+      暗色主题使用 <code>.cm-s-material-darker</code>。
+      两套配色方案都直接对照 M3 官方页面的 CodeMirror 主题色值提取——
+      亮色下关键字为 <code>#1d75b3</code>（蓝）、变量为 <code>#047d65</code>（绿）、
+      字符串为 <code>#b35e14</code>（橙）、注释为 <code>#75787b</code>（灰）；
+      暗色下关键字变为 <code>#c792ea</code>（紫）、变量变为 <code>#f07178</code>（粉红）、
+      字符串变为 <code>#c3e88d</code>（浅绿）、注释变为 <code>#545454</code>（深灰）。
+    </p>
+    <p>
+      主题切换的关键在于 <strong>容器级别的 class 交换</strong>：
+      Vue 组件通过 <code>MutationObserver</code> 监听 <code>data-theme</code> 属性变化，
+      同步更新 <code>isDark</code> ref，从而在 CodeMirror 容器上切换
+      <code>cm-s-neo</code> 和 <code>cm-s-material-darker</code> 两个 class。
+      由于所有高亮选择器都以主题 class 为前缀（如 <code>.cm-s-neo .cm-keyword</code>），
+      切换容器 class 即可一次性切换全部 token 颜色，无需逐个修改元素样式。
+    </p>
+    <p>
+      代码块的背景和边框同样按主题区分：亮色下背景为 <code>#f5f5f5</code>，
+      暗色下为 <code>#212121</code>，边框颜色跟随 <code>--md-sys-color-surface-variant</code>
+      CSS 变量自动适配。这些值全部从 M3 官方 <code>mio-code-snippet</code> 的
+      渲染结果中精确测量得到。
+    </p>
+
+    <h4 id="code-typography">代码排版规格</h4>
     <p>
       代码字体严格遵循 M3 的排版规格：代码块使用
       <code>Google Sans Mono 15px / weight 500 / line-height 32px</code>，
       行内代码使用 <code>Google Sans Mono 16px / weight 400 / line-height 24px</code>——
       这些参数直接对应 M3 官方 CSS 变量中的 <code>--mio-theme-v2-code-snippet</code>
       和 <code>--mio-theme-v2-code-l</code> 令牌。
-    </p>
-    <p>
       与 Google Sans 类似，Google Sans Mono 也需要通过 @font-face 内联声明来确保加载。
       我们从 Google Fonts CDN 获取 woff2 格式的 weight 400 和 500 两个字重的
       3 个 unicode-range 切片，在 <code>index.html</code> 中声明，

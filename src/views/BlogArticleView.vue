@@ -495,6 +495,9 @@ onUnmounted(() => {
 })
 
 watch(() => route.params.slug, () => {
+  // 同组件路由切换时滚动到顶部（滚动容器是 main.app-main，不是 window）
+  const main = document.querySelector('main.app-main')
+  if (main) main.scrollTo({ top: 0, behavior: 'instant' })
   tocItems.value = []
   activeTocIndex.value = -1
   nextTick(() => {
