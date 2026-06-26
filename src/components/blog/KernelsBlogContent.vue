@@ -458,4 +458,22 @@ onUnmounted(() => {
     display: none;
   }
 }
+
+/* ── 暗色主题覆盖 ── */
+
+/* 暗色主题 — copy-button 颜色（on-surface 暗） */
+:global([data-theme="dark"] .copy-button) {
+  color: var(--md-sys-color-on-surface, #e6e1e5);
+}
+
+/* 暗色主题 — copy-button-background（on-surface-variant 暗 8%） */
+:global([data-theme="dark"] .copy-button-background) {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent);
+}
+
+/* 暗色主题 — tooltip 反转色彩（M3 官方：暗色模式下 tooltip 为浅色背景深色文字） */
+:global([data-theme="dark"] .tooltip) {
+  background: #fefbff;
+  color: #1f1f1f;
+}
 </style>

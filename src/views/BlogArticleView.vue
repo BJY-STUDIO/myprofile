@@ -1028,30 +1028,64 @@ watch(() => route.params.slug, () => {
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
+/* inline <code> — 对照 m3: Google Sans Mono 400 16px/24px, surface-container bg, 2px 8px padding, 2px radius */
 .blog-content :deep(code) {
   font-family: 'Google Sans Mono', 'Courier New', monospace;
-  font-size: 14px;
-  background: var(--md-sys-color-surface-container-high);
-  padding: 2px 6px;
-  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  font-variation-settings: "GRAD" 0, "opsz" 17;
+  background: var(--md-sys-color-surface-container, #ece7e9);
+  padding: 2px 8px;
+  border-radius: 2px;
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
+/* pre (code block) — 对照 m3: bg #fff, border surface-variant, 16px radius, monospace 16px/23px */
 .blog-content :deep(pre) {
-  background: var(--md-sys-color-surface-container);
+  background: #fff;
   border-radius: 16px;
-  padding: 24px;
+  padding: 0;
   overflow-x: auto;
-  margin: 24px 0;
-  border: 1px solid var(--md-sys-color-outline-variant);
+  margin: 56px 0;
+  border: 1px solid var(--md-sys-color-surface-variant, #e8e0e8);
 }
 
 .blog-content :deep(pre code) {
   background: none;
   padding: 0;
-  font-size: 14px;
-  line-height: 24px;
+  font-family: monospace;
+  font-size: 16px;
+  line-height: 23px;
   border-radius: 0;
+  display: block;
+  padding: 4px 4px 4px 24px;
+  color: #2e383c;
+}
+
+/* 语法高亮色彩 — 对照 m3 cm-s-neo 亮色主题 */
+.blog-content :deep(pre code .variable),
+.blog-content :deep(pre code .var) {
+  color: #047d65;
+}
+
+.blog-content :deep(pre code .property),
+.blog-content :deep(pre code .keyword) {
+  color: #1d75b3;
+}
+
+.blog-content :deep(pre code .number),
+.blog-content :deep(pre code .atom) {
+  color: #75438a;
+}
+
+.blog-content :deep(pre code .string) {
+  color: #b35e14;
+}
+
+.blog-content :deep(pre code .operator),
+.blog-content :deep(pre code .comment) {
+  color: #2e383c;
 }
 
 .blog-content :deep(blockquote) {
@@ -1575,8 +1609,55 @@ watch(() => route.params.slug, () => {
 
 /* 暗色主题 — ol 药丸徽章：CSS 变量 inverse-surface/inverse-on-surface 由 theme.js 自动切换，无需额外规则 */
 
-/* 暗色主题 — ul bullet SVG（M3 官方暗色 #E3E3E3） */
-:global([data-theme="dark"]) .blog-content :deep(ul li::before) {
+/* 暗色主题 — inline <code>（M3 官方暗色 bg: #2b292b, color: #e6e1e3） */
+:global([data-theme="dark"] .blog-content code) {
+  background: var(--md-sys-color-surface-container, #2b292b);
+  color: var(--md-sys-color-on-surface, #e6e1e3);
+}
+
+/* 暗色主题 — pre code block（M3 官方 cm-s-material-darker: bg #212121, border #4d4256, color #eeffff） */
+:global([data-theme="dark"] .blog-content pre) {
+  background: #212121;
+  border-color: var(--md-sys-color-on-surface-variant, #4d4256);
+}
+
+:global([data-theme="dark"] .blog-content pre code) {
+  color: #eeffff;
+}
+
+/* 暗色主题 — 语法高亮色彩（对照 m3 cm-s-material-darker） */
+:global([data-theme="dark"] .blog-content pre code .variable),
+:global([data-theme="dark"] .blog-content pre code .var) {
+  color: #f07178;
+}
+
+:global([data-theme="dark"] .blog-content pre code .property),
+:global([data-theme="dark"] .blog-content pre code .keyword) {
+  color: #c792ea;
+}
+
+:global([data-theme="dark"] .blog-content pre code .number) {
+  color: #ff5370;
+}
+
+:global([data-theme="dark"] .blog-content pre code .atom) {
+  color: #f78c6c;
+}
+
+:global([data-theme="dark"] .blog-content pre code .string) {
+  color: #c3e88d;
+}
+
+:global([data-theme="dark"] .blog-content pre code .operator) {
+  color: #89ddff;
+}
+
+:global([data-theme="dark"] .blog-content pre code .comment) {
+  color: #727579;
+}
+
+/* 暗色主题 — ul bullet SVG（M3 官方暗色 #E3E3E3，:global() 包裹完整选择器防止 Vue 编译破坏） */
+:global([data-theme="dark"] .blog-content ul li::before) {
   background-image: url("data:image/svg+xml,%3Csvg width='8' height='8' viewBox='0 0 8 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.95843 0.279933C5.5378 -0.353974 6.58452 0.173492 6.41974 1.01632L6.05454 2.88412C5.99767 3.17501 6.09646 3.47451 6.31525 3.67447L7.72007 4.95843C8.35397 5.5378 7.82651 6.58452 6.98368 6.41974L5.11588 6.05454C4.82499 5.99767 4.52549 6.09646 4.32553 6.31525L3.04157 7.72007C2.4622 8.35397 1.41548 7.82651 1.58026 6.98368L1.94545 5.11588C2.00233 4.82499 1.90354 4.52549 1.68475 4.32553L0.279933 3.04157C-0.353974 2.4622 0.173492 1.41548 1.01632 1.58026L2.88412 1.94545C3.17501 2.00233 3.47451 1.90354 3.67447 1.68475L4.95843 0.279933Z' fill='%23E3E3E3'/%3E%3C/svg%3E");
 }
 
