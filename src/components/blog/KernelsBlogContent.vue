@@ -122,6 +122,28 @@
       <code>font-weight</code> 控制中文字符的字重，两者互不干扰。
     </p>
 
+    <h3 id="code-block">代码块与语法高亮</h3>
+    <p>
+      文章页中的代码展示是博客的核心交互元素之一。我们按照 M3 官方
+      <code>mio-code-snippet</code> 组件的结构，构建了一个轻量的静态代码块组件——
+      不依赖 CodeMirror 运行时，而是直接输出 <code>&lt;pre&gt;</code> 标签结构，
+      通过 CSS class 模拟 CodeMirror 的语法高亮 token（<code>.cm-keyword</code>、
+      <code>.cm-string</code>、<code>.cm-comment</code> 等）。
+    </p>
+    <p>
+      代码字体严格遵循 M3 的排版规格：代码块使用
+      <code>Google Sans Mono 15px / weight 500 / line-height 32px</code>，
+      行内代码使用 <code>Google Sans Mono 16px / weight 400 / line-height 24px</code>——
+      这些参数直接对应 M3 官方 CSS 变量中的 <code>--mio-theme-v2-code-snippet</code>
+      和 <code>--mio-theme-v2-code-l</code> 令牌。
+    </p>
+    <p>
+      与 Google Sans 类似，Google Sans Mono 也需要通过 @font-face 内联声明来确保加载。
+      我们从 Google Fonts CDN 获取 woff2 格式的 weight 400 和 500 两个字重的
+      3 个 unicode-range 切片，在 <code>index.html</code> 中声明，
+      确保代码块的 font-weight: 500 不会降级为浏览器合成粗体。
+    </p>
+
     <div class="block" id="theme-engine">
       <div class="copy-button-container focusable">
         <div class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to 主题引擎 section">link</div>
@@ -180,6 +202,26 @@
       样式使用 <code>&lt;style scoped&gt;</code> 隔离，但 Teleport 内容通过
       <code>:global()</code> 选择器突破 Shadow DOM 限制。
     </p>
+
+    <h3 id="standardized-components">标准化组件架构</h3>
+    <p>
+      为了支撑未来的 CMS 后端编辑场景，我们对页面中的所有可复用元素进行了标准化。
+      标题区块（h2 block with copy link）、代码块（mio-code-snippet）、
+      行内代码（<code>&lt;code&gt;</code>）、有序/无序列表等，
+      都遵循统一的排版规格和交互模式。
+    </p>
+    <p>
+      核心原则是 <strong>布局稳定性</strong>：无论某个组件是否存在，
+      页面中其他元素的位置不应发生变化。例如，文章页右侧的 TOC 侧栏和 Up Next 区域
+      使用相同宽度的占位元素，确保内容区的宽度在有无 TOC 时都完全一致。
+      这通过 CSS Flex 布局的固定比例分配实现，而非 JavaScript 动态计算。
+    </p>
+    <p>
+      每个标准化组件都有明确的 M3 对照规格——从 copy link 按钮的 48×48px 触摸目标、
+      tooltip 的 <code>border-radius: 6px</code>，到 ol 列表的药丸数字徽章
+      （24×32px，<code>inverse-surface</code> 背景色）和 ul 列表的星形子弹
+      （8×8px SVG 背景图，随机旋转角度），全部可追溯到 M3 官方源代码。
+    </p>
     <p>从零搭建到完整上线的典型开发流程如下：</p>
     <ol>
       <li><strong>环境初始化</strong> — 使用 Vite 创建 Vue 3 项目，安装 <code>@material/web</code> 及字体依赖</li>
@@ -189,6 +231,23 @@
       <li><strong>细节打磨</strong> — 字体 GRAD 轴效果、涟漪动效、暗色主题适配、移动端响应式</li>
       <li><strong>部署上线</strong> — GitHub Pages 部署，配置自定义域名与 HTTPS</li>
     </ol>
+    <p>
+      实际的迭代过程远比上述线性列表复杂。我们采用的是 <strong>对照复刻</strong> 驱动的开发方式——
+      每个组件和交互效果都直接参照 m3.material.io 的源代码和渲染结果，
+      通过浏览器 DevTools 精确测量尺寸、间距、颜色、动效参数，然后在自己的项目中还原。
+    </p>
+    <p>
+      这种方式的好处是目标明确、偏差可量化；代价是 M3 官方使用 Angular + 自定义 Web Components，
+      而我们使用 Vue 3 + <code>@material/web</code>，技术栈差异意味着同样的视觉效果
+      可能需要截然不同的实现路径。例如，M3 的布局对齐完全基于 CSS Flex 和固定比例，
+      而初始版本中我们误用了 JavaScript 动态计算偏移量——对照 M3 源码才发现
+      原版根本没有 JS 参与，纯 CSS 就能实现完美对齐。
+    </p>
+    <p>
+      每轮迭代通常遵循「测量 → 实现 → 对比 → 修正」的循环。
+      一个看似简单的 footer 对齐问题可能需要 3-4 轮迭代才能与 M3 官方完全一致。
+      但正是这种对细节的执着追求，让最终产物的视觉质量达到了与 M3 官网几乎无差别的水平。
+    </p>
 
     <mio-code-snippet>
       <div class="mio-code-snippet__container">
@@ -254,6 +313,25 @@
       确保不被通配符规则覆盖。这类由全局重置引发的局部样式失效是最难定位的 CSS 问题之一。
     </p>
 
+    <h3 id="font-loading">字体加载策略</h3>
+    <p>
+      项目使用三种字体族：Google Sans（展示字体）、Google Sans Mono（代码字体）、
+      Noto Sans SC（中文可变字体）。前两者不通过 Google Fonts API 的
+      <code>&lt;link&gt;</code> 标签加载——API 返回的 Google Sans 字体文件
+      GRAD 轴响应极弱，与 M3 官方使用的编译版本完全不同。
+    </p>
+    <p>
+      最终采用的方案是直接在 <code>index.html</code> 中内联全部 @font-face 声明：
+      Google Sans 有 25 个 unicode-range 切片（<code>font-weight: 475</code>、
+      <code>font-display: block</code>），Google Sans Mono 有 6 个切片
+      （weight 400 和 500 各 3 个，<code>font-display: swap</code>）。
+      Noto Sans SC 因无需 GRAD 轴，仍通过 Google Fonts API 加载。
+    </p>
+    <p>
+      这套方案确保了字体效果与 M3 官方完全一致，同时浏览器按 unicode-range
+      按需下载子集——纯英文页面不会加载中文切片，纯中文页面也不会下载符号切片。
+    </p>
+
     <div class="block" id="lessons">
       <div class="copy-button-container focusable">
         <div class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to 经验总结 section">link</div>
@@ -275,6 +353,8 @@
       <li><strong>M3 规范的细节远超视觉</strong>——从触摸目标的 48px 最小尺寸到 state layer 的精确透明度，每处都经过可访问性考量</li>
       <li><strong>全局重置是定时炸弹</strong>——<code>* { font-weight: normal }</code> 这种规则在与可变字体配合时会产生意想不到的连锁效应</li>
       <li><strong>渐进式适配比一次性响应式更可靠</strong>——从移动端基础布局逐步增强到桌面端完整体验</li>
+      <li><strong>对照源码胜过猜测</strong>——当布局效果与预期不符时，直接测量 M3 官方源码的 CSS 属性比凭直觉调整更高效</li>
+      <li><strong>字体加载是可变字体的第一道坎</strong>——同一字体族的不同编译版本，轴响应特性可能有天壤之别，必须验证</li>
     </ol>
     <p>
       这个项目仍在持续迭代中。未来计划添加更多博客文章、完善可访问性、

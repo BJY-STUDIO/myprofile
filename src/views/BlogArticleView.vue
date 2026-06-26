@@ -206,29 +206,16 @@ const articles = {
     ],
     contentComponent: defineAsyncComponent(() => import('@/components/blog/KernelsBlogContent.vue'))
   },
-  'coming-soon-1': {
-    slug: 'coming-soon-1',
-    title: 'M3 Expressive Design Language',
-    description: '探索 Material Design 3 Expressive 的全新设计语言与动效系统。',
-    date: 'Jun 20, 2026',
-    icon: 'brush',
+  'changelog-v1': {
+    slug: 'changelog-v1',
+    title: 'Changelog: Kernel\'s Blog v1',
+    description: 'v1 开发周期的关键里程碑、修复记录与后续计划。',
+    date: 'Jun 26, 2026',
+    icon: 'history',
     authors: [
       { name: 'Jerry Bao', role: 'Developer' }
     ],
-    content: '<p>敬请期待…</p>',
-    contentComponent: null
-  },
-  'coming-soon-2': {
-    slug: 'coming-soon-2',
-    title: 'Dynamic Color in Practice',
-    description: '从 HCT 色彩空间到动态主题——M3 Dynamic Color 的实战指南。',
-    date: 'Jun 15, 2026',
-    icon: 'palette',
-    authors: [
-      { name: 'Jerry Bao', role: 'Developer' }
-    ],
-    content: '<p>敬请期待…</p>',
-    contentComponent: null
+    contentComponent: defineAsyncComponent(() => import('@/components/blog/ChangelogContent.vue'))
   }
 }
 
