@@ -1,6 +1,8 @@
 /**
  * 博客数据存储 — reactive + localStorage 持久化
  * 管理导航菜单、页面内容（sections/cards）
+ *
+ * 文章路由格式: /article/{slug}，slug 对应 src/articles/{slug}.js
  */
 import { reactive, watch, toRaw } from 'vue'
 

@@ -174,8 +174,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick, watch, defineAsyncComponent } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { articles, defaultSlug } from '@/articles'
 
 const route = useRoute()
 
@@ -193,35 +194,12 @@ onMounted(() => {
   onUnmounted(() => observer.disconnect())
 })
 
-// ======== 文章数据 ========
-const articles = {
-  'kernels-blog': {
-    slug: 'kernels-blog',
-    title: "Kernel's Blog",
-    description: '基于 Vue 3 + Material Web 的个人博客站点，严格遵循 M3 规范。',
-    date: 'Jun 25, 2026',
-    heroImage: null,
-    authors: [
-      { name: 'Jerry Bao', role: 'Developer' }
-    ],
-    contentComponent: defineAsyncComponent(() => import('@/components/blog/KernelsBlogContent.vue'))
-  },
-  'changelog-v1': {
-    slug: 'changelog-v1',
-    title: 'Changelog: Kernel\'s Blog v1',
-    description: 'v1 开发周期的关键里程碑、修复记录与后续计划。',
-    date: 'Jun 26, 2026',
-    icon: 'history',
-    authors: [
-      { name: 'Jerry Bao', role: 'Developer' }
-    ],
-    contentComponent: defineAsyncComponent(() => import('@/components/blog/ChangelogContent.vue'))
-  }
-}
+// ======== 文章数据（来自 src/articles/ 自动发现注册表） ========
+// 新增文章只需创建 src/articles/xxx.js，无需修改此文件
 
 const article = computed(() => {
   const slug = route.params.slug
-  return articles[slug] || articles['kernels-blog']
+  return articles[slug] || articles[defaultSlug] || Object.values(articles)[0]
 })
 
 // ======== TOC 目录（复用 HomeView 的 indicator 方案） ========
