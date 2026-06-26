@@ -202,7 +202,7 @@ const articles = {
     date: 'Jun 25, 2026',
     heroImage: null,
     authors: [
-      { name: 'BJY', role: 'Developer, Material Design Contributor' }
+      { name: 'Jerry Bao', role: 'Developer' }
     ],
     contentComponent: defineAsyncComponent(() => import('@/components/blog/KernelsBlogContent.vue'))
   },
@@ -213,7 +213,7 @@ const articles = {
     date: 'Jun 20, 2026',
     icon: 'brush',
     authors: [
-      { name: 'BJY', role: 'Developer, Material Design Contributor' }
+      { name: 'Jerry Bao', role: 'Developer' }
     ],
     content: '<p>敬请期待…</p>',
     contentComponent: null
@@ -225,7 +225,7 @@ const articles = {
     date: 'Jun 15, 2026',
     icon: 'palette',
     authors: [
-      { name: 'BJY', role: 'Developer, Material Design Contributor' }
+      { name: 'Jerry Bao', role: 'Developer' }
     ],
     content: '<p>敬请期待…</p>',
     contentComponent: null
@@ -863,7 +863,7 @@ watch(() => route.params.slug, () => {
 .byline {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0;
   margin-top: 8px;
   font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
 }
@@ -880,6 +880,7 @@ watch(() => route.params.slug, () => {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
+  margin-left: 24px;
 }
 
 .author-name {
