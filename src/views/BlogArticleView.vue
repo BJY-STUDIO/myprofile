@@ -396,7 +396,7 @@ const upNextArticles = computed(() => {
 })
 
 // 卡片涟漪动效（复用 HomeView 的 onCardDown）
-const thumbBg = 'color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 8%, var(--md-sys-color-surface-container-low, #f8f1f6))'
+const thumbBg = 'var(--md-sys-color-secondary-container, #e8def8)'
 
 function isCjk(text) {
   if (!text) return false

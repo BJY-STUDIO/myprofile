@@ -303,7 +303,7 @@ function onCardDown(e) {
   window.addEventListener('mouseup', onUp)
 }
 
-const thumbBg = 'color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 8%, var(--md-sys-color-surface-container-low, #f8f1f6))'
+const thumbBg = 'var(--md-sys-color-secondary-container, #e8def8)'
 
 // 日期格式化（对照 m3: "Jun 18, 2026"）
 function formatDate(dateStr) {
