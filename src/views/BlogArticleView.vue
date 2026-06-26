@@ -1041,50 +1041,105 @@ watch(() => route.params.slug, () => {
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
-/* pre (code block) — 对照 m3: bg #fff, border surface-variant, 16px radius, monospace 16px/23px */
-.blog-content :deep(pre) {
-  background: #fff;
-  border-radius: 16px;
-  padding: 0;
-  overflow-x: auto;
-  margin: 56px 0;
-  border: 1px solid var(--md-sys-color-surface-variant, #e8e0e8);
-}
+/* ================================================================
+   mio-code-snippet__container（对照 m3: CodeMirror code snippet）
+   M3 官方结构: mio-code-snippet > .mio-code-snippet__container > .CodeMirror > .CodeMirror-code > pre.CodeMirror-line
+   字体: Google Sans Mono 15px/500/32px, GRAD 0, opsz 17
+   ================================================================ */
 
-.blog-content :deep(pre code) {
-  background: none;
-  padding: 0;
-  font-family: monospace;
-  font-size: 16px;
-  line-height: 23px;
-  border-radius: 0;
+/* mio-code-snippet 外层 display:block, margin-top:56px */
+.blog-content :deep(mio-code-snippet) {
   display: block;
-  padding: 4px 4px 4px 24px;
-  color: #2e383c;
+  margin-top: 56px;
 }
 
-/* 语法高亮色彩 — 对照 m3 cm-s-neo 亮色主题 */
-.blog-content :deep(pre code .variable),
-.blog-content :deep(pre code .var) {
+/* mio-code-snippet__container — 纯 wrapper，无 bg/padding/margin */
+.blog-content :deep(.mio-code-snippet__container) {
+  display: block;
+}
+
+/* .CodeMirror — 对照 m3: box-sizing border-box, height auto, 1px border surface-variant, 16px radius */
+.blog-content :deep(.mio-code-snippet__container .CodeMirror) {
+  box-sizing: border-box;
+  height: auto;
+  background: #fff;
+  border: 1px solid var(--md-sys-color-surface-variant, #e8e0e8);
+  border-radius: 16px;
+  color: #2e383c;
+  line-height: normal;
+  position: relative;
+  overflow: hidden;
+}
+
+/* .CodeMirror-lines padding */
+.blog-content :deep(.mio-code-snippet__container .CodeMirror-lines) {
+  padding: 4px 0;
+  cursor: text;
+  min-height: 1px;
+}
+
+/* .CodeMirror-code margin */
+.blog-content :deep(.mio-code-snippet__container .CodeMirror-code) {
+  margin: 12px 0;
+  outline: none;
+}
+
+/* pre.CodeMirror-line — 对照 m3: font-family Google Sans Mono 500 15px/32px, padding 0 4px 0 24px */
+.blog-content :deep(.mio-code-snippet__container pre.CodeMirror-line) {
+  font-family: 'Google Sans Mono', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 32px;
+  font-variation-settings: "GRAD" 0, "opsz" 17;
+  padding: 0 4px 0 24px;
+  margin: 0;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+/* 移动端 ≤960px: padding-left 16px（对照 m3） */
+@media screen and (max-width: 960px) {
+  .blog-content :deep(.mio-code-snippet__container pre.CodeMirror-line) {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+/* ── 语法高亮色彩 — 对照 m3 cm-s-neo 亮色主题 ── */
+.blog-content :deep(.cm-s-neo .cm-variable),
+.blog-content :deep(.cm-s-neo .cm-qualifier) {
   color: #047d65;
 }
 
-.blog-content :deep(pre code .property),
-.blog-content :deep(pre code .keyword) {
+.blog-content :deep(.cm-s-neo .cm-keyword),
+.blog-content :deep(.cm-s-neo .cm-property) {
   color: #1d75b3;
 }
 
-.blog-content :deep(pre code .number),
-.blog-content :deep(pre code .atom) {
+.blog-content :deep(.cm-s-neo .cm-atom),
+.blog-content :deep(.cm-s-neo .cm-number) {
   color: #75438a;
 }
 
-.blog-content :deep(pre code .string) {
+.blog-content :deep(.cm-s-neo .cm-node),
+.blog-content :deep(.cm-s-neo .cm-tag) {
+  color: #9c3328;
+}
+
+.blog-content :deep(.cm-s-neo .cm-string) {
   color: #b35e14;
 }
 
-.blog-content :deep(pre code .operator),
-.blog-content :deep(pre code .comment) {
+.blog-content :deep(.cm-s-neo .cm-comment) {
+  color: #75787b;
+}
+
+.blog-content :deep(.cm-s-neo .cm-operator) {
   color: #2e383c;
 }
 
@@ -1615,45 +1670,53 @@ watch(() => route.params.slug, () => {
   color: var(--md-sys-color-on-surface, #e6e1e3);
 }
 
-/* 暗色主题 — pre code block（M3 官方 cm-s-material-darker: bg #212121, border #4d4256, color #eeffff） */
-:global([data-theme="dark"] .blog-content pre) {
+/* 暗色主题 — CodeMirror code block（M3 官方 cm-s-material-darker: bg #212121, border #4d4256, color #eeffff） */
+:global([data-theme="dark"] .blog-content .mio-code-snippet__container .CodeMirror) {
   background: #212121;
-  border-color: var(--md-sys-color-on-surface-variant, #4d4256);
-}
-
-:global([data-theme="dark"] .blog-content pre code) {
+  border-color: var(--md-sys-color-surface-variant, #49454f);
   color: #eeffff;
 }
 
 /* 暗色主题 — 语法高亮色彩（对照 m3 cm-s-material-darker） */
-:global([data-theme="dark"] .blog-content pre code .variable),
-:global([data-theme="dark"] .blog-content pre code .var) {
+:global([data-theme="dark"] .blog-content .cm-s-material-darker .cm-variable) {
   color: #f07178;
 }
 
-:global([data-theme="dark"] .blog-content pre code .property),
-:global([data-theme="dark"] .blog-content pre code .keyword) {
+:global([data-theme="dark"] .blog-content .cm-s-material-darker .cm-keyword),
+:global([data-theme="dark"] .blog-content .cm-s-material-darker .cm-property) {
   color: #c792ea;
 }
 
-:global([data-theme="dark"] .blog-content pre code .number) {
+:global([data-theme="dark"] .blog-content .cm-s-material-darker .cm-number) {
   color: #ff5370;
 }
 
-:global([data-theme="dark"] .blog-content pre code .atom) {
+:global([data-theme="dark"] .blog-content .cm-s-material-darker .cm-atom) {
   color: #f78c6c;
 }
 
-:global([data-theme="dark"] .blog-content pre code .string) {
+:global([data-theme="dark"] .blog-content .cm-s-material-darker .cm-string) {
   color: #c3e88d;
 }
 
-:global([data-theme="dark"] .blog-content pre code .operator) {
+:global([data-theme="dark"] .blog-content .cm-s-material-darker .cm-operator) {
   color: #89ddff;
 }
 
-:global([data-theme="dark"] .blog-content pre code .comment) {
-  color: #727579;
+:global([data-theme="dark"] .blog-content .cm-s-material-darker .cm-comment) {
+  color: #545454;
+}
+
+:global([data-theme="dark"] .blog-content .cm-s-material-darker .cm-def) {
+  color: #82aaff;
+}
+
+:global([data-theme="dark"] .blog-content .cm-s-material-darker .cm-tag) {
+  color: #ff5370;
+}
+
+:global([data-theme="dark"] .blog-content .cm-s-material-darker .cm-attribute) {
+  color: #c792ea;
 }
 
 /* 暗色主题 — ul bullet SVG（M3 官方暗色 #E3E3E3，:global() 包裹完整选择器防止 Vue 编译破坏） */

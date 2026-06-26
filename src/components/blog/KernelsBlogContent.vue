@@ -190,6 +190,33 @@
       <li><strong>部署上线</strong> — GitHub Pages 部署，配置自定义域名与 HTTPS</li>
     </ol>
 
+    <mio-code-snippet>
+      <div class="mio-code-snippet__container">
+        <div :class="['CodeMirror', isDark ? 'cm-s-material-darker' : 'cm-s-neo', 'CodeMirror-wrap']" translate="no">
+          <div class="CodeMirror-scroll">
+            <div class="CodeMirror-sizer">
+              <div class="CodeMirror-lines">
+                <div class="CodeMirror-code">
+                  <pre class="CodeMirror-line"><span class="cm-comment">// theme.js — HCT 色彩引擎核心逻辑</span></pre>
+                  <pre class="CodeMirror-line"><span class="cm-keyword">export function</span> <span class="cm-def">applyThemeFromHCT</span>(sourceColor) {</pre>
+                  <pre class="CodeMirror-line">  <span class="cm-keyword">const</span> <span class="cm-variable">hct</span> = <span class="cm-variable">Hct</span>.<span class="cm-property">fromInt</span>(<span class="cm-variable">sourceColor</span>);</pre>
+                  <pre class="CodeMirror-line">  <span class="cm-keyword">const</span> <span class="cm-variable">scheme</span> = <span class="cm-keyword">new</span> <span class="cm-variable">SchemeContent</span>(<span class="cm-variable">hct</span>, <span class="cm-atom">false</span>, <span class="cm-atom">0.0</span>);</pre>
+                  <pre class="CodeMirror-line">&nbsp;</pre>
+                  <pre class="CodeMirror-line">  <span class="cm-keyword">const</span> <span class="cm-variable">tokens</span> = <span class="cm-variable">schemeToTokens</span>(<span class="cm-variable">scheme</span>);</pre>
+                  <pre class="CodeMirror-line">  <span class="cm-keyword">for</span> (<span class="cm-keyword">const</span> [<span class="cm-variable">key</span>, <span class="cm-variable">value</span>] <span class="cm-keyword">of</span> <span class="cm-variable">Object</span>.<span class="cm-property">entries</span>(<span class="cm-variable">tokens</span>)) {</pre>
+                  <pre class="CodeMirror-line">    <span class="cm-variable">document</span>.<span class="cm-property">documentElement</span>.<span class="cm-property">style</span>.<span class="cm-property">setProperty</span>(</pre>
+                  <pre class="CodeMirror-line">      <span class="cm-string">`--md-sys-color-${<span class="cm-variable">key</span>}`</span>, <span class="cm-variable">value</span></pre>
+                  <pre class="CodeMirror-line">    );</pre>
+                  <pre class="CodeMirror-line">  }</pre>
+                  <pre class="CodeMirror-line">}</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mio-code-snippet>
+
     <div class="block" id="challenges">
       <div class="copy-button-container focusable">
         <div class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to 遇到的挑战 section">link</div>
@@ -258,8 +285,13 @@
 
 <script setup>
 // Copy link 交互逻辑 — 使用事件委托，避免异步组件加载后找不到 DOM 元素
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 
+// 暗色模式检测 — 监听 data-theme 属性变化同步 CodeMirror 主题 class
+const isDark = ref(false)
+let themeObserver = null
+
+// Copy link 交互逻辑 — 使用事件委托
 function handleClick(e) {
   const btn = e.target.closest('.copy-button')
   if (!btn) return
@@ -271,7 +303,6 @@ function handleClick(e) {
   const url = window.location.origin + window.location.pathname + '#' + id
   navigator.clipboard.writeText(url).catch(() => {})
 
-  // M3 官方：给 .copy-button 添加 .activated class
   btn.classList.add('activated')
   setTimeout(() => {
     btn.classList.remove('activated')
@@ -279,6 +310,16 @@ function handleClick(e) {
 }
 
 onMounted(() => {
+  // 初始化 isDark
+  const root = document.documentElement
+  isDark.value = root.getAttribute('data-theme') === 'dark'
+
+  // 监听 data-theme 变化（用户切换主题时同步）
+  themeObserver = new MutationObserver(() => {
+    isDark.value = root.getAttribute('data-theme') === 'dark'
+  })
+  themeObserver.observe(root, { attributes: true, attributeFilter: ['data-theme'] })
+
   const container = document.querySelector('.article-content')
   container?.addEventListener('click', handleClick)
 
@@ -290,6 +331,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.querySelector('.article-content')?.removeEventListener('click', handleClick)
+  themeObserver?.disconnect()
 })
 </script>
 
