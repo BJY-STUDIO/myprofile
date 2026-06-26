@@ -25,7 +25,7 @@
     </header>
 
     <!-- ======== content-container（复用 HomeView 的 flex row-reverse 布局） ======== -->
-    <div class="content-container">
+    <div class="content-container" :class="{ 'no-toc': tocItems.length === 0 }">
       <!-- TOC 目录（复用 HomeView 的 .toc 结构和 indicator，始终渲染容器） -->
       <aside class="toc" v-show="tocItems.length > 0">
         <nav aria-label="page content">
@@ -89,7 +89,7 @@
     <!-- ======== Up Next（M3 文章页专有：推荐阅读） ======== -->
     <!-- 对照 m3: mio-up-next > .content-container(flex) > .empty + .section -->
     <div class="mio-up-next" v-if="upNextArticles.length">
-      <div class="content-container">
+      <div class="content-container" :class="{ 'no-toc': tocItems.length === 0 }">
         <div class="empty"></div>
         <div class="section">
           <div class="section-header">
@@ -104,7 +104,7 @@
           @click.prevent="$router.push('/article/' + item.slug)"
           @mousedown="onCardDown"
         >
-          <div class="content-container">
+    <div class="content-container">
             <span v-if="item.date" class="date">{{ item.date }}</span>
             <span class="mio-title-row">
               <span class="title" :class="{ 'title--cjk': isCjk(item.title) }">{{ item.title }}</span>
@@ -212,6 +212,10 @@ const articles = {
     description: '探索 Material Design 3 Expressive 的全新设计语言与动效系统。',
     date: 'Jun 20, 2026',
     icon: 'brush',
+    authors: [
+      { name: 'BJY', role: 'Developer, Material Design Contributor' }
+    ],
+    content: '<p>敬请期待…</p>',
     contentComponent: null
   },
   'coming-soon-2': {
@@ -220,6 +224,10 @@ const articles = {
     description: '从 HCT 色彩空间到动态主题——M3 Dynamic Color 的实战指南。',
     date: 'Jun 15, 2026',
     icon: 'palette',
+    authors: [
+      { name: 'BJY', role: 'Developer, Material Design Contributor' }
+    ],
+    content: '<p>敬请期待…</p>',
     contentComponent: null
   }
 }
@@ -468,24 +476,6 @@ function recalcIndicatorTop() {
   }
 }
 
-/** 计算 Up next .section 的 padding-left，使 h2 与 blog-content 文本左边缘对齐
- *  对照 M3: .section padding-left:116px(=nav-rail 88+gap 28)
- *  我们的项目无 nav-rail，需动态计算：
- *  offset = blogContent文本起始X - section左边缘X
- */
-function updateContentOffset() {
-  const section = document.querySelector('.mio-up-next .section')
-  const blogContent = blogContentRef.value
-  if (!section || !blogContent) return
-  const sectionRect = section.getBoundingClientRect()
-  const contentRect = blogContent.getBoundingClientRect()
-  const contentPaddingLeft = parseFloat(getComputedStyle(blogContent).paddingLeft) || 0
-  // blogContent 文本起始位置 = blogContent.left + paddingLeft(24px)
-  // section padding-left = 文本起始位置 - section 左边缘
-  const offset = Math.max(0, (contentRect.left + contentPaddingLeft) - sectionRect.left)
-  section.style.setProperty('--section-padding-left', offset + 'px')
-}
-
 onMounted(() => {
   // 监听 blog-content DOM 变化，异步组件加载完时再构建 TOC
   contentMutationObserver = new MutationObserver(() => {
@@ -493,11 +483,7 @@ onMounted(() => {
     if (built) {
       setupScrollObserver()
       contentMutationObserver?.disconnect()
-      nextTick(() => {
-        recalcIndicatorTop()
-        // 异步内容加载完成后重新计算 Up Next section 偏移
-        updateContentOffset()
-      })
+      nextTick(recalcIndicatorTop)
     }
   })
   nextTick(() => {
@@ -513,22 +499,12 @@ onMounted(() => {
 
     // 计算 indicator top 基准位置
     recalcIndicatorTop()
-
-    // 计算 Up next section padding-left：需延迟到布局稳定后
-    // 初始调用可能因异步内容未加载而计算错误，MutationObserver 会再次修正
-    requestAnimationFrame(() => {
-      updateContentOffset()
-      // 二次确认：延迟一帧后再次校准
-      requestAnimationFrame(updateContentOffset)
-    })
-    window.addEventListener('resize', updateContentOffset)
   })
 })
 
 onUnmounted(() => {
   if (observer) observer.disconnect()
   if (contentMutationObserver) contentMutationObserver.disconnect()
-  window.removeEventListener('resize', updateContentOffset)
 })
 
 watch(() => route.params.slug, () => {
@@ -542,10 +518,7 @@ watch(() => route.params.slug, () => {
         if (built) {
           setupScrollObserver()
           contentMutationObserver?.disconnect()
-          nextTick(() => {
-            recalcIndicatorTop()
-            updateContentOffset()
-          })
+          nextTick(recalcIndicatorTop)
         }
       })
       contentMutationObserver.observe(blogContentRef.value, { childList: true, subtree: true })
@@ -556,11 +529,6 @@ watch(() => route.params.slug, () => {
         nextTick(recalcIndicatorTop)
       }
     }
-    // 路由切换后重新计算 Up Next 偏移
-    requestAnimationFrame(() => {
-      updateContentOffset()
-      requestAnimationFrame(updateContentOffset)
-    })
   })
 })
 </script>
@@ -856,11 +824,20 @@ watch(() => route.params.slug, () => {
   }
 }
 
+/* 桌面端 TOC 不可见时，也切换为 column（否则 row-reverse 会让 blog-section 跑到右侧） */
+@media screen and (min-width: 1295px) {
+  .content-container.no-toc {
+    flex-direction: column;
+  }
+}
+
 /* ================================================================
    blog-section（M3 文章页专有：文章区域）
+   对照 M3: flex: 1 1 0%, max-width: 1112px → 我们 max-width:840px
+   flex-grow:1 确保始终扩展到最大宽度，不因内容为空而收缩
    ================================================================ */
 .blog-section {
-  flex: 0 1 auto;
+  flex: 1 1 0%;
   min-width: 0;
   max-width: 840px;
 }
@@ -1219,11 +1196,20 @@ watch(() => route.params.slug, () => {
 
 /* ================================================================
    Up Next — 严格对照 M3 源代码架构
-   mio-up-next > .content-container(flex row-reverse justify-content:center)
-     > .empty(156px + margin 0 24px, 桌面端) + .section(padding-left 动态)
-   M3 官方: .content-container width:100vw, .empty 宽 156px margin 0 24px
-            .section padding-left:116px(=nav-rail 88px + gap 28px)
-   我们的项目: 无 nav-rail，section padding-left 由 JS 动态计算
+   纯 CSS 对齐，无需 JS 计算：
+   
+   M3 对齐原理：
+   1. editorial .content-container 与 up-next .content-container 同宽同级
+   2. 两者都用 flex row-reverse + justify-content:center
+   3. .empty 宽度+margin = TOC 宽度+margin（156px + 24px*2）
+   4. .section max-width = .blog-section max-width → 右边缘对齐
+   5. .section padding-left = blog-content padding-left → h2 与文本对齐
+   6. 最终：卡片左边缘 = 文本起始，卡片右边缘 = section 右边缘 = blog-section 右边缘
+   
+   对应 M3 的值：
+   - .section max-width: 1112px → 我们 840px（= blog-section）
+   - .section padding-left: 116px → 我们 24px（= blog-content padding）
+   - .empty width: 156px, margin: 0 24px → 与 TOC 尺寸一致
    ================================================================ */
 .mio-up-next {
   display: block;
@@ -1239,8 +1225,8 @@ watch(() => route.params.slug, () => {
   margin: 0 auto;
 }
 
-/* .empty — 对照 M3: 桌面端 width:156px margin:0 24px，视觉上在右侧(与 TOC 对称)
-   移动端隐藏 */
+/* .empty — 与 .toc 尺寸完全一致：width:156px + margin:0 24px
+   桌面端显示，移动端隐藏 */
 .mio-up-next .empty {
   display: none;
   flex-shrink: 0;
@@ -1252,19 +1238,30 @@ watch(() => route.params.slug, () => {
     width: 156px;
     margin: 0 24px;
   }
+  /* TOC 不可见时，.empty 也隐藏，section 居中 */
+  .mio-up-next .content-container.no-toc .empty {
+    display: none;
+  }
+  .mio-up-next .content-container.no-toc {
+    flex-direction: column;
+  }
 }
 
+/* .section — 与 .blog-section max-width 一致，纯 CSS 对齐
+   桌面端: max-width:840px + padding-left:24px = 文本对齐
+   移动/平板: padding:0 24px = 与 blog-content 一致 */
 .mio-up-next .section {
   display: block;
   flex: 1;
   min-width: 0;
+  max-width: 840px;
   padding: 0 24px;
   margin: 0;
 }
 
 @media screen and (min-width: 1295px) {
   .mio-up-next .section {
-    padding: 0 0 0 var(--section-padding-left, 0px);
+    padding-left: 24px;
   }
 }
 
