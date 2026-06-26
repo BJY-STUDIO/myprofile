@@ -87,11 +87,15 @@
     </div>
 
     <!-- ======== Up Next（M3 文章页专有：推荐阅读） ======== -->
-    <div class="section" v-if="upNextArticles.length">
-      <div class="section-header">
-        <h2>Up next</h2>
-      </div>
-      <div class="card-set">
+    <!-- 对照 m3: mio-up-next > .content-container(flex) > .empty + .section -->
+    <div class="mio-up-next" v-if="upNextArticles.length">
+      <div class="content-container">
+        <div class="empty"></div>
+        <div class="section">
+          <div class="section-header">
+            <h2>Up next</h2>
+          </div>
+          <div class="card-set">
         <a
           v-for="item in upNextArticles"
           :key="item.slug"
@@ -111,6 +115,8 @@
             <span class="material-symbols-rounded thumb-icon">{{ item.icon || 'article' }}</span>
           </div>
         </a>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -199,6 +205,22 @@ const articles = {
       { name: 'BJY', role: 'Developer, Material Design Contributor' }
     ],
     contentComponent: defineAsyncComponent(() => import('@/components/blog/KernelsBlogContent.vue'))
+  },
+  'coming-soon-1': {
+    slug: 'coming-soon-1',
+    title: 'M3 Expressive Design Language',
+    description: '探索 Material Design 3 Expressive 的全新设计语言与动效系统。',
+    date: 'Jun 20, 2026',
+    icon: 'brush',
+    contentComponent: null
+  },
+  'coming-soon-2': {
+    slug: 'coming-soon-2',
+    title: 'Dynamic Color in Practice',
+    description: '从 HCT 色彩空间到动态主题——M3 Dynamic Color 的实战指南。',
+    date: 'Jun 15, 2026',
+    icon: 'palette',
+    contentComponent: null
   }
 }
 
@@ -446,19 +468,22 @@ function recalcIndicatorTop() {
   }
 }
 
-/** 计算 Up next section 的 padding-left，使内容与 blog-content 左对齐 */
+/** 计算 Up next .section 的 padding-left，使 h2 与 blog-content 文本左边缘对齐
+ *  对照 M3: .section padding-left:116px(=nav-rail 88+gap 28)
+ *  我们的项目无 nav-rail，需动态计算：
+ *  offset = blogContent文本起始X - section左边缘X
+ */
 function updateContentOffset() {
-  const section = document.querySelector('.section')
+  const section = document.querySelector('.mio-up-next .section')
   const blogContent = blogContentRef.value
   if (!section || !blogContent) return
-  // 重置为 0 避免当前偏移影响测量
-  section.style.setProperty('--content-offset', '0px')
-  // 强制 reflow
-  void section.getBoundingClientRect()
   const sectionRect = section.getBoundingClientRect()
   const contentRect = blogContent.getBoundingClientRect()
-  const offset = Math.max(0, contentRect.left - sectionRect.left)
-  section.style.setProperty('--content-offset', offset + 'px')
+  const contentPaddingLeft = parseFloat(getComputedStyle(blogContent).paddingLeft) || 0
+  // blogContent 文本起始位置 = blogContent.left + paddingLeft(24px)
+  // section padding-left = 文本起始位置 - section 左边缘
+  const offset = Math.max(0, (contentRect.left + contentPaddingLeft) - sectionRect.left)
+  section.style.setProperty('--section-padding-left', offset + 'px')
 }
 
 onMounted(() => {
@@ -468,7 +493,11 @@ onMounted(() => {
     if (built) {
       setupScrollObserver()
       contentMutationObserver?.disconnect()
-      nextTick(recalcIndicatorTop)
+      nextTick(() => {
+        recalcIndicatorTop()
+        // 异步内容加载完成后重新计算 Up Next section 偏移
+        updateContentOffset()
+      })
     }
   })
   nextTick(() => {
@@ -485,8 +514,13 @@ onMounted(() => {
     // 计算 indicator top 基准位置
     recalcIndicatorTop()
 
-    // 计算 Up next 区域偏移：使 h2 和卡片与 blog-content 左对齐
-    updateContentOffset()
+    // 计算 Up next section padding-left：需延迟到布局稳定后
+    // 初始调用可能因异步内容未加载而计算错误，MutationObserver 会再次修正
+    requestAnimationFrame(() => {
+      updateContentOffset()
+      // 二次确认：延迟一帧后再次校准
+      requestAnimationFrame(updateContentOffset)
+    })
     window.addEventListener('resize', updateContentOffset)
   })
 })
@@ -508,7 +542,10 @@ watch(() => route.params.slug, () => {
         if (built) {
           setupScrollObserver()
           contentMutationObserver?.disconnect()
-          nextTick(recalcIndicatorTop)
+          nextTick(() => {
+            recalcIndicatorTop()
+            updateContentOffset()
+          })
         }
       })
       contentMutationObserver.observe(blogContentRef.value, { childList: true, subtree: true })
@@ -519,6 +556,11 @@ watch(() => route.params.slug, () => {
         nextTick(recalcIndicatorTop)
       }
     }
+    // 路由切换后重新计算 Up Next 偏移
+    requestAnimationFrame(() => {
+      updateContentOffset()
+      requestAnimationFrame(updateContentOffset)
+    })
   })
 })
 </script>
@@ -1176,22 +1218,61 @@ watch(() => route.params.slug, () => {
 }
 
 /* ================================================================
-   section / section-header / card-set（复用 HomeView 结构）
+   Up Next — 严格对照 M3 源代码架构
+   mio-up-next > .content-container(flex row-reverse justify-content:center)
+     > .empty(156px + margin 0 24px, 桌面端) + .section(padding-left 动态)
+   M3 官方: .content-container width:100vw, .empty 宽 156px margin 0 24px
+            .section padding-left:116px(=nav-rail 88px + gap 28px)
+   我们的项目: 无 nav-rail，section padding-left 由 JS 动态计算
    ================================================================ */
-.section {
-  width: 100%;
-  max-width: 1200px;
-  margin: 72px auto 96px;
-  /* 对照 m3: 内容区与 blog-content 左边缘对齐（JS 动态计算偏移） */
-  padding-left: var(--content-offset, 0px);
-  box-sizing: border-box;
+.mio-up-next {
+  display: block;
+  margin: 120px 0 0;
 }
 
-.section-header {
+.mio-up-next .content-container {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: center;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* .empty — 对照 M3: 桌面端 width:156px margin:0 24px，视觉上在右侧(与 TOC 对称)
+   移动端隐藏 */
+.mio-up-next .empty {
+  display: none;
+  flex-shrink: 0;
+}
+
+@media screen and (min-width: 1295px) {
+  .mio-up-next .empty {
+    display: block;
+    width: 156px;
+    margin: 0 24px;
+  }
+}
+
+.mio-up-next .section {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  padding: 0 24px;
+  margin: 0;
+}
+
+@media screen and (min-width: 1295px) {
+  .mio-up-next .section {
+    padding: 0 0 0 var(--section-padding-left, 0px);
+  }
+}
+
+.mio-up-next .section-header {
   margin: 24px 24px 24px 0;
 }
 
-.section-header h2 {
+.mio-up-next .section-header h2 {
   font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
   font-size: 57px;
   font-weight: 475;
@@ -1202,15 +1283,37 @@ watch(() => route.params.slug, () => {
   font-variation-settings: "GRAD" 0, "opsz" 18;
 }
 
-.card-set {
+/* 移动端 ≤600px: display-s (对照 M3) */
+@media screen and (max-width: 600px) {
+  .mio-up-next .section-header h2 {
+    font-size: 36px;
+    line-height: 44px;
+  }
+}
+
+/* 平板 601-1294px: display-m (对照 M3) */
+@media screen and (min-width: 601px) and (max-width: 1294px) {
+  .mio-up-next .section-header h2 {
+    font-size: 45px;
+    line-height: 52px;
+  }
+}
+
+.mio-up-next .card-set {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
-  margin: 24px 0 0;
+  margin: 0;
+  padding: 0;
+}
+
+/* 卡片填满网格单元（inline-flex 默认只包裹内容，需 width:100% 拉伸） */
+.mio-up-next .card-set .thumbnail {
+  width: 100%;
 }
 
 @media screen and (max-width: 600px) {
-  .card-set {
+  .mio-up-next .card-set {
     grid-template-columns: 1fr;
   }
 }
