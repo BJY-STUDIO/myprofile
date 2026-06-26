@@ -1374,10 +1374,7 @@ watch(() => route.params.slug, () => {
   text-decoration: underline !important;
   cursor: pointer;
   display: inline-flex;
-  /* M3 官方 padding:1px 用于增大点击区域，用负 margin 补偿以保持与 h3 文本左对齐 */
-  /* !important 覆盖 main.css 全局 a 的 padding:3px */
-  padding: 1px !important;
-  margin: -1px;
+  padding: 1px;
 }
 
 /* section.legal — 对照 m3: margin-top 64px, flex row, brand logo + 链接, max-width 1200px */

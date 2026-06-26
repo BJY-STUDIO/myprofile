@@ -70,19 +70,9 @@
   overflow: hidden;
 }
 
-a:not(.sub-panel__item):not(.nav-rail__destination):not(.nav-rail__fab):not(.nav-rail__github-btn):not(.nav-drawer__item):not(.nav-rail__action-btn):not(.mobile-top-bar__title):not(.mobile-top-bar__icon-btn):not(.thumbnail):not(.toc__link),
 .green {
   text-decoration: none;
   color: var(--md-sys-color-primary);
-  transition: color 0.2s ease;
-  padding: 3px;
-}
-
-@media (hover: hover) {
-  a:hover:not(.sub-panel__item):not(.nav-rail__destination):not(.nav-rail__fab):not(.nav-rail__github-btn):not(.nav-drawer__item):not(.nav-rail__action-btn):not(.mobile-top-bar__title):not(.mobile-top-bar__icon-btn):not(.thumbnail):not(.toc__link) {
-    background-color: var(--md-sys-color-primary-container);
-    border-radius: 4px;
-  }
 }
 
 /* Material Symbols Rounded 全局辅助（可变字体，支持 font-variation-settings） */
