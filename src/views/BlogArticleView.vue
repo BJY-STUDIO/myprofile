@@ -1131,34 +1131,42 @@ watch(() => route.params.slug, () => {
    ================================================================ */
 .thumbnail {
   position: relative;
+  display: inline-flex;
   border-radius: 24px;
   background-color: var(--md-sys-color-surface-container-low, #f8f1f6);
   color: var(--md-sys-color-on-surface, #1c1b1f);
   text-decoration: none;
   overflow: hidden;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   transition: border-radius 0.3s cubic-bezier(0.2, 0, 0, 1), background-color 0.3s cubic-bezier(0.2, 0, 0, 1);
 }
 
-.thumbnail:focus-visible {
-  outline: 1.6px solid var(--md-sys-color-on-surface, #1c1b1f);
-  outline-offset: 0.8px;
-}
-
-.thumbnail:hover {
-  background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 8%, var(--md-sys-color-surface-container-low, #f8f1f6));
-}
-
+/* M3 官方：hover/focus/active 统一使用 secondary-container 背景色 */
+.thumbnail:hover,
+.thumbnail:focus,
 .thumbnail:active {
-  border-radius: 40px;
-  background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 12%, var(--md-sys-color-surface-container-low, #f8f1f6));
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
+}
+
+/* M3 官方：focus 时圆角 48px + outline 2px solid on-surface + offset 1px */
+.thumbnail:focus {
+  border-radius: 48px;
+  outline: 2px solid var(--md-sys-color-on-surface, #1c1b1f);
+  outline-offset: 1px;
+}
+
+/* M3 官方：active 时圆角 48px，outline 复位 */
+.thumbnail:active {
+  border-radius: 48px;
+  outline: initial;
 }
 
 /* ripple */
 .thumbnail > .ripple {
   position: absolute;
   border-radius: 50%;
-  background-color: var(--md-sys-color-primary, #6750a4);
+  background-color: var(--md-sys-color-on-secondary-container, #1d192b);
   opacity: 0;
   pointer-events: none;
   transform: scale(0);
@@ -1503,11 +1511,11 @@ watch(() => route.params.slug, () => {
 /* ================================================================
    暗色主题
    ================================================================ */
-:global([data-theme="dark"]) .primary-container {
+:global([data-theme="dark"] .primary-container) {
   background: var(--md-sys-color-surface-container-low, #1d1b20);
 }
 
-:global([data-theme="dark"]) .split-asset-image__foreground {
+:global([data-theme="dark"] .split-asset-image__foreground) {
   background: linear-gradient(
     135deg,
     var(--md-sys-color-primary-container, #21005d) 0%,
@@ -1516,53 +1524,50 @@ watch(() => route.params.slug, () => {
   );
 }
 
-:global([data-theme="dark"]) .thumbnail {
+:global([data-theme="dark"] .thumbnail) {
   background-color: var(--md-sys-color-surface-container-low, #1d1b20);
 }
 
-:global([data-theme="dark"]) .thumbnail:hover {
-  background-color: color-mix(in srgb, var(--md-sys-color-primary, #d0bcff) 8%, var(--md-sys-color-surface-container-low, #1d1b20));
+/* M3 官方暗色：hover/focus/active 统一使用 secondary-container */
+:global([data-theme="dark"] .thumbnail:hover),
+:global([data-theme="dark"] .thumbnail:focus),
+:global([data-theme="dark"] .thumbnail:active) {
+  background-color: var(--md-sys-color-secondary-container, #4a4458);
 }
 
-:global([data-theme="dark"]) .thumbnail:active {
-  background-color: color-mix(in srgb, var(--md-sys-color-primary, #d0bcff) 12%, var(--md-sys-color-surface-container-low, #1d1b20));
+:global([data-theme="dark"] .thumbnail:focus) {
+  border-radius: 48px;
+  outline: 2px solid var(--md-sys-color-on-surface, #e6e1e5);
+  outline-offset: 1px;
 }
 
-:global([data-theme="dark"]) .thumbnail::after {
-  background-color: var(--md-sys-color-primary, #d0bcff);
-}
-
-:global([data-theme="dark"]) .thumbnail:focus-visible {
-  outline-color: var(--md-sys-color-on-surface, #e6e1e5);
-}
-
-:global([data-theme="dark"]) .thumb-icon {
+:global([data-theme="dark"] .thumb-icon) {
   color: var(--md-sys-color-on-primary-container, #eaddff);
 }
 
-:global([data-theme="dark"]) .toc__indicator {
+:global([data-theme="dark"] .toc__indicator) {
   border-color: var(--md-sys-color-outline, #938f99);
 }
 
-:global([data-theme="dark"]) .toc__item:hover {
+:global([data-theme="dark"] .toc__item:hover) {
   background: color-mix(in srgb, var(--md-sys-color-on-surface, #e6e1e5) 8%, transparent);
 }
 
-:global([data-theme="dark"]) .toc__link--selected {
+:global([data-theme="dark"] .toc__link--selected) {
   color: var(--md-sys-color-on-secondary-container, #e8def8);
 }
 
-:global([data-theme="dark"]) .about-material .about-logo .material-symbols-rounded,
-:global([data-theme="dark"]) .mio-footer-inner .legal .brand-logo-text {
+:global([data-theme="dark"] .about-material .about-logo .material-symbols-rounded),
+:global([data-theme="dark"] .mio-footer-inner .legal .brand-logo-text) {
   color: var(--md-sys-color-on-surface, #e6e1e5);
 }
 
-:global([data-theme="dark"]) .mio-footer-inner .social-links h3,
-:global([data-theme="dark"]) .mio-footer-inner .site-links h3 {
+:global([data-theme="dark"] .mio-footer-inner .social-links h3),
+:global([data-theme="dark"] .mio-footer-inner .site-links h3) {
   color: var(--md-sys-color-on-surface, #e6e1e5);
 }
 
-:global([data-theme="dark"]) .separator {
+:global([data-theme="dark"] .separator) {
   border-top-color: var(--md-sys-color-outline-variant, #49454f);
 }
 

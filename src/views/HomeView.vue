@@ -675,47 +675,65 @@ onBeforeUnmount(() => {
 
 /* ================================================================
     卡片通用 — thumbnail 容器（对照 m3: a.thumbnail）
-    border-radius 24px, bg surface-container, overflow hidden, position relative
-    hover: backgroundColor 用 primary 8% 混合
-    pressed: border-radius 24px→40px, backgroundColor 用 primary 12% 混合, ripple
+    border-radius 24px, bg surface-container-low, overflow hidden, position relative
+    hover/focus/active: bg secondary-container（M3 官方统一）
+    focus: border-radius 48px + outline 2px solid on-surface
+    active: border-radius 48px + outline initial
     ================================================================ */
 .thumbnail {
   position: relative;
+  display: inline-flex;
   border-radius: 24px;
   background-color: var(--md-sys-color-surface-container-low, #f8f1f6);
   color: var(--md-sys-color-on-surface, #1c1b1f);
   text-decoration: none;
   overflow: hidden;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   transition: border-radius 0.3s cubic-bezier(0.2, 0, 0, 1), background-color 0.3s cubic-bezier(0.2, 0, 0, 1);
 }
 
-.thumbnail:focus-visible {
-  outline: 1.6px solid var(--md-sys-color-on-surface, #1c1b1f);
-  outline-offset: 0.8px;
-}
-
-/* hover: primary 8% 混合到 surface（对照 m3: backgroundColor 变为 primary 色 state-layer） */
-.thumbnail:hover {
-  background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 8%, var(--md-sys-color-surface-container-low, #f8f1f6));
-}
-
-/* pressed: border-radius 变大 + primary 12% 混合 */
+/* M3 官方：hover/focus/active 统一使用 secondary-container 背景色 */
+.thumbnail:hover,
+.thumbnail:focus,
 .thumbnail:active {
-  border-radius: 40px;
-  background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 12%, var(--md-sys-color-surface-container-low, #f8f1f6));
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
 }
 
-/* feature-card / regular-card 的 hover/active 需要同等的 specificity 来覆盖各自的基础 bg */
+/* feature-card / regular-card 同等 specificity */
 .feature-card.thumbnail:hover,
-.regular-card.thumbnail:hover {
-  background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 8%, var(--md-sys-color-surface-container-low, #f8f1f6));
+.feature-card.thumbnail:focus,
+.feature-card.thumbnail:active,
+.regular-card.thumbnail:hover,
+.regular-card.thumbnail:focus,
+.regular-card.thumbnail:active {
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
+}
+
+/* M3 官方：focus 时圆角 48px + outline 2px solid on-surface + offset 1px */
+.thumbnail:focus {
+  border-radius: 48px;
+  outline: 2px solid var(--md-sys-color-on-surface, #1c1b1f);
+  outline-offset: 1px;
+}
+
+.feature-card.thumbnail:focus,
+.regular-card.thumbnail:focus {
+  border-radius: 48px;
+  outline: 2px solid var(--md-sys-color-on-surface, #1c1b1f);
+  outline-offset: 1px;
+}
+
+/* M3 官方：active 时圆角 48px，outline 复位 */
+.thumbnail:active {
+  border-radius: 48px;
+  outline: initial;
 }
 
 .feature-card.thumbnail:active,
 .regular-card.thumbnail:active {
-  border-radius: 40px;
-  background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 12%, var(--md-sys-color-surface-container-low, #f8f1f6));
+  border-radius: 48px;
+  outline: initial;
 }
 
 /* ripple 涟漪动效（对照 m3 mioripple 指令：动态创建 DOM） */
@@ -723,7 +741,7 @@ onBeforeUnmount(() => {
 .thumbnail > .ripple {
   position: absolute;
   border-radius: 50%;
-  background-color: var(--md-sys-color-primary, #6750a4);
+  background-color: var(--md-sys-color-on-secondary-container, #1d192b);
   opacity: 0;
   pointer-events: none;
   transform: scale(0);
@@ -941,11 +959,11 @@ onBeforeUnmount(() => {
 /* ================================================================
    暗色主题
    ================================================================ */
-:global([data-theme="dark"]) .primary-container {
+:global([data-theme="dark"] .primary-container) {
   background: var(--md-sys-color-surface-container-low, #1d1b20);
 }
 
-:global([data-theme="dark"]) .split-asset-image__foreground {
+:global([data-theme="dark"] .split-asset-image__foreground) {
   background: linear-gradient(
     135deg,
     var(--md-sys-color-primary-container, #21005d) 0%,
@@ -954,43 +972,44 @@ onBeforeUnmount(() => {
   );
 }
 
-:global([data-theme="dark"]) .thumbnail {
+:global([data-theme="dark"] .thumbnail) {
   background-color: var(--md-sys-color-surface-container-low, #1d1b20);
 }
 
-:global([data-theme="dark"]) .thumbnail:hover,
-:global([data-theme="dark"]) .feature-card.thumbnail:hover,
-:global([data-theme="dark"]) .regular-card.thumbnail:hover {
-  background-color: color-mix(in srgb, var(--md-sys-color-primary, #d0bcff) 8%, var(--md-sys-color-surface-container-low, #1d1b20));
+/* M3 官方暗色：hover/focus/active 统一使用 secondary-container */
+:global([data-theme="dark"] .thumbnail:hover),
+:global([data-theme="dark"] .thumbnail:focus),
+:global([data-theme="dark"] .thumbnail:active),
+:global([data-theme="dark"] .feature-card.thumbnail:hover),
+:global([data-theme="dark"] .feature-card.thumbnail:focus),
+:global([data-theme="dark"] .feature-card.thumbnail:active),
+:global([data-theme="dark"] .regular-card.thumbnail:hover),
+:global([data-theme="dark"] .regular-card.thumbnail:focus),
+:global([data-theme="dark"] .regular-card.thumbnail:active) {
+  background-color: var(--md-sys-color-secondary-container, #4a4458);
 }
 
-:global([data-theme="dark"]) .thumbnail:active,
-:global([data-theme="dark"]) .feature-card.thumbnail:active,
-:global([data-theme="dark"]) .regular-card.thumbnail:active {
-  background-color: color-mix(in srgb, var(--md-sys-color-primary, #d0bcff) 12%, var(--md-sys-color-surface-container-low, #1d1b20));
+:global([data-theme="dark"] .thumbnail:focus),
+:global([data-theme="dark"] .feature-card.thumbnail:focus),
+:global([data-theme="dark"] .regular-card.thumbnail:focus) {
+  border-radius: 48px;
+  outline: 2px solid var(--md-sys-color-on-surface, #e6e1e5);
+  outline-offset: 1px;
 }
 
-:global([data-theme="dark"]) .thumbnail::after {
-  background-color: var(--md-sys-color-primary, #d0bcff);
-}
-
-:global([data-theme="dark"]) .thumbnail:focus-visible {
-  outline-color: var(--md-sys-color-on-surface, #e6e1e5);
-}
-
-:global([data-theme="dark"]) .thumb-icon {
+:global([data-theme="dark"] .thumb-icon) {
   color: var(--md-sys-color-on-primary-container, #eaddff);
 }
 
-:global([data-theme="dark"]) .toc__indicator {
+:global([data-theme="dark"] .toc__indicator) {
   border-color: var(--md-sys-color-outline, #938f99);
 }
 
-:global([data-theme="dark"]) .toc__item:hover {
+:global([data-theme="dark"] .toc__item:hover) {
   background: color-mix(in srgb, var(--md-sys-color-on-surface, #e6e1e5) 8%, transparent);
 }
 
-:global([data-theme="dark"]) .toc__link--selected {
+:global([data-theme="dark"] .toc__link--selected) {
   color: var(--md-sys-color-on-secondary-container, #e8def8);
 }
 </style>
