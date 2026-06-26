@@ -446,6 +446,21 @@ function recalcIndicatorTop() {
   }
 }
 
+/** 计算 Up next section 的 padding-left，使内容与 blog-content 左对齐 */
+function updateContentOffset() {
+  const section = document.querySelector('.section')
+  const blogContent = blogContentRef.value
+  if (!section || !blogContent) return
+  // 重置为 0 避免当前偏移影响测量
+  section.style.setProperty('--content-offset', '0px')
+  // 强制 reflow
+  void section.getBoundingClientRect()
+  const sectionRect = section.getBoundingClientRect()
+  const contentRect = blogContent.getBoundingClientRect()
+  const offset = Math.max(0, contentRect.left - sectionRect.left)
+  section.style.setProperty('--content-offset', offset + 'px')
+}
+
 onMounted(() => {
   // 监听 blog-content DOM 变化，异步组件加载完时再构建 TOC
   contentMutationObserver = new MutationObserver(() => {
@@ -469,12 +484,17 @@ onMounted(() => {
 
     // 计算 indicator top 基准位置
     recalcIndicatorTop()
+
+    // 计算 Up next 区域偏移：使 h2 和卡片与 blog-content 左对齐
+    updateContentOffset()
+    window.addEventListener('resize', updateContentOffset)
   })
 })
 
 onUnmounted(() => {
   if (observer) observer.disconnect()
   if (contentMutationObserver) contentMutationObserver.disconnect()
+  window.removeEventListener('resize', updateContentOffset)
 })
 
 watch(() => route.params.slug, () => {
@@ -1070,18 +1090,23 @@ watch(() => route.params.slug, () => {
    section / section-header / card-set（复用 HomeView 结构）
    ================================================================ */
 .section {
-  margin: 72px 0 96px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 72px auto 96px;
+  /* 对照 m3: 内容区与 blog-content 左边缘对齐（JS 动态计算偏移） */
+  padding-left: var(--content-offset, 0px);
+  box-sizing: border-box;
 }
 
 .section-header {
-  margin: 24px;
+  margin: 24px 24px 24px 0;
 }
 
 .section-header h2 {
   font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
-  font-size: 45px;
+  font-size: 57px;
   font-weight: 475;
-  line-height: 52px;
+  line-height: 64px;
   letter-spacing: normal;
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0 0 8px;
@@ -1092,7 +1117,6 @@ watch(() => route.params.slug, () => {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 8px;
-  padding: 0 8px;
   margin: 24px 0 0;
 }
 
