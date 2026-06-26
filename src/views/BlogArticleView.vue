@@ -1285,9 +1285,13 @@ watch(() => route.params.slug, () => {
   margin-top: 120px;
 }
 
+/* ── Footer 内层容器 ── 对照 m3: max-width 1280px 居中, padding 64px 40px */
 .mio-footer-inner {
+  max-width: 1280px;
+  margin: 0 auto;
   padding: 64px 40px;
   font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
+  box-sizing: border-box;
 }
 
 /* section.about — 对照 m3: grid, max-width 1200px, justify-content: space-between */
@@ -1295,14 +1299,13 @@ watch(() => route.params.slug, () => {
   display: grid;
   grid-template-columns: auto;
   gap: 0 20px;
-  max-width: 1200px;
-  margin: 0 auto;
   justify-content: space-between;
 }
 
 @media screen and (min-width: 960px) {
   .mio-footer-inner .about {
     grid-template-columns: 570px 190px 190px;
+    max-width: 1200px;
   }
 }
 
