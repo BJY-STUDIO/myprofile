@@ -124,11 +124,34 @@
     <MioFooter />
   </div>
 
+  <!-- ======== 加载失败 — 错误状态 ======== -->
+  <div class="editorial" v-else-if="fetchError">
+    <div class="content-container no-toc">
+      <article class="blog-section">
+        <div class="error-state">
+          <md-icon class="error-icon">cloud_off</md-icon>
+          <h2>无法加载文章</h2>
+          <p class="error-body">服务器暂时无法响应，请稍后重试。</p>
+          <md-filled-button @click="manualRetry">
+            <md-icon slot="icon">refresh</md-icon>
+            重新加载
+          </md-filled-button>
+        </div>
+      </article>
+    </div>
+    <MioFooter />
+  </div>
+
   <!-- ======== 骨架屏（文章加载中 — 整页切换，非逐段消失） ======== -->
   <div class="editorial" v-else>
     <div class="content-container no-toc">
       <article class="blog-section">
-        <div class="authors">
+        <!-- 重试中提示 -->
+        <div class="retry-banner" v-if="retrying">
+          <md-circular-progress indeterminate :size="20"></md-circular-progress>
+          <span>正在重试… ({{ retryCount }}/{{ maxRetries }})</span>
+        </div>
+        <div class="authors" :class="{ 'authors--with-banner': retrying }">
           <p class="overline skeleton" style="height:14px;width:80px;"></p>
           <div class="byline">
             <div class="skeleton" style="width:40px;height:40px;border-radius:50%;"></div>
@@ -173,7 +196,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { getArticle, getArticleIndex, retryArticleFetch, retryArticleIndexFetch, getResolvedSource } from '@/services/articleService'
+import { getArticle, getArticleIndex, retryArticleFetch, retryArticleIndexFetch, getResolvedSource, resetApiDetection } from '@/services/articleService'
 import MioFooter from '@/components/common/MioFooter.vue'
 
 const route = useRoute()
@@ -188,6 +211,12 @@ const route = useRoute()
 const article = ref(null)
 const articleList = ref({})  // 用于 Up Next
 const resolvedSource = ref('local')
+
+// ======== 重试状态管理 ========
+const fetchError = ref(false)   // 所有重试耗尽，显示错误状态
+const retrying = ref(false)     // 正在后台重试中
+const retryCount = ref(0)       // 当前重试轮次
+const maxRetries = 5            // 对应 articleService 的 MAX_RETRY_ATTEMPTS
 
 // 异步加载文章列表（用于 Up Next）
 let cancelListRetry = null
@@ -216,6 +245,11 @@ async function loadArticleList() {
 let cancelArticleRetry = null
 
 async function resolveArticle(slug) {
+  // 重置状态
+  fetchError.value = false
+  retrying.value = false
+  retryCount.value = 0
+
   // 取消之前的重试
   if (cancelArticleRetry) {
     cancelArticleRetry()
@@ -226,19 +260,67 @@ async function resolveArticle(slug) {
     const data = await getArticle(slug)
     if (data) {
       article.value = data
-    }
-    // 如果返回的是本地文章（API 暂不可达），启动后台重试
-    const resolved = await getResolvedSource()
-    if (resolved === 'local') {
-      cancelArticleRetry = retryArticleFetch(slug, (apiArticle) => {
-        article.value = apiArticle
-        resolvedSource.value = 'api'
-      })
+      // 如果返回的是本地文章（API 暂不可达），启动后台重试
+      const resolved = await getResolvedSource()
+      if (resolved === 'local') {
+        cancelArticleRetry = retryArticleFetch(
+          slug,
+          (apiArticle) => {
+            // 重试成功：更新文章数据
+            article.value = apiArticle
+            resolvedSource.value = 'api'
+            retrying.value = false
+            fetchError.value = false
+          },
+          ({ attempt }) => {
+            // 每轮重试开始
+            retrying.value = true
+            retryCount.value = attempt
+          },
+          () => {
+            // 所有重试耗尽
+            retrying.value = false
+            // 有本地文章就不显示错误状态，用户已经能看到内容
+          }
+        )
+      }
+    } else {
+      // getArticle 返回 null — 无本地降级的纯 API 文章
+      // 启动后台重试
+      cancelArticleRetry = retryArticleFetch(
+        slug,
+        (apiArticle) => {
+          article.value = apiArticle
+          resolvedSource.value = 'api'
+          retrying.value = false
+          fetchError.value = false
+        },
+        ({ attempt }) => {
+          retrying.value = true
+          retryCount.value = attempt
+        },
+        () => {
+          // 所有重试耗尽，无本地降级
+          retrying.value = false
+          fetchError.value = true
+        }
+      )
     }
   } catch {
-    // 文章获取失败，保持 article=null 显示骨架屏
+    // getArticle 本身异常
+    fetchError.value = true
   }
   // TOC 通过 watch(article) 自动重建
+}
+
+/**
+ * 手动重试（用户点击"重新加载"按钮）
+ * 重置 API 检测状态，重新走一遍 resolveArticle 流程
+ */
+function manualRetry() {
+  resetApiDetection()
+  article.value = null
+  resolveArticle(route.params.slug)
 }
 
 // 初始解析
@@ -896,6 +978,72 @@ watch(() => route.params.slug, () => {
   flex: 1 1 0%;
   min-width: 0;
   max-width: 840px;
+}
+
+/* ================================================================
+   错误状态（所有重试耗尽）
+   M3 风格：居中、柔和色调、可操作的 CTA
+   ================================================================ */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 80px 24px;
+  margin: 80px 24px 0;
+}
+
+.error-state .error-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: var(--md-sys-color-on-surface-variant, #4d4256);
+  margin-bottom: 24px;
+}
+
+.error-state h2 {
+  font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 28px;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  margin: 0 0 12px;
+}
+
+.error-state .error-body {
+  font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: 0.25px;
+  color: var(--md-sys-color-on-surface-variant, #4d4256);
+  margin: 0 0 24px;
+}
+
+/* ================================================================
+   重试 Banner（覆盖在骨架屏顶部）
+   M3 风格：低调的提示条，不干扰骨架屏视觉
+   ================================================================ */
+.retry-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin: 80px 24px 0;
+  border-radius: 12px;
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: 0.25px;
+  color: var(--md-sys-color-on-surface-variant, #4d4256);
+}
+
+/* 重试 banner 显示时，骨架屏 authors 去掉顶部 80px margin */
+.authors--with-banner {
+  margin-top: 0 !important;
 }
 
 /* ================================================================

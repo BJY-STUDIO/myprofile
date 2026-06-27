@@ -442,8 +442,11 @@ function mapStrapiArticle(strapiArticle, includeContent = false) {
 const API_FETCH_TIMEOUT = 15000
 // 重试超时：60s（覆盖 Render 冷启动 30-50s）
 const API_RETRY_TIMEOUT = 60000
-// 首次失败后等待 2s 再重试（Render 正在启动中）
-const API_RETRY_DELAY = 2000
+// 最大重试次数（覆盖冷启动 30-50s 场景）
+const MAX_RETRY_ATTEMPTS = 5
+// 指数退避基础延迟（ms）：3s → 6s → 12s → 24s → 30s（cap）
+const RETRY_BASE_DELAY = 3000
+const RETRY_MAX_DELAY = 30000
 
 let _apiAvailable = null  // null=未检测, true=已确认可用。永远不缓存 false
 let _apiCache = { list: null, detail: {} }
@@ -622,41 +625,67 @@ export async function getArticle(slug) {
 
 /**
  * 后台重试获取文章（用于 Render 冷启动场景）
- * 首次 15s 超时失败后，等待 2s 再用 60s 超时重试
+ * 首次 15s 超时失败后，进行最多 5 轮指数退避重试（3s→6s→12s→24s→30s），每轮 60s 超时
  * @param {string} slug
  * @param {function} onUpdate — 重试成功时回调，参数为文章数据
+ * @param {function} [onRetry] — 每轮重试开始时回调，参数为 { attempt: number, maxAttempts: number }
+ * @param {function} [onFailed] — 所有重试耗尽时回调
  * @returns {function} 取消函数
  */
-export function retryArticleFetch(slug, onUpdate) {
-  if (ARTICLE_SOURCE === 'local') return () => {}
-  if (_apiAvailable === true) return () => {}
+export function retryArticleFetch(slug, onUpdate, onRetry, onFailed) {
+  if (ARTICLE_SOURCE === 'local') {
+    if (onFailed) onFailed()
+    return () => {}
+  }
+  if (_apiAvailable === true) {
+    // API 已确认可用，不需要重试；但可能当前文章 fetch 失败了
+    // 不直接放弃，尝试一次
+  }
 
   let cancelled = false
+  let attempt = 0
 
-  setTimeout(async () => {
-    if (cancelled) return
-    try {
-      const apiArticle = await fetchArticleDetail(slug, API_RETRY_TIMEOUT)
+  async function runRetry() {
+    while (attempt < MAX_RETRY_ATTEMPTS) {
+      attempt++
+      // 计算退避延迟：3s * 2^(attempt-1)，上限 30s
+      const delay = Math.min(RETRY_BASE_DELAY * Math.pow(2, attempt - 1), RETRY_MAX_DELAY)
+      // 等待退避延迟
+      await new Promise(resolve => setTimeout(resolve, delay))
       if (cancelled) return
-      if (apiArticle) {
-        getLocalArticles()
-        const localArticle = _localArticles[slug]
-        if (localArticle?.contentComponent) {
-          onUpdate({ ...apiArticle, contentComponent: localArticle.contentComponent })
-        } else {
-          onUpdate(apiArticle)
-        }
-      }
-    } catch {
-      // 重试也失败，放弃本次
-    }
-  }, API_RETRY_DELAY)
 
+      // 通知调用方本次重试
+      if (onRetry) onRetry({ attempt, maxAttempts: MAX_RETRY_ATTEMPTS })
+
+      try {
+        const apiArticle = await fetchArticleDetail(slug, API_RETRY_TIMEOUT)
+        if (cancelled) return
+        if (apiArticle) {
+          getLocalArticles()
+          const localArticle = _localArticles[slug]
+          if (localArticle?.contentComponent) {
+            onUpdate({ ...apiArticle, contentComponent: localArticle.contentComponent })
+          } else {
+            onUpdate(apiArticle)
+          }
+          return  // 成功，退出生存
+        }
+      } catch {
+        // 本轮重试失败，继续下一轮
+      }
+    }
+
+    // 所有重试耗尽
+    if (!cancelled && onFailed) onFailed()
+  }
+
+  runRetry()
   return () => { cancelled = true }
 }
 
 /**
  * 后台重试获取文章列表（用于 Up Next 等场景）
+ * 最多 5 轮指数退避重试
  * @param {function} onUpdate — 重试成功时回调，参数为 index 对象
  * @returns {function} 取消函数
  */
@@ -665,24 +694,34 @@ export function retryArticleIndexFetch(onUpdate) {
   if (_apiAvailable === true) return () => {}
 
   let cancelled = false
+  let attempt = 0
 
-  setTimeout(async () => {
-    if (cancelled) return
-    try {
-      const list = await fetchArticleList(API_RETRY_TIMEOUT)
+  async function runRetry() {
+    while (attempt < MAX_RETRY_ATTEMPTS) {
+      attempt++
+      const delay = Math.min(RETRY_BASE_DELAY * Math.pow(2, attempt - 1), RETRY_MAX_DELAY)
+      await new Promise(resolve => setTimeout(resolve, delay))
       if (cancelled) return
-      if (list && Object.keys(list).length > 0) {
-        const sortedSlugs = Object.values(list)
-          .sort((a, b) => new Date(b.date) - new Date(a.date))
-          .map(a => a.slug)
-        const defaultSlug = sortedSlugs[0] || ''
-        onUpdate({ articles: list, sortedSlugs, defaultSlug, source: 'api' })
-      }
-    } catch {
-      // 重试也失败
-    }
-  }, API_RETRY_DELAY)
 
+      try {
+        const list = await fetchArticleList(API_RETRY_TIMEOUT)
+        if (cancelled) return
+        if (list && Object.keys(list).length > 0) {
+          const sortedSlugs = Object.values(list)
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .map(a => a.slug)
+          const defaultSlug = sortedSlugs[0] || ''
+          onUpdate({ articles: list, sortedSlugs, defaultSlug, source: 'api' })
+          return  // 成功
+        }
+      } catch {
+        // 本轮失败，继续
+      }
+    }
+    // 所有重试耗尽，静默放弃（列表非关键）
+  }
+
+  runRetry()
   return () => { cancelled = true }
 }
 
