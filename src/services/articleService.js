@@ -53,21 +53,21 @@ function formatDate(isoString) {
 
 const m3Renderer = new Renderer()
 
-m3Renderer.heading = function({ text, depth }) {
-  if (depth === 2) {
+m3Renderer.heading = function(text, level, raw) {
+  if (level === 2) {
     const id = text.toLowerCase().replace(/[^\w\u4e00-\u9fff]+/g, '-').replace(/^-|-$/g, '')
     return `<div class="block" id="${id}"><div class="copy-button-container focusable"><div class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to ${text} section">link</div><div class="copy-button-background"></div><div class="tooltip"><span class="deactivated">Copy link</span><span aria-live="polite" class="activated">Link copied</span></div></div><div class="scroll-target"></div><div class="text-chunk"><h2 class="linkable" tabindex="-1">${text}</h2></div></div>`
   }
-  return `<h${depth}>${text}</h${depth}>`
+  return `<h${level}>${text}</h${level}>`
 }
 
-m3Renderer.code = function({ text, lang }) {
-  const escaped = text
+m3Renderer.code = function(code, infostring, escaped) {
+  const text = code
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .trimEnd()
-  const lines = escaped.split('\n')
+  const lines = text.split('\n')
   const preLines = lines.map(line => `<pre class="CodeMirror-line">${line}</pre>`).join('')
   return `<mio-code-snippet><div class="mio-code-snippet__container"><div class="CodeMirror cm-s-neo CodeMirror-wrap" translate="no"><div class="CodeMirror-scroll"><div class="CodeMirror-sizer"><div class="CodeMirror-lines"><div class="CodeMirror-code">${preLines}</div></div></div></div></div></div></mio-code-snippet>`
 }
