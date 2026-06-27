@@ -54,20 +54,43 @@ function formatDate(isoString) {
 const m3Renderer = new Renderer()
 
 m3Renderer.heading = function(text, level, raw) {
-  if (level === 2) {
-    const id = text.toLowerCase().replace(/[^\w\u4e00-\u9fff]+/g, '-').replace(/^-|-$/g, '')
-    return `<div class="block" id="${id}"><div class="copy-button-container focusable"><div class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to ${text} section">link</div><div class="copy-button-background"></div><div class="tooltip"><span class="deactivated">Copy link</span><span aria-live="polite" class="activated">Link copied</span></div></div><div class="scroll-target"></div><div class="text-chunk"><h2 class="linkable" tabindex="-1">${text}</h2></div></div>`
+  // 兼容不同 marked 版本的参数格式：
+  // - marked v12 CJS: heading(text: string, level: number, raw: string)
+  // - marked v13+ (Vite 预构建可能使用更高版本): heading({text, depth, raw})
+  let headingText, headingLevel
+  if (typeof text === 'object' && text !== null) {
+    // 对象参数格式（marked v13+）
+    headingText = text.text
+    headingLevel = text.depth
+  } else {
+    // 位置参数格式（marked v12）
+    headingText = text
+    headingLevel = level
   }
-  return `<h${level}>${text}</h${level}>`
+
+  if (headingLevel === 2) {
+    const id = headingText.toLowerCase().replace(/[^\w\u4e00-\u9fff]+/g, '-').replace(/^-|-$/g, '')
+    return `<div class="block" id="${id}"><div class="copy-button-container focusable"><div class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to ${headingText} section">link</div><div class="copy-button-background"></div><div class="tooltip"><span class="deactivated">Copy link</span><span aria-live="polite" class="activated">Link copied</span></div></div><div class="scroll-target"></div><div class="text-chunk"><h2 class="linkable" tabindex="-1">${headingText}</h2></div></div>`
+  }
+  return `<h${headingLevel}>${headingText}</h${headingLevel}>`
 }
 
 m3Renderer.code = function(code, infostring, escaped) {
-  const text = code
+  // 兼容不同 marked 版本的参数格式：
+  // - marked v12 CJS: code(code, infostring, escaped)
+  // - marked v13+: code({text, lang, escaped})
+  let codeText
+  if (typeof code === 'object' && code !== null) {
+    codeText = code.text
+  } else {
+    codeText = code
+  }
+  const escapedCode = codeText
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .trimEnd()
-  const lines = text.split('\n')
+  const lines = escapedCode.split('\n')
   const preLines = lines.map(line => `<pre class="CodeMirror-line">${line}</pre>`).join('')
   return `<mio-code-snippet><div class="mio-code-snippet__container"><div class="CodeMirror cm-s-neo CodeMirror-wrap" translate="no"><div class="CodeMirror-scroll"><div class="CodeMirror-sizer"><div class="CodeMirror-lines"><div class="CodeMirror-code">${preLines}</div></div></div></div></div></div></mio-code-snippet>`
 }

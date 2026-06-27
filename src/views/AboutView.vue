@@ -63,11 +63,15 @@
         </div>
       </div>
     </section>
+
+    <!-- ======== Footer ======== -->
+    <MioFooter />
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
+import MioFooter from '@/components/common/MioFooter.vue'
 
 const skills = ref([
   { name: 'Vue 3', icon: 'code' },

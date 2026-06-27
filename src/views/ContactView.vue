@@ -68,6 +68,9 @@
         消息已发送（示例）
       </div>
     </Teleport>
+
+    <!-- ======== Footer ======== -->
+    <MioFooter />
   </div>
 </template>
 
@@ -75,6 +78,7 @@
 import { ref, reactive } from 'vue'
 import '@material/web/textfield/outlined-text-field'
 import '@material/web/button/filled-button'
+import MioFooter from '@/components/common/MioFooter.vue'
 
 const form = reactive({
   name: '',

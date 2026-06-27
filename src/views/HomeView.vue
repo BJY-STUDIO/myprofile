@@ -107,6 +107,9 @@
         </div>
       </article>
     </div>
+
+    <!-- ======== Footer ======== -->
+    <MioFooter />
   </div>
 </template>
 
@@ -115,6 +118,7 @@ import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { usePage } from '@/stores/blogStore'
 import store from '@/stores/blogStore'
 import { getArticleIndex, retryArticleIndexFetch } from '@/services/articleService'
+import MioFooter from '@/components/common/MioFooter.vue'
 
 const pageApi = usePage('home')
 
@@ -142,26 +146,42 @@ function mapArticleToCard(article, id) {
   }
 }
 
-// 动态 sections：Featured 区由 API 数据填充，其余保留 blogStore
+// 动态 sections：所有 section 均由 API 数据填充，按 tags 分类
 const sections = computed(() => {
   const page = store.pages.home
   if (!page?.sections) return []
 
-  // 如果 API 数据已加载，用 API 文章替换 Featured section
+  // 如果 API 数据已加载，用 API 文章按 tags 分类填充各 section
   if (apiArticles.value !== null && Object.keys(apiArticles.value).length > 0) {
-    const sortedSlugs = Object.values(apiArticles.value)
+    const allArticles = Object.values(apiArticles.value)
       .sort((a, b) => new Date(b.date) - new Date(a.date))
-      .map(a => a.slug)
 
-    const Articles = sortedSlugs.map((slug, i) => mapArticleToCard(apiArticles.value[slug], `api-${slug}`))
+    // Featured section: 所有文章，第一篇为 feature
+    const allCards = allArticles.map((a, i) => mapArticleToCard(a, `api-${a.slug}`))
+    const feature = allCards[0] || null
+    const items = allCards.slice(1)
 
-    // 第一篇为 feature，其余为 regular items
-    const feature = Articles[0] || null
-    const items = Articles.slice(1)
+    // Projects section: tags 包含 "project" 的文章
+    const projectArticles = allArticles.filter(a =>
+      a.tags?.some(t => t.toLowerCase() === 'project')
+    )
+    const projectCards = projectArticles.map(a => mapArticleToCard(a, `api-${a.slug}`))
+
+    // 2026 section: changelog tag 的文章
+    const changelogArticles = allArticles.filter(a =>
+      a.tags?.some(t => t.toLowerCase() === 'changelog')
+    )
+    const changelogCards = changelogArticles.map(a => mapArticleToCard(a, `api-${a.slug}`))
 
     return page.sections.map((section, i) => {
       if (i === 0 && section.id === 's-featured') {
         return { ...section, feature, items }
+      }
+      if (i === 1 && section.id === 's-projects') {
+        return { ...section, feature: projectCards[0] || null, items: projectCards.slice(1) }
+      }
+      if (i === 2 && section.id === 's-2026') {
+        return { ...section, feature: changelogCards[0] || null, items: changelogCards.slice(1) }
       }
       return section
     })

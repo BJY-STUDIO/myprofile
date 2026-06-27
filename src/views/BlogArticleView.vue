@@ -120,56 +120,8 @@
       </div>
     </div>
 
-    <!-- ======== Footer（对照 m3.material.io mio-footer 结构，在 main 内部随内容滚动） ======== -->
-    <div class="mio-footer" :data-theme-squiggle="isDark ? 'dark' : 'light'">
-      <div class="squiggle" aria-hidden="true">
-        <!-- 亮色 squiggle（M3 官方 stroke: #E1E3E1） -->
-        <svg v-if="!isDark" width="100%" height="8" overflow="visible" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <pattern id="squiggle-pattern" width="91" height="8" patternUnits="userSpaceOnUse">
-            <path d="M114 4c-5.067 4.667-10.133 4.667-15.2 0S88.667-.667 83.6 4 73.467 8.667 68.4 4 58.267-.667 53.2 4 43.067 8.667 38 4 27.867-.667 22.8 4 12.667 8.667 7.6 4-2.533-.667-7.6 4s-10.133 4.667-15.2 0S-32.933-.667-38 4s-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0" stroke="#E1E3E1" stroke-linecap="square" />
-          </pattern>
-          <rect width="100%" height="100%" fill="url(#squiggle-pattern)" />
-        </svg>
-        <!-- 暗色 squiggle（M3 官方 stroke: #49454f） -->
-        <svg v-else width="100%" height="8" overflow="visible" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <pattern id="squiggle-pattern" width="91" height="8" patternUnits="userSpaceOnUse">
-            <path d="M114 4c-5.067 4.667-10.133 4.667-15.2 0S88.667-.667 83.6 4 73.467 8.667 68.4 4 58.267-.667 53.2 4 43.067 8.667 38 4 27.867-.667 22.8 4 12.667 8.667 7.6 4-2.533-.667-7.6 4s-10.133 4.667-15.2 0S-32.933-.667-38 4s-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0-10.133 4.667-15.2 0-10.133-4.667-15.2 0" stroke="#49454f" stroke-linecap="square" />
-          </pattern>
-          <rect width="100%" height="100%" fill="url(#squiggle-pattern)" />
-        </svg>
-      </div>
-      <footer class="mio-footer-inner">
-        <section class="about">
-          <div class="about-material">
-            <a class="about-logo" @click.prevent="$router.push('/')" aria-label="Kernel's Blog">
-              <span class="material-symbols-rounded">edit_note</span>
-            </a>
-            <p>Kernel's Blog 是基于 Vue 3 + Material Web 的个人博客站点，严格遵循 Material Design 3 规范。探索技术，记录生活。</p>
-          </div>
-          <ul class="social-links">
-            <li><h3>Social</h3></li>
-            <li><a href="https://github.com/BJY-STUDIO/myprofile" target="_blank" rel="noopener">GitHub</a></li>
-          </ul>
-          <ul class="site-links">
-            <li><h3>Site</h3></li>
-            <li><a @click.prevent="$router.push('/')">首页</a></li>
-            <li><a @click.prevent="$router.push('/blog')">博客</a></li>
-            <li><a @click.prevent="$router.push('/projects')">项目</a></li>
-            <li><a @click.prevent="$router.push('/about')">关于</a></li>
-            <li><a @click.prevent="$router.push('/contact')">联系</a></li>
-          </ul>
-        </section>
-        <section class="legal">
-          <div class="brand-logo" @click.prevent="$router.push('/')" aria-label="Kernel's Blog">
-            <span class="brand-logo-text">BJY-STUDIO</span>
-          </div>
-          <ul>
-            <li><a href="https://github.com/BJY-STUDIO/myprofile" target="_blank" rel="noopener">GitHub</a></li>
-            <li><a @click.prevent="$router.push('/about')">关于</a></li>
-          </ul>
-        </section>
-      </footer>
-    </div>
+    <!-- ======== Footer ======== -->
+    <MioFooter />
   </div>
 </template>
 
@@ -178,22 +130,9 @@ import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { articles as localArticles, defaultSlug as localDefaultSlug } from '@/articles'
 import { getArticle, getArticleIndex, retryArticleFetch, retryArticleIndexFetch, getResolvedSource } from '@/services/articleService'
+import MioFooter from '@/components/common/MioFooter.vue'
 
 const route = useRoute()
-
-// ======== 主题状态（用于 squiggle 颜色切换） ========
-const isDark = ref(document.documentElement.getAttribute('data-theme') === 'dark')
-
-function updateThemeState() {
-  isDark.value = document.documentElement.getAttribute('data-theme') === 'dark'
-}
-
-onMounted(() => {
-  // 监听 data-theme 变化
-  const observer = new MutationObserver(updateThemeState)
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
-  onUnmounted(() => observer.disconnect())
-})
 
 // ======== 文章数据 ========
 // 统一通过 articleService 异步获取：
@@ -506,6 +445,45 @@ function recalcIndicatorTop() {
   }
 }
 
+// ======== v-html 内容的 copy link 事件委托 ========
+// 本地组件（如 KernelsBlogContent.vue）在自己的 script 中通过事件委托处理 click，
+// 但 v-html 内容是纯 HTML，没有 Vue 事件绑定，需要在 BlogArticleView 层面统一委托。
+function handleVHtmlClick(e) {
+  const btn = e.target.closest('.copy-button')
+  if (!btn) return
+  const block = btn.closest('.block')
+  if (!block) return
+  const id = block.id
+  if (!id) return
+
+  const url = window.location.origin + window.location.pathname + '#' + id
+  navigator.clipboard.writeText(url).catch(() => {})
+
+  btn.classList.add('activated')
+  setTimeout(() => {
+    btn.classList.remove('activated')
+  }, 2000)
+}
+
+// v-html 内容中 ul li 的随机旋转（与本地组件 onMounted 逻辑一致）
+function applyBulletRotations() {
+  if (!blogContentRef.value) return
+  blogContentRef.value.querySelectorAll('ul > li').forEach(li => {
+    li.style.setProperty('--rotation', String(Math.floor(Math.random() * 10)))
+  })
+}
+
+// 绑定 v-html 内容的 copy link 事件委托
+// 注意：本地组件自己绑定了 handleClick（通过 .article-content 容器），
+// 我们只在 blogContentRef 上监听，不会与本地组件冲突（因为本地组件的容器是 .article-content，
+// 而 v-html 的 div 是 blogContentRef 的直接子元素）
+function bindVHtmlEvents() {
+  if (!blogContentRef.value) return
+  // 避免重复绑定
+  blogContentRef.value.removeEventListener('click', handleVHtmlClick)
+  blogContentRef.value.addEventListener('click', handleVHtmlClick)
+}
+
 onMounted(() => {
   // 计算 indicator top 基准位置
   recalcIndicatorTop()
@@ -526,6 +504,9 @@ watch(article, (val) => {
     if (built) {
       setupScrollObserver()
       nextTick(recalcIndicatorTop)
+      // 为 v-html 内容绑定 copy link 事件委托
+      bindVHtmlEvents()
+      applyBulletRotations()
       return
     }
 
@@ -536,6 +517,9 @@ watch(article, (val) => {
         setupScrollObserver()
         contentMutationObserver?.disconnect()
         nextTick(recalcIndicatorTop)
+        // 异步组件也需要绑定事件
+        bindVHtmlEvents()
+        applyBulletRotations()
       }
     })
     contentMutationObserver.observe(blogContentRef.value, { childList: true, subtree: true })
@@ -547,6 +531,10 @@ onUnmounted(() => {
   if (contentMutationObserver) contentMutationObserver.disconnect()
   if (cancelArticleRetry) cancelArticleRetry()
   if (cancelListRetry) cancelListRetry()
+  // 清理 v-html 事件委托
+  if (blogContentRef.value) {
+    blogContentRef.value.removeEventListener('click', handleVHtmlClick)
+  }
 })
 
 watch(() => route.params.slug, () => {
@@ -932,16 +920,6 @@ watch(() => route.params.slug, () => {
   margin: 80px 24px 56px;
 }
 
-/* squiggle（对照 m3: SVG pattern 方案，亮暗色通过 v-if 切换）
-   M3 官方使用内联 SVG + <pattern> 实现无缝波浪线 */
-.mio-footer .squiggle {
-  position: relative;
-}
-
-.mio-footer .squiggle svg {
-  display: block;
-}
-
 /* ================================================================
    blog-content（M3 文章页专有：文章排版）
    对照 m3: h2 45px/475/52px, p 16px/400/24px, on-surface
@@ -1217,6 +1195,168 @@ watch(() => route.params.slug, () => {
   border: none;
   border-top: 1px solid var(--md-sys-color-outline-variant);
   margin: 48px 0;
+}
+
+/* ================================================================
+   v-html 内容的 copy link 样式
+   从本地组件（KernelsBlogContent.vue）提取，用 :deep() 作用于 v-html 元素
+   本地组件的 copy link 样式在各自 scoped CSS 中，v-html 元素没有 data-v-xxx，
+   所以需要在 BlogArticleView 中用 :deep() 重新声明
+   ================================================================ */
+
+/* .block — 对照 m3: grid 68px auto 0px 0px, gap 20px, margin-left -90px */
+.blog-content :deep(.block) {
+  display: grid;
+  position: relative;
+  grid-template-columns: 68px auto 0px 0px;
+  gap: 20px;
+  margin: 80px 0 24px -90px;
+}
+
+/* .copy-button-container — 对照 m3: display flex, relative, margin-left 20px */
+.blog-content :deep(.copy-button-container) {
+  display: flex;
+  position: relative;
+  align-items: flex-start;
+  justify-content: center;
+  height: max-content;
+  margin-left: 20px;
+  margin-top: 2px;
+  cursor: auto;
+}
+
+/* .copy-button — 对照 m3: flex, relative, 48x48, opacity 0, z-index 2, border-radius 24px */
+.blog-content :deep(.copy-button) {
+  display: flex;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
+  border-radius: 24px;
+  opacity: 0;
+  z-index: 2;
+  font-size: 24px;
+  line-height: 24px;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  cursor: pointer;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* .block:hover 时显示 copy-button */
+.blog-content :deep(.block:hover .copy-button) {
+  opacity: 1;
+}
+
+/* .copy-button 自身 focus-visible / hover 时也显示 */
+.blog-content :deep(.copy-button:focus-visible),
+.blog-content :deep(.copy-button:hover) {
+  opacity: 1;
+}
+
+/* .copy-button hover/focus-visible 时显示 background + tooltip */
+.blog-content :deep(.copy-button:focus-visible + .copy-button-background),
+.blog-content :deep(.copy-button:focus-visible ~ .tooltip),
+.blog-content :deep(.copy-button:hover + .copy-button-background),
+.blog-content :deep(.copy-button:hover ~ .tooltip) {
+  opacity: 1;
+}
+
+/* .copy-button.activated 时 background 变色 */
+.blog-content :deep(.copy-button.activated + .copy-button-background) {
+  background: var(--md-sys-color-tertiary-container, #ffd8e4);
+}
+
+/* .copy-button.activated 时 tooltip 宽度变化 */
+.blog-content :deep(.copy-button.activated ~ .tooltip) {
+  width: 86px;
+}
+
+/* .copy-button.activated 时 tooltip 文字切换 */
+.blog-content :deep(.copy-button.activated ~ .tooltip .deactivated) {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.blog-content :deep(.copy-button.activated ~ .tooltip .activated) {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* .copy-button-background — 对照 m3: absolute, 48x48, z-index 1 */
+.blog-content :deep(.copy-button-background) {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  transition: 0.2s cubic-bezier(0.2, 0, 0, 1);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454f) 8%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* .scroll-target (对照 m3: position absolute, 0x0, 锚点定位偏移) */
+.blog-content :deep(.scroll-target) {
+  display: block;
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+/* .tooltip — 对照 m3: absolute, bottom -28px, 74x24px, padding 4px 11px */
+.blog-content :deep(.tooltip) {
+  display: block;
+  position: absolute;
+  bottom: -28px;
+  width: 74px;
+  height: 24px;
+  padding: 4px 11px;
+  transition: 0.2s cubic-bezier(0.2, 0, 0, 1);
+  border-radius: 6px;
+  background: rgba(48, 48, 48, 0.8);
+  color: var(--md-sys-color-inverse-on-surface, #f2f2f2);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  letter-spacing: 0.1px;
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* .tooltip 文字切换 */
+.blog-content :deep(.tooltip .deactivated) {
+  position: absolute;
+  transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
+  opacity: 1;
+  visibility: visible;
+}
+
+.blog-content :deep(.tooltip .activated) {
+  position: absolute;
+  transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* .text-chunk */
+.blog-content :deep(.text-chunk) {
+  display: block;
+}
+
+/* 移动端 ≤1294px: 隐藏 copy-button 区域，block 回退到无 grid */
+@media screen and (max-width: 1294px) {
+  .blog-content :deep(.block) {
+    display: block;
+    margin: 64px 0 24px 0;
+  }
+
+  .blog-content :deep(.copy-button-container) {
+    display: none;
+  }
 }
 
 /* ================================================================
@@ -1521,208 +1661,6 @@ watch(() => route.params.slug, () => {
 }
 
 /* ================================================================
-   Footer（对照 m3.material.io footer 结构）
-   mio-footer (外层 wrapper): margin-top 120px, position static
-   mio-footer-inner (footer): padding 64px 40px, 无背景色
-   section.about: grid, max-width 1200px, 3列, gap 20px, justify-content: space-between
-   section.legal: margin-top 64px, flex row, logo + 法律链接
-   ================================================================ */
-.mio-footer {
-  margin-top: 120px;
-}
-
-/* ── Footer 内层容器 ── 对照 m3: max-width 1280px 居中, padding 64px 40px */
-.mio-footer-inner {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 64px 40px;
-  font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
-  box-sizing: border-box;
-}
-
-/* section.about — 对照 m3: grid, max-width 1200px, justify-content: space-between */
-.mio-footer-inner .about {
-  display: grid;
-  grid-template-columns: auto;
-  gap: 0 20px;
-  justify-content: space-between;
-}
-
-@media screen and (min-width: 960px) {
-  .mio-footer-inner .about {
-    grid-template-columns: 570px 190px 190px;
-    max-width: 1200px;
-  }
-}
-
-/* about-material — 对照 m3: logo (Google Symbols 40px) + description */
-.about-material {
-  display: block;
-}
-
-.about-material .about-logo {
-  display: flex;
-  cursor: pointer;
-  padding: 1px;
-  width: max-content;
-}
-
-.about-material .about-logo .material-symbols-rounded {
-  font-size: 40px;
-  line-height: 40px;
-  color: var(--md-sys-color-on-surface, #1c1b1f);
-}
-
-.about-material p {
-  font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 24px;
-  color: var(--md-sys-color-on-surface, #1c1b1f);
-  margin: 24px 64px 16px 0;
-}
-
-/* social-links / site-links — 对照 m3: ul, flex column, gap 20px, margin-top 24px */
-/* h3 在第一个 li 中，与下方链接左对齐（同列） */
-.mio-footer-inner .social-links,
-.mio-footer-inner .site-links {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  list-style: none;
-  padding: 0;
-  margin: 24px 0 0;
-}
-
-.mio-footer-inner .social-links h3,
-.mio-footer-inner .site-links h3 {
-  font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 20px;
-  margin: 0;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-}
-
-.mio-footer-inner .social-links li,
-.mio-footer-inner .site-links li {
-  padding: 0;
-  margin: 0;
-}
-
-.mio-footer-inner .social-links li a,
-.mio-footer-inner .site-links li a {
-  font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 24px;
-  color: var(--md-sys-color-primary, #6750a4);
-  text-decoration: underline !important;
-  cursor: pointer;
-  display: inline-flex;
-  padding: 1px;
-}
-
-/* section.legal — 对照 m3: margin-top 64px, flex row, brand logo + 链接, max-width 1200px */
-.mio-footer-inner .legal {
-  display: flex;
-  align-items: center;
-  margin: 64px 0 0;
-  max-width: 1200px;
-}
-
-.mio-footer-inner .legal .brand-logo {
-  display: block;
-  cursor: pointer;
-  margin-right: 32px;
-  flex-shrink: 0;
-}
-
-.mio-footer-inner .legal .brand-logo-text {
-  font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 24px;
-  color: var(--md-sys-color-on-surface, #1c1b1f);
-  letter-spacing: 0.5px;
-}
-
-.mio-footer-inner .legal ul {
-  display: flex;
-  flex-direction: row;
-  gap: 16px 24px;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  flex-wrap: wrap;
-}
-
-.mio-footer-inner .legal li {
-  margin: 0;
-  padding: 0;
-}
-
-.mio-footer-inner .legal li a {
-  font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 24px;
-  color: var(--md-sys-color-primary, #6750a4);
-  text-decoration: none !important;
-  cursor: pointer;
-  display: inline;
-  padding: 1px;
-}
-
-/* ── 平板端 601-960px ── 对照 M3: footer padding 32px, about 3-col, about-material span 3 */
-@media screen and (max-width: 960px) and (min-width: 601px) {
-  .mio-footer-inner {
-    padding: 64px 32px;
-  }
-
-  .mio-footer-inner .about {
-    grid-template-columns: 1fr 1fr 1fr;
-  }
-
-  .about-material {
-    grid-column: span 3;
-  }
-
-  .about-material p {
-    margin-right: 0;
-  }
-}
-
-/* ── 移动端 ≤600px ── 对照 M3: footer padding 24px, about 1-col, legal column, ul gap 24px */
-@media screen and (max-width: 600px) {
-  .mio-footer-inner {
-    padding: 64px 24px;
-  }
-
-  .mio-footer-inner .about {
-    grid-template-columns: 1fr;
-  }
-
-  .about-material p {
-    margin-right: 0;
-  }
-
-  .mio-footer-inner .social-links,
-  .mio-footer-inner .site-links {
-    row-gap: 24px;
-  }
-
-  .mio-footer-inner .legal {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .mio-footer-inner .legal ul {
-    margin-top: 24px;
-  }
-}
-
-/* ================================================================
    暗色主题
    ================================================================ */
 :global([data-theme="dark"] .primary-container) {
@@ -1769,16 +1707,6 @@ watch(() => route.params.slug, () => {
 
 :global([data-theme="dark"] .toc__link--selected) {
   color: var(--md-sys-color-on-secondary-container, #e8def8);
-}
-
-:global([data-theme="dark"] .about-material .about-logo .material-symbols-rounded),
-:global([data-theme="dark"] .mio-footer-inner .legal .brand-logo-text) {
-  color: var(--md-sys-color-on-surface, #e6e1e5);
-}
-
-:global([data-theme="dark"] .mio-footer-inner .social-links h3),
-:global([data-theme="dark"] .mio-footer-inner .site-links h3) {
-  color: var(--md-sys-color-on-surface, #e6e1e5);
 }
 
 :global([data-theme="dark"] .separator) {
@@ -1847,6 +1775,20 @@ watch(() => route.params.slug, () => {
 /* 暗色主题 — ul bullet SVG（M3 官方暗色 #E3E3E3，:global() 包裹完整选择器防止 Vue 编译破坏） */
 :global([data-theme="dark"] .blog-content ul li::before) {
   background-image: url("data:image/svg+xml,%3Csvg width='8' height='8' viewBox='0 0 8 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.95843 0.279933C5.5378 -0.353974 6.58452 0.173492 6.41974 1.01632L6.05454 2.88412C5.99767 3.17501 6.09646 3.47451 6.31525 3.67447L7.72007 4.95843C8.35397 5.5378 7.82651 6.58452 6.98368 6.41974L5.11588 6.05454C4.82499 5.99767 4.52549 6.09646 4.32553 6.31525L3.04157 7.72007C2.4622 8.35397 1.41548 7.82651 1.58026 6.98368L1.94545 5.11588C2.00233 4.82499 1.90354 4.52549 1.68475 4.32553L0.279933 3.04157C-0.353974 2.4622 0.173492 1.41548 1.01632 1.58026L2.88412 1.94545C3.17501 2.00233 3.47451 1.90354 3.67447 1.68475L4.95843 0.279933Z' fill='%23E3E3E3'/%3E%3C/svg%3E");
+}
+
+/* 暗色主题 — v-html copy link 样式（对照 KernelsBlogContent.vue 暗色覆盖） */
+:global([data-theme="dark"] .blog-content .copy-button) {
+  color: var(--md-sys-color-on-surface, #e6e1e5);
+}
+
+:global([data-theme="dark"] .blog-content .copy-button-background) {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent);
+}
+
+:global([data-theme="dark"] .blog-content .tooltip) {
+  background: #fefbff;
+  color: #1f1f1f;
 }
 
 </style>

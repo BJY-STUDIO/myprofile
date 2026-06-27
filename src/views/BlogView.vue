@@ -58,6 +58,9 @@
         </div>
       </div>
     </Teleport>
+
+    <!-- ======== Footer ======== -->
+    <MioFooter />
   </div>
 </template>
 
@@ -68,6 +71,7 @@ import '@material/web/chips/chip-set'
 import '@material/web/chips/filter-chip'
 import '@material/web/iconbutton/icon-button'
 import '@material/web/divider/divider'
+import MioFooter from '@/components/common/MioFooter.vue'
 
 const route = useRoute()
 
