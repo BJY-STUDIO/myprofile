@@ -108,6 +108,7 @@ const hljsToCm = {
   'hljs-deletion': 'cm-string',
   'hljs-params': 'cm-variable',
   'hljs-section': 'cm-keyword',
+  'hljs-link': 'cm-string',
 }
 
 /**
@@ -123,6 +124,85 @@ function remapHljsToCm(html) {
     const unique = [...new Set(mapped.filter(c => !c.startsWith('hljs')))]
     return unique.length > 0 ? `class="${unique.join(' ')}"` : ''
   })
+}
+
+// ===== bash/shell 后处理器 — 增强 hljs 不擅长的场景 =====
+// 问题：bash 模式将 curl -d '{...}' 内的 JSON 全部归为"字符串"，URL / 变量赋值也无着色
+// 方案：hljs.highlight() 输出后，对 bash/shell 结果做二次处理：
+//   1. 提取字符串内的 JSON 内容并用 hljs JSON 重新着色
+//   2. 标记裸 URL 为 hljs-link（映射为 cm-string 着色）
+function enhanceBashHighlighting(html) {
+  let result = html
+
+  // 重新着色 bash 单引号字符串内的 JSON
+  // 模式：<span class="hljs-string">&#x27;{ ... }&#x27;</span>
+  result = result.replace(
+    /<span class="hljs-string">&#x27;(\{[\s\S]*?\})&#x27;<\/span>/g,
+    (_match, jsonEncoded) => {
+      const decoded = decodeHtmlEntities(jsonEncoded)
+      try {
+        JSON.parse(decoded)
+        const jsonHL = hljs.highlight(decoded, { language: 'json' }).value
+        return `'${jsonHL}'`
+      } catch {
+        return _match
+      }
+    }
+  )
+
+  // 重新着色 bash 双引号字符串内的 JSON
+  // 模式：<span class="hljs-string">&quot;{ ... }&quot;</span>
+  result = result.replace(
+    /<span class="hljs-string">&quot;(\{[\s\S]*?\})&quot;<\/span>/g,
+    (_match, jsonEncoded) => {
+      const decoded = decodeHtmlEntities(jsonEncoded)
+      try {
+        JSON.parse(decoded)
+        const jsonHL = hljs.highlight(decoded, { language: 'json' }).value
+        return `"${jsonHL}"`
+      } catch {
+        return _match
+      }
+    }
+  )
+
+  // 标记裸 URL（不在已有 span 内的各种协议链接）
+  // 方案：按 <span>/<span/> 标签拆分 HTML，仅在 depth=0（span 外部）的文本节点中匹配 URL
+  // 这样避免两个问题：
+  //   1. lookbehind (?<![="]) 会误拒 VAR=postgresql://... 也会部分匹配 ttps://
+  //   2. 已在 <span class="hljs-string"> 内的 URL 不应被重复包装
+  const URL_RE = /[a-z][a-z0-9+.-]*:\/\/[^\s<"'\\]+/g
+  const TAG_RE = /(<\/?span[^>]*>)/g
+  const parts = result.split(TAG_RE)
+  let depth = 0
+  result = parts.map(part => {
+    if (part.match(/^<span[^>]*>$/)) {
+      depth++
+      return part
+    }
+    if (part.match(/^<\/span>$/)) {
+      depth--
+      return part
+    }
+    if (depth > 0) {
+      // 在 span 内部 — 不做 URL 增强
+      return part
+    }
+    // depth=0 — 文本节点，增强 URL
+    return part.replace(URL_RE, url => `<span class="hljs-link">${url}</span>`)
+  }).join('')
+
+  return result
+}
+
+function decodeHtmlEntities(str) {
+  return str
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&#x27;/g, "'")
+    .replace(/&#39;/g, "'")
 }
 
 // ===== 配置 =====
@@ -178,9 +258,14 @@ m3Renderer.code = function(code, infostring, escaped) {
 
   // 使用 highlight.js 进行语法高亮
   let highlighted
+  const isBashLike = lang === 'bash' || lang === 'shell' || lang === 'sh'
   if (lang && hljs.getLanguage(lang)) {
     try {
       highlighted = hljs.highlight(codeText, { language: lang }).value
+      // bash/shell 后处理：增强 JSON 内嵌着色和 URL 标记
+      if (isBashLike) {
+        highlighted = enhanceBashHighlighting(highlighted)
+      }
     } catch {
       highlighted = codeText
         .replace(/&/g, '&amp;')
