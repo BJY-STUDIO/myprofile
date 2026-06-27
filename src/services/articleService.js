@@ -37,25 +37,23 @@
 import { defineAsyncComponent } from 'vue'
 import { marked, Renderer } from 'marked'
 import hljs from 'highlight.js/lib/core'
+import { highlightWithLezer, isLezerSupported } from './lezerHighlight.js'
 
-// 按需注册 highlight.js 语言（减小 bundle 体积）
-import javascript from 'highlight.js/lib/languages/javascript'
-import xml from 'highlight.js/lib/languages/xml'
-import css from 'highlight.js/lib/languages/css'
-import json from 'highlight.js/lib/languages/json'
+// 按需注册 highlight.js 语言（仅 Lezer 不支持的语言）
+// Lezer 支持：javascript, js, typescript, ts, html, css, json, python, py, java, xml, markdown, md
+// hljs 保留：bash, shell, yaml, yml, sql
 import bash from 'highlight.js/lib/languages/bash'
 import python from 'highlight.js/lib/languages/python'
 import sql from 'highlight.js/lib/languages/sql'
 import yaml from 'highlight.js/lib/languages/yaml'
+import shell from 'highlight.js/lib/languages/shell'
+import javascript from 'highlight.js/lib/languages/javascript'
+import xml from 'highlight.js/lib/languages/xml'
+import css from 'highlight.js/lib/languages/css'
+import json from 'highlight.js/lib/languages/json'
 import java from 'highlight.js/lib/languages/java'
 import typescript from 'highlight.js/lib/languages/typescript'
-import shell from 'highlight.js/lib/languages/shell'
-hljs.registerLanguage('javascript', javascript)
-hljs.registerLanguage('js', javascript)
-hljs.registerLanguage('xml', xml)
-hljs.registerLanguage('html', xml)
-hljs.registerLanguage('css', css)
-hljs.registerLanguage('json', json)
+
 hljs.registerLanguage('bash', bash)
 hljs.registerLanguage('shell', shell)
 hljs.registerLanguage('python', python)
@@ -63,6 +61,13 @@ hljs.registerLanguage('py', python)
 hljs.registerLanguage('sql', sql)
 hljs.registerLanguage('yaml', yaml)
 hljs.registerLanguage('yml', yaml)
+// hljs 后备注册（Lezer 主用，hljs 作为回退）
+hljs.registerLanguage('javascript', javascript)
+hljs.registerLanguage('js', javascript)
+hljs.registerLanguage('xml', xml)
+hljs.registerLanguage('html', xml)
+hljs.registerLanguage('css', css)
+hljs.registerLanguage('json', json)
 hljs.registerLanguage('java', java)
 hljs.registerLanguage('typescript', typescript)
 hljs.registerLanguage('ts', typescript)
@@ -297,13 +302,28 @@ m3Renderer.code = function(code, infostring, escaped) {
     lang = infostring
   }
 
-  // 使用 highlight.js 进行语法高亮
   let highlighted
   const isBashLike = lang === 'bash' || lang === 'shell' || lang === 'sh'
+
+  // ① 优先使用 Lezer 高亮（JS/TS/HTML/CSS/JSON/Python/Java/XML/Markdown）
+  if (lang && isLezerSupported(lang)) {
+    const lezerResult = highlightWithLezer(codeText, lang)
+    if (lezerResult !== null) {
+      highlighted = lezerResult
+      // 按行拆分并包裹在 <pre class="CodeMirror-line"> 中
+      const lines = highlighted.trimEnd().split('\n')
+      const preLines = lines.map(line => `<pre class="CodeMirror-line"><span role="presentation" style="padding-right: 0.1px;">${line || ' '}</span></pre>`).join('')
+      return `<mio-code-snippet><div class="mio-code-snippet__container"><div class="CodeMirror cm-s-neo CodeMirror-wrap" translate="no"><div class="CodeMirror-scroll"><div class="CodeMirror-sizer"><div class="CodeMirror-lines"><div class="CodeMirror-code">${preLines}</div></div></div></div></div></div></mio-code-snippet>`
+    }
+    // Lezer 失败 → 回退到 hljs
+  }
+
+  // ② bash/shell → hljs + enhanceBashHighlighting + remapHljsToCm
+  // ③ 其他 → hljs + remapHljsToCm（后备）
   if (lang && hljs.getLanguage(lang)) {
     try {
       highlighted = hljs.highlight(codeText, { language: lang }).value
-      // bash/shell 后处理：增强 JSON 内嵌着色和 URL 标记
+      // bash/shell 后处理：增强 JSON 内嵌着色和命令标记
       if (isBashLike) {
         highlighted = enhanceBashHighlighting(highlighted)
       }
@@ -379,6 +399,11 @@ function getLocalArticles() {
       const article = { ...mod.default }
       if (typeof article.contentComponent === 'function') {
         article.contentComponent = defineAsyncComponent(article.contentComponent)
+      }
+      // 本地文章的 content 是 Markdown 字符串，需转为 HTML
+      if (article.content && !article.contentFormat && !article.contentComponent) {
+        article.content = markdownToHtml(article.content)
+        article.contentFormat = 'html'
       }
       articles[article.slug] = article
     }

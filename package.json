@@ -9,6 +9,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@lezer/common": "^1.5.2",
+    "@lezer/css": "^1.3.4",
+    "@lezer/highlight": "^1.2.3",
+    "@lezer/html": "^1.3.13",
+    "@lezer/java": "^1.1.3",
+    "@lezer/javascript": "^1.5.4",
+    "@lezer/json": "^1.0.3",
+    "@lezer/python": "^1.1.19",
+    "@lezer/xml": "^1.0.6",
     "@material/web": "^1.4.0",
     "highlight.js": "^11.11.1",
     "marked": "12.0.2",
