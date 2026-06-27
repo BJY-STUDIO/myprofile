@@ -445,7 +445,7 @@ const bodyMarginLeft = computed(() => {
                 <a
                   v-for="child in drawerSubItems"
                   :key="child.id"
-                  class="nav-drawer__item"
+                  class="nav-drawer__item nav-drawer__item--sub"
                   :class="{ 'nav-drawer__item--active': activeSubItemId === child.id }"
                   @click.prevent="navigateDrawerSubItem(child)"
                 >
@@ -715,10 +715,10 @@ const bodyMarginLeft = computed(() => {
 }
 
 /* Drawer 内部的 close 按钮（官方: mio-icon-button icon="menu_open"） */
-/* m3 实测: margin: 0 0 8px 12px, width/height: 48px */
+/* m3 实测: margin: 0 0 8px 12px, close-btn-wrapper padding-top: 8px */
 .nav-drawer__close-btn-wrap {
   flex-shrink: 0;
-  padding: 12px 0 0 0;
+  padding: 8px 0 0 0;
 }
 
 .nav-drawer__close-btn {
@@ -809,7 +809,7 @@ const bodyMarginLeft = computed(() => {
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
-  margin: 0 8px; /* 对应 m3 .topic-wrapper 的 margin: 0 8px，与 .nav-drawer__items 的 padding 一致 */
+  margin: 0 12px; /* 匹配 .nav-drawer__items 的 padding: 0 12px（M3 specs active indicator padding = 12dp） */
 }
 
 /* m3: .main-menu:hover = background: on-surface-variant-2, color: on-surface */
@@ -866,10 +866,11 @@ const bodyMarginLeft = computed(() => {
 }
 
 /* ======== Drawer 项目列表容器 ======== */
-/* m3 实测: topic-wrapper margin: 0 8px; nav-drawer-section padding-bottom: 24px */
+/* m3 实测: topic-wrapper margin: 0 12px; nav-drawer-section padding-bottom: 24px */
+/* m3 specs: active indicator padding = 12dp */
 .nav-drawer__items {
   flex: 1;
-  padding: 0 8px 24px;
+  padding: 0 12px 24px;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -877,7 +878,8 @@ const bodyMarginLeft = computed(() => {
 }
 
 /* ======== Drawer 项目（严格对照 m3 .item） ======== */
-/* m3 实测: display=flex, height=48px, padding=2px 16px, borderRadius=100px, fontSize=16px, fontWeight=500 */
+/* m3 specs: item height=48dp(非活跃), active indicator height=56dp */
+/* m3 实测: display=flex, padding=2px 16px, borderRadius=100px, fontSize=16px, fontWeight=500 */
 .nav-drawer__item {
   display: flex;
   align-items: center;
@@ -898,12 +900,12 @@ const bodyMarginLeft = computed(() => {
   transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
-/* m3: .item::before = indicator pill (secondary-container, scaleX(0.32), opacity 0) */
+/* m3: .item::before = indicator pill (secondary-container, active indicator height=56dp, shape=28dp) */
 .nav-drawer__item::before {
   content: '';
   position: absolute;
-  inset: 0;
-  border-radius: 100px;
+  inset: -4px 0;
+  border-radius: 28px;
   background-color: var(--md-sys-color-secondary-container, #e8def8);
   opacity: 0;
   transform: scaleX(0.32);
@@ -1020,6 +1022,14 @@ const bodyMarginLeft = computed(() => {
 /* m3: .item:active .google-symbols = FILL 1, wght 300, opsz 24 */
 .nav-drawer__item:active .nav-drawer__arrow {
   font-variation-settings: "FILL" 1, "wght" 300, "opsz" 24;
+}
+
+/* ======== 二级菜单项（严格对照 m3 .nav-drawer-subsection .item） ======== */
+/* m3 二级菜单项无图标，文字与一级菜单项文字左对齐 */
+/* 计算：一级 label left = item padding-left(16px) + icon(24px) + icon margin-right(16px) = 56px */
+/* 二级菜单项需 padding-left: 56px 使文字到达同一位置 */
+.nav-drawer__item--sub {
+  padding-left: 56px;
 }
 
 /* ======== 主题面板（Teleported to body，需要全局选择器） ======== */
