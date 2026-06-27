@@ -65,25 +65,25 @@
 
           <!-- card-set（对照 m3: mio-card-set, grid, gap 8px） -->
           <div class="card-set">
-            <!-- 加载中：骨架屏 -->
+            <!-- 加载中：骨架屏（精确匹配真实卡片布局） -->
             <template v-if="apiArticles === null">
-              <div v-if="si === 0 && section.id === 's-featured'" class="skeleton-feature-card">
-                <div style="padding: 24px;">
-                  <div class="skeleton skeleton-line" style="height:14px;width:80px;margin-bottom:12px;"></div>
-                  <div class="skeleton skeleton-line--title"></div>
-                  <div class="skeleton skeleton-line--desc"></div>
+              <!-- feature 骨架屏（对照 feature-card.thumbnail: grid 1fr 1fr） -->
+              <div class="skeleton-feature-card">
+                <div class="sk-content">
+                  <span class="skeleton" style="height:16px;width:80px;"></span>
+                  <span class="skeleton" style="height:24px;width:60%;"></span>
+                  <span class="skeleton" style="height:16px;width:90%;"></span>
                 </div>
-                <div style="display:flex;align-items:center;justify-content:center;">
-                  <div class="skeleton skeleton-thumb"></div>
-                </div>
+                <div class="sk-thumb skeleton"></div>
               </div>
+              <!-- regular 骨架屏（对照 regular-card.thumbnail: flex column-reverse） -->
               <div v-for="n in (si === 0 ? 3 : 2)" :key="'sk-' + n" class="skeleton-card">
-                <div class="skeleton skeleton-thumb"></div>
-                <div style="margin-top: 16px;">
-                  <div class="skeleton skeleton-line" style="height:14px;width:80px;margin-bottom:8px;"></div>
-                  <div class="skeleton skeleton-line--title"></div>
-                  <div class="skeleton skeleton-line--desc"></div>
+                <div class="sk-content">
+                  <span class="skeleton" style="height:16px;width:80px;"></span>
+                  <span class="skeleton" style="height:24px;width:70%;"></span>
+                  <span class="skeleton" style="height:16px;width:85%;"></span>
                 </div>
+                <div class="sk-thumb skeleton"></div>
               </div>
             </template>
 
@@ -720,7 +720,7 @@ onBeforeUnmount(() => {
    posts-container（对照 m3: article.posts-container）
    ================================================================ */
 .posts-container {
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-width: 0;
 }
 

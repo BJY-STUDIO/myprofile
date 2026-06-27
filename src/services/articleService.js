@@ -207,6 +207,26 @@ m3Renderer.code = function(code, infostring, escaped) {
   return `<mio-code-snippet><div class="mio-code-snippet__container"><div class="CodeMirror cm-s-neo CodeMirror-wrap" translate="no"><div class="CodeMirror-scroll"><div class="CodeMirror-sizer"><div class="CodeMirror-lines"><div class="CodeMirror-code">${preLines}</div></div></div></div></div></div></mio-code-snippet>`
 }
 
+// ===== 表格渲染器 — 对照 M3 博客 mio-table 结构 =====
+// M3 官方结构: <div class="mio-table"><div class="mdc-data-table table-wrapper"><table class="mdc-data-table__table">...
+// table-wrapper: border 1px solid surface-variant, border-radius 24px, overflow-x auto
+// td: padding 16px 24px, border-top 1px solid surface-variant, border-right 1px solid surface-variant
+// 首行无 border-top, 末列无 border-right
+m3Renderer.table = function(header, body) {
+  // 兼容 marked v12 (header, body) 和 marked v13+ ({header, body})
+  let headerContent, bodyContent
+  if (typeof header === 'object' && header !== null && !Array.isArray(header)) {
+    headerContent = header.header || ''
+    bodyContent = header.body || ''
+  } else {
+    headerContent = header || ''
+    bodyContent = body || ''
+  }
+  // marked v12 headerContent 不含 <thead> 包装，需显式添加
+  const thead = headerContent ? `<thead>${headerContent}</thead>` : ''
+  return `<div class="mio-table"><div class="table-wrapper"><table>${thead}${bodyContent}</table></div></div>`
+}
+
 marked.use({ renderer: m3Renderer })
 
 function markdownToHtml(md) {

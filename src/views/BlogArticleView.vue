@@ -124,7 +124,7 @@
     <MioFooter />
   </div>
 
-  <!-- ======== 骨架屏（文章加载中） ======== -->
+  <!-- ======== 骨架屏（文章加载中 — 整页切换，非逐段消失） ======== -->
   <div class="editorial" v-else>
     <div class="content-container no-toc">
       <article class="blog-section">
@@ -133,8 +133,8 @@
           <div class="byline">
             <div class="skeleton" style="width:40px;height:40px;border-radius:50%;"></div>
             <div class="author-info">
-              <span class="skeleton" style="display:block;height:14px;width:90px;margin-bottom:4px;"></span>
-              <span class="skeleton" style="display:block;height:12px;width:60px;"></span>
+              <span class="skeleton" style="display:block;height:14px;width:90px;margin-bottom:6px;"></span>
+              <span class="skeleton" style="display:block;height:14px;width:60px;"></span>
             </div>
           </div>
         </div>
@@ -155,6 +155,13 @@
             <div class="skeleton skeleton-paragraph" style="width:80%;"></div>
             <div class="skeleton skeleton-code"></div>
             <div class="skeleton skeleton-paragraph" style="width:85%;"></div>
+            <div class="skeleton skeleton-paragraph" style="width:75%;"></div>
+          </div>
+          <div class="skeleton-block">
+            <div class="skeleton skeleton-heading"></div>
+            <div class="skeleton skeleton-paragraph" style="width:90%;"></div>
+            <div class="skeleton skeleton-paragraph" style="width:95%;"></div>
+            <div class="skeleton skeleton-paragraph" style="width:50%;"></div>
           </div>
         </div>
       </article>
@@ -1225,109 +1232,131 @@ watch(() => route.params.slug, () => {
 }
 
 /* ================================================================
-   表格样式 — 对照 M3 官方 .block table:not(.status-table)
-   官方规则:
+   表格样式 — 对照 M3 博客 mio-table 结构
+   官方结构: div.mio-table > div.table-wrapper > table
+   外层 mio-table: display block, margin-top 56px
+     table-wrapper: border 1px solid surface-variant, border-radius 24px, overflow-x auto
      table: width 100%, border-collapse collapse
-     td/th: padding 16px 24px, border-top 1px solid surface-variant,
-            border-right 1px solid surface-variant, vertical-align middle
-     thead th: background surface-1, color on-surface-variant, font-weight 500
-     tr :last-child: border-right 0
-     td:last-child: border-left 1px solid surface-variant
-     thead:first-child tr:first-child th: border-top 0
-     td:empty / th:empty: border-top 0
-     p inside table: margin-block 0
-   亮色实际值: surface-variant #e8e0e8, surface-1 #f8f1f6, on-surface-variant #4d4256
-   暗色实际值: surface-variant #49454f, surface-1 #1e1b1f, on-surface-variant #cac4d0
+     td: padding 16px 24px, border-top 1px solid surface-variant,
+         border-right 1px solid surface-variant, vertical-align middle
+     th: 同 td, 另加 font-weight 500, background surface-container-low
+     首行: border-top 0 (wrapper 边框代替)
+     末列: border-right 0 (wrapper 边框代替)
+     table + p: margin-top 56px（与 code-snippet + p 一致）
+   亮色实际值: surface-variant #e7e0ec, on-surface-variant #49454f
+   暗色实际值: surface-variant #49454f, on-surface-variant #cac4d0
    ================================================================ */
 
-.blog-content :deep(table) {
+/* mio-table 外层 — 对照 M3: display block, margin-top 56px */
+.blog-content :deep(.mio-table) {
+  display: block;
+  margin-top: 56px;
+}
+
+/* table-wrapper — 对照 M3: border 1px solid, radius 24px, overflow-x auto */
+.blog-content :deep(.mio-table .table-wrapper) {
+  max-width: calc(-80px + 100vw);
+  border: 1px solid var(--md-sys-color-surface-variant, #e7e0ec);
+  border-radius: 24px;
+  overflow-x: auto;
+}
+
+/* table — 对照 M3: width 100%, border-collapse collapse */
+.blog-content :deep(.mio-table table) {
   width: 100%;
   border-collapse: collapse;
-  margin: 24px 0;
   font-size: 14px;
   line-height: 24px;
 }
 
-.blog-content :deep(table p) {
+.blog-content :deep(.mio-table table p) {
   margin-block: 0;
 }
 
-.blog-content :deep(table td),
-.blog-content :deep(table th) {
+/* td/th — 对照 M3: padding 16px 24px, row/col 分隔线 */
+.blog-content :deep(.mio-table table td),
+.blog-content :deep(.mio-table table th) {
   padding: 16px 24px;
-  border-top: 1px solid var(--md-sys-color-surface-variant, #e8e0e8);
-  border-right: 1px solid var(--md-sys-color-surface-variant, #e8e0e8);
+  border-top: 1px solid var(--md-sys-color-surface-variant, #e7e0ec);
+  border-right: 1px solid var(--md-sys-color-surface-variant, #e7e0ec);
   vertical-align: middle;
   text-align: left;
 }
 
-.blog-content :deep(table th) {
+/* th — 对照 M3: font-weight 500 */
+.blog-content :deep(.mio-table table th) {
   font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
   font-weight: 500;
   font-variation-settings: "GRAD" 0, "opsz" 17;
-  background: var(--md-sys-color-surface-container-low, #f8f1f6);
-  color: var(--md-sys-color-on-surface-variant, #4d4256);
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
-.blog-content :deep(table thead:first-child tr:first-child th),
-.blog-content :deep(table tbody:first-child tr:first-child td) {
+/* 首行无 border-top（wrapper 已有边框）— 覆盖 thead 和无 thead 两种情况 */
+.blog-content :deep(.mio-table table thead:first-child tr:first-child th),
+.blog-content :deep(.mio-table table tbody:first-child tr:first-child td),
+.blog-content :deep(.mio-table table tbody:first-child tr:first-child th) {
   border-top: 0;
 }
 
-.blog-content :deep(table tr :last-child) {
+/* 末列无 border-right（wrapper 已有边框） */
+.blog-content :deep(.mio-table table tr th:last-child),
+.blog-content :deep(.mio-table table tr td:last-child) {
   border-right: 0;
 }
 
-.blog-content :deep(table td:last-child) {
-  border-left: 1px solid var(--md-sys-color-surface-variant, #e8e0e8);
-}
-
-.blog-content :deep(table td:empty),
-.blog-content :deep(table th:empty) {
+/* 空单元格 */
+.blog-content :deep(.mio-table table td:empty),
+.blog-content :deep(.mio-table table th:empty) {
   border-top: 0;
 }
 
-/* 表格内 inline code 不需要 bg（在 td 中已经够区分） */
-.blog-content :deep(table td code) {
+/* table 后的 p — 对照 M3: margin-top 56px */
+.blog-content :deep(.mio-table + p) {
+  margin-top: 32px;
+}
+
+/* 表格内 inline code */
+.blog-content :deep(.mio-table table td code) {
   background: var(--md-sys-color-surface-container, #ece7e9);
   padding: 1px 6px;
   font-size: 13px;
 }
 
-/* 移动端 ≤960px: table padding 收窄 */
+/* 移动端 ≤960px */
 @media screen and (max-width: 960px) {
-  .blog-content :deep(table td),
-  .blog-content :deep(table th) {
+  .blog-content :deep(.mio-table table td),
+  .blog-content :deep(.mio-table table th) {
     padding: 12px 16px;
   }
 }
 
-/* 移动端 ≤600px: 更紧凑 */
+/* 移动端 ≤600px */
 @media screen and (max-width: 600px) {
-  .blog-content :deep(table td),
-  .blog-content :deep(table th) {
+  .blog-content :deep(.mio-table table td),
+  .blog-content :deep(.mio-table table th) {
     padding: 10px 12px;
     font-size: 13px;
   }
 }
 
 /* ── 暗色主题表格 ── */
-:global([data-theme="dark"] .blog-content table th) {
+:global([data-theme="dark"] .blog-content .mio-table .table-wrapper) {
+  border-color: var(--md-sys-color-surface-variant, #49454f);
+}
+
+:global([data-theme="dark"] .blog-content .mio-table table th) {
   background: var(--md-sys-color-surface-container-low, #1e1b1f);
   color: var(--md-sys-color-on-surface-variant, #cac4d0);
 }
 
-:global([data-theme="dark"] .blog-content table td),
-:global([data-theme="dark"] .blog-content table th) {
+:global([data-theme="dark"] .blog-content .mio-table table td),
+:global([data-theme="dark"] .blog-content .mio-table table th) {
   border-top-color: var(--md-sys-color-surface-variant, #49454f);
   border-right-color: var(--md-sys-color-surface-variant, #49454f);
 }
 
-:global([data-theme="dark"] .blog-content table td:last-child) {
-  border-left-color: var(--md-sys-color-surface-variant, #49454f);
-}
-
-:global([data-theme="dark"] .blog-content table td code) {
+:global([data-theme="dark"] .blog-content .mio-table table td code) {
   background: var(--md-sys-color-surface-container, #2b292b);
 }
 

@@ -143,91 +143,113 @@ md-dialog {
   border-radius: 8px;
 }
 
-/* 骨架屏卡片 */
-.skeleton-card {
-  display: inline-flex;
-  flex-direction: column-reverse;
-  width: 302px;
-  min-height: 248px;
-  padding: 24px;
-  box-sizing: border-box;
-  border-radius: 16px;
-  background: var(--md-sys-color-surface-container, #ece7e9);
-  overflow: hidden;
-}
+/* ================================================================
+   骨架屏卡片 — 精确匹配真实卡片布局
+   feature-card: grid 1fr 1fr, grid-column: 1 / -1, sk-thumb order:-1, min-height 298px
+   regular-card: flex column-reverse, sk-thumb height 298px
+   共用: border-radius 24px, bg surface-container-low, sk-content margin 24px, gap 8px
+   注意: 使用 sk-content/sk-thumb 避免与 HomeView 的 .content-container/.thumb-container 冲突
+   ================================================================ */
 
-.skeleton-card .skeleton-line {
-  height: 16px;
-  margin-bottom: 8px;
-}
-
-.skeleton-card .skeleton-line--title {
-  height: 24px;
-  width: 70%;
-  margin-bottom: 12px;
-}
-
-.skeleton-card .skeleton-line--desc {
-  height: 14px;
-  width: 90%;
-}
-
-.skeleton-card .skeleton-thumb {
-  width: 100%;
-  height: 80px;
-  margin-top: 16px;
-  border-radius: 12px;
-}
-
-/* 骨架屏 feature 卡片（大卡片） */
+/* feature 骨架屏（对照 .feature-card.thumbnail） */
 .skeleton-feature-card {
+  grid-column: 1 / -1;
   display: grid;
   grid-template-columns: 1fr 1fr;
+  align-items: center;
   width: 100%;
-  min-height: 248px;
-  padding: 24px;
-  box-sizing: border-box;
-  border-radius: 16px;
-  background: var(--md-sys-color-surface-container, #ece7e9);
+  border-radius: 24px;
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
   overflow: hidden;
 }
 
-.skeleton-feature-card .skeleton-line {
-  height: 16px;
-  margin-bottom: 8px;
+.skeleton-feature-card > .sk-content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin: 24px;
+  min-width: 0;
+  flex-shrink: 0;
+  align-self: center;
+  width: calc(100% - 48px);
+  overflow: hidden;
 }
 
-.skeleton-feature-card .skeleton-line--title {
-  height: 28px;
-  width: 60%;
-  margin-bottom: 12px;
+.skeleton-feature-card > .sk-thumb.skeleton {
+  min-height: 298px;
+  order: -1;
+  border-radius: 24px;
+  width: 100%;
+  flex-shrink: 0;
 }
 
-.skeleton-feature-card .skeleton-thumb {
-  width: 80%;
-  height: 100px;
-  margin: auto;
-  border-radius: 12px;
+/* regular 骨架屏（对照 .regular-card.thumbnail） */
+.skeleton-card {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  width: 100%;
+  border-radius: 24px;
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  overflow: hidden;
 }
 
-/* 骨架屏文章内容 */
+.skeleton-card > .sk-content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin: 24px;
+  min-width: 0;
+  flex-shrink: 0;
+  align-self: start;
+  width: calc(100% - 48px);
+  overflow: hidden;
+}
+
+.skeleton-card > .sk-thumb.skeleton {
+  height: 298px;
+  border-radius: 24px;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+/* 移动端 ≤600px: thumb 高度缩小（对照 m3 @ ≤600px: thumb h 200px） */
+@media screen and (max-width: 600px) {
+  .skeleton-feature-card {
+    display: flex;
+    flex-direction: column-reverse;
+  }
+  .skeleton-feature-card > .sk-thumb.skeleton {
+    min-height: 200px;
+    order: 0;
+  }
+  .skeleton-card > .sk-thumb.skeleton {
+    height: 200px;
+  }
+}
+
+/* 骨架屏文章内容 — 对照真实文章段落间距 */
 .skeleton-article {
   padding: 0;
 }
 
 .skeleton-article .skeleton-block {
-  margin: 80px 0 24px 0;
+  margin: 56px 0 0 0;
+}
+
+.skeleton-article .skeleton-block:first-child {
+  margin-top: 0;
 }
 
 .skeleton-article .skeleton-heading {
-  height: 32px;
+  height: 28px;
   width: 40%;
   margin-bottom: 16px;
 }
 
 .skeleton-article .skeleton-paragraph {
-  height: 16px;
-  margin-bottom: 24px;
+  height: 14px;
+  margin-bottom: 10px;
 }
 
 .skeleton-article .skeleton-paragraph:nth-child(3) { width: 85%; }
@@ -236,14 +258,14 @@ md-dialog {
 
 .skeleton-article .skeleton-code {
   height: 120px;
-  margin: 56px 0 0 0;
+  margin: 32px 0 16px 0;
   border-radius: 16px;
 }
 
 /* 暗色主题骨架屏 */
 [data-theme="dark"] .skeleton-card,
 [data-theme="dark"] .skeleton-feature-card {
-  background: var(--md-sys-color-surface-container, #2b292b);
+  background: var(--md-sys-color-surface-container-low, #1d1b20);
 }
 
 @keyframes skeleton-shimmer-dark {
