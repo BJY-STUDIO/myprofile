@@ -1224,6 +1224,113 @@ watch(() => route.params.slug, () => {
   color: #2e383c;
 }
 
+/* ================================================================
+   表格样式 — 对照 M3 官方 .block table:not(.status-table)
+   官方规则:
+     table: width 100%, border-collapse collapse
+     td/th: padding 16px 24px, border-top 1px solid surface-variant,
+            border-right 1px solid surface-variant, vertical-align middle
+     thead th: background surface-1, color on-surface-variant, font-weight 500
+     tr :last-child: border-right 0
+     td:last-child: border-left 1px solid surface-variant
+     thead:first-child tr:first-child th: border-top 0
+     td:empty / th:empty: border-top 0
+     p inside table: margin-block 0
+   亮色实际值: surface-variant #e8e0e8, surface-1 #f8f1f6, on-surface-variant #4d4256
+   暗色实际值: surface-variant #49454f, surface-1 #1e1b1f, on-surface-variant #cac4d0
+   ================================================================ */
+
+.blog-content :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  font-size: 14px;
+  line-height: 24px;
+}
+
+.blog-content :deep(table p) {
+  margin-block: 0;
+}
+
+.blog-content :deep(table td),
+.blog-content :deep(table th) {
+  padding: 16px 24px;
+  border-top: 1px solid var(--md-sys-color-surface-variant, #e8e0e8);
+  border-right: 1px solid var(--md-sys-color-surface-variant, #e8e0e8);
+  vertical-align: middle;
+  text-align: left;
+}
+
+.blog-content :deep(table th) {
+  font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
+  font-weight: 500;
+  font-variation-settings: "GRAD" 0, "opsz" 17;
+  background: var(--md-sys-color-surface-container-low, #f8f1f6);
+  color: var(--md-sys-color-on-surface-variant, #4d4256);
+}
+
+.blog-content :deep(table thead:first-child tr:first-child th),
+.blog-content :deep(table tbody:first-child tr:first-child td) {
+  border-top: 0;
+}
+
+.blog-content :deep(table tr :last-child) {
+  border-right: 0;
+}
+
+.blog-content :deep(table td:last-child) {
+  border-left: 1px solid var(--md-sys-color-surface-variant, #e8e0e8);
+}
+
+.blog-content :deep(table td:empty),
+.blog-content :deep(table th:empty) {
+  border-top: 0;
+}
+
+/* 表格内 inline code 不需要 bg（在 td 中已经够区分） */
+.blog-content :deep(table td code) {
+  background: var(--md-sys-color-surface-container, #ece7e9);
+  padding: 1px 6px;
+  font-size: 13px;
+}
+
+/* 移动端 ≤960px: table padding 收窄 */
+@media screen and (max-width: 960px) {
+  .blog-content :deep(table td),
+  .blog-content :deep(table th) {
+    padding: 12px 16px;
+  }
+}
+
+/* 移动端 ≤600px: 更紧凑 */
+@media screen and (max-width: 600px) {
+  .blog-content :deep(table td),
+  .blog-content :deep(table th) {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+}
+
+/* ── 暗色主题表格 ── */
+:global([data-theme="dark"] .blog-content table th) {
+  background: var(--md-sys-color-surface-container-low, #1e1b1f);
+  color: var(--md-sys-color-on-surface-variant, #cac4d0);
+}
+
+:global([data-theme="dark"] .blog-content table td),
+:global([data-theme="dark"] .blog-content table th) {
+  border-top-color: var(--md-sys-color-surface-variant, #49454f);
+  border-right-color: var(--md-sys-color-surface-variant, #49454f);
+}
+
+:global([data-theme="dark"] .blog-content table td:last-child) {
+  border-left-color: var(--md-sys-color-surface-variant, #49454f);
+}
+
+:global([data-theme="dark"] .blog-content table td code) {
+  background: var(--md-sys-color-surface-container, #2b292b);
+}
+
 .blog-content :deep(blockquote) {
   border-left: 4px solid var(--md-sys-color-primary);
   padding-left: 20px;
