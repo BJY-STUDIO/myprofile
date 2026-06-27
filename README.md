@@ -1,14 +1,3 @@
----
-AIGC:
-  ContentProducer: '001191110102MAD55U9H0F10002'
-  ContentPropagator: '001191110102MAD55U9H0F10002'
-  Label: '1'
-  ProduceID: 'eb630e42-c722-4ea1-86cf-b337fb264ec2'
-  PropagateID: 'eb630e42-c722-4ea1-86cf-b337fb264ec2'
-  ReservedCode1: 'b6f0a8a2-965b-40bc-9fd0-eb6306bb9878'
-  ReservedCode2: 'b6f0a8a2-965b-40bc-9fd0-eb6306bb9878'
----
-
 # Kernel's Blog
 
 基于 Vue 3 + Material Web Components 的个人博客网站，严格遵循 Material Design 3 设计规范。全栈零成本部署于 Cloudflare Pages + Render + Neon PostgreSQL。
