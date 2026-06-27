@@ -204,6 +204,68 @@ const loadingFading = ref(false)   // 正在 fade 消失
 const progressValue = ref(0)       // 已确认进度
 const progressBuffer = ref(0.2)    // 预期缓冲进度
 
+// 进度条时间驱动推进器
+let progressTimer = null
+
+/**
+ * 启动进度条时间推进
+ * 每轮重试期间，按时间缓慢推进 progressValue（多段递进曲线），
+ * buffer 始终领先 value 一段距离，减少访客等待焦虑。
+ *
+ * 递进曲线设计（每段递减增速，避免线性拖沓感）：
+ *   0%   → 15%  快速起步（0~2s）
+ *   15%  → 40%  中速推进（2~8s）
+ *   40%  → 65%  减速缓行（8~20s）
+ *   65%  → 85%  逐渐停滞（20~45s）
+ *   85%+        几乎不再推进（等待最终结果）
+ */
+function startProgressAnimation(startValue = 0, startBuffer = 0.2) {
+  stopProgressAnimation()
+  progressValue.value = startValue
+  progressBuffer.value = startBuffer
+  loadingActive.value = true
+  loadingFading.value = false
+
+  const TICK_MS = 500  // 每 500ms 推进一步
+  progressTimer = setInterval(() => {
+    const v = progressValue.value
+    const b = progressBuffer.value
+    // 多段递进：根据当前进度选择增量
+    let dv, db
+    if (v < 0.15)      { dv = 0.025; db = 0.035 }  // 快速起步
+    else if (v < 0.40) { dv = 0.012; db = 0.020 }  // 中速推进
+    else if (v < 0.65) { dv = 0.006; db = 0.012 }  // 减速缓行
+    else if (v < 0.85) { dv = 0.002; db = 0.006 }  // 逐渐停滞
+    else               { dv = 0.0005; db = 0.002 } // 几乎不动
+
+    progressValue.value = Math.min(v + dv, 0.95)
+    progressBuffer.value = Math.min(b + db, 0.98)
+  }, TICK_MS)
+}
+
+/** 停止进度条推进器 */
+function stopProgressAnimation() {
+  if (progressTimer) {
+    clearInterval(progressTimer)
+    progressTimer = null
+  }
+}
+
+/**
+ * 重试轮次开始时，跳进进度条（给用户"又过了一关"的感觉）
+ * buffer 先跳，value 跟随滞后
+ */
+function onRetryAttempt(attempt) {
+  const maxAttempts = 5
+  // value 跳到当前轮次对应的基础位，但不超过 85%
+  const jumpedValue = Math.min(0.10 + (attempt / maxAttempts) * 0.60, 0.85)
+  // buffer 再多跳一步
+  const jumpedBuffer = Math.min(jumpedValue + 0.15, 0.95)
+  // 只往上跳，不回退
+  if (jumpedValue > progressValue.value) progressValue.value = jumpedValue
+  if (jumpedBuffer > progressBuffer.value) progressBuffer.value = jumpedBuffer
+}
+
 // 异步加载文章列表（用于 Up Next）
 let cancelListRetry = null
 
@@ -231,11 +293,9 @@ async function loadArticleList() {
 let cancelArticleRetry = null
 
 async function resolveArticle(slug) {
-  // 重置进度条状态
-  loadingActive.value = true
-  loadingFading.value = false
-  progressValue.value = 0
-  progressBuffer.value = 0.2
+  // 重置进度条并启动时间推进
+  stopProgressAnimation()
+  startProgressAnimation(0, 0.2)
 
   // 取消之前的重试
   if (cancelArticleRetry) {
@@ -253,10 +313,8 @@ async function resolveArticle(slug) {
       // 如果返回的是本地文章（API 暂不可达），启动后台重试
       const resolved = await getResolvedSource()
       if (resolved === 'local') {
-        loadingActive.value = true
-        loadingFading.value = false
-        progressValue.value = 0.15
-        progressBuffer.value = 0.35
+        // 重新显示进度条（后台正在尝试 API）
+        startProgressAnimation(0.15, 0.35)
         cancelArticleRetry = retryArticleFetch(
           slug,
           (apiArticle) => {
@@ -265,22 +323,16 @@ async function resolveArticle(slug) {
             resolvedSource.value = 'api'
             fadeOutProgress()
           },
-          ({ attempt }) => {
-            // 每轮重试：更新进度
-            progressValue.value = Math.min(0.15 + attempt * 0.15, 0.85)
-            progressBuffer.value = Math.min(0.35 + attempt * 0.12, 0.95)
-          },
+          ({ attempt }) => onRetryAttempt(attempt),
           () => {
-            // 所有重试耗尽（有本地文章兜底，用户已能看到内容）
+            // 所有重试耗尽（有本地文章兜底）
             fadeOutProgress()
           }
         )
       }
     } else {
       // getArticle 返回 null — 无本地降级的纯 API 文章
-      // 保持进度条可见，启动后台重试
-      progressValue.value = 0.05
-      progressBuffer.value = 0.2
+      // 进度条继续推进，启动后台重试
       cancelArticleRetry = retryArticleFetch(
         slug,
         (apiArticle) => {
@@ -288,18 +340,17 @@ async function resolveArticle(slug) {
           resolvedSource.value = 'api'
           fadeOutProgress()
         },
-        ({ attempt }) => {
-          progressValue.value = Math.min(attempt * 0.15, 0.85)
-          progressBuffer.value = Math.min(0.2 + attempt * 0.14, 0.95)
-        },
+        ({ attempt }) => onRetryAttempt(attempt),
         () => {
-          // 所有重试耗尽，进度条保持显示（无内容可展示）
+          // 所有重试耗尽，进度条保持显示
+          stopProgressAnimation()
           progressValue.value = progressBuffer.value
         }
       )
     }
   } catch {
     // getArticle 本身异常，进度条保持显示
+    stopProgressAnimation()
     progressValue.value = progressBuffer.value
   }
   // TOC 通过 watch(article) 自动重建
@@ -310,6 +361,7 @@ async function resolveArticle(slug) {
  * 先添加 fade class → CSS 过渡完成后再移除元素
  */
 function fadeOutProgress() {
+  stopProgressAnimation()
   loadingFading.value = true
   setTimeout(() => {
     loadingActive.value = false
@@ -627,6 +679,8 @@ watch(article, (val) => {
       // 为 v-html 内容绑定 copy link 事件委托
       bindVHtmlEvents()
       applyBulletRotations()
+      // 处理 URL hash 跳转（copy link 场景）
+      handleHashNavigation()
       return
     }
 
@@ -640,17 +694,36 @@ watch(article, (val) => {
         // 异步组件也需要绑定事件
         bindVHtmlEvents()
         applyBulletRotations()
+        // 处理 URL hash 跳转
+        handleHashNavigation()
       }
     })
     contentMutationObserver.observe(blogContentRef.value, { childList: true, subtree: true })
   })
 }, { immediate: true })
 
+/**
+ * 处理 URL hash 跳转
+ * 从 copy link 访问带 #fragment 的 URL 时，文章尚未加载无法跳转，
+ * 此函数在文章 DOM 就绪后补做跳转。
+ */
+function handleHashNavigation() {
+  const hash = route.hash
+  if (!hash) return
+  const id = hash.substring(1)  // 去掉 #
+  if (!id) return
+  // 使用 scrollToHeading 实现一致的滚动行为
+  nextTick(() => {
+    scrollToHeading(id)
+  })
+}
+
 onUnmounted(() => {
   if (observer) observer.disconnect()
   if (contentMutationObserver) contentMutationObserver.disconnect()
   if (cancelArticleRetry) cancelArticleRetry()
   if (cancelListRetry) cancelListRetry()
+  stopProgressAnimation()
   // 清理 v-html 事件委托
   if (blogContentRef.value) {
     blogContentRef.value.removeEventListener('click', handleVHtmlClick)
@@ -659,8 +732,11 @@ onUnmounted(() => {
 
 watch(() => route.params.slug, () => {
   // 同组件路由切换时滚动到顶部（滚动容器是 main.app-main，不是 window）
-  const main = document.querySelector('main.app-main')
-  if (main) main.scrollTo({ top: 0, behavior: 'instant' })
+  // 如果 URL 包含 hash，则不滚动顶部，由 handleHashNavigation 处理跳转
+  if (!route.hash) {
+    const main = document.querySelector('main.app-main')
+    if (main) main.scrollTo({ top: 0, behavior: 'instant' })
+  }
   // TOC 将通过 watch(article) 重新构建
 })
 </script>
