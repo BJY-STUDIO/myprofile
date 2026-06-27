@@ -127,14 +127,16 @@ function remapHljsToCm(html) {
 }
 
 // ===== bash/shell 后处理器 — 增强 hljs 不擅长的场景 =====
-// 问题：bash 模式将 curl -d '{...}' 内的 JSON 全部归为"字符串"，URL / 变量赋值也无着色
-// 方案：hljs.highlight() 输出后，对 bash/shell 结果做二次处理：
-//   1. 提取字符串内的 JSON 内容并用 hljs JSON 重新着色
-//   2. 标记裸 URL 为 hljs-link（映射为 cm-string 着色）
+// 问题：hljs bash 模式的不足：
+//   1. curl -d '{...}' 内的 JSON 全部归为"字符串"
+//   2. 现代 CLI 命令（npm, git, curl, docker 等）不被识别
+//   3. -x / --xxx 形式的 flag 参数无着色
+//   4. 裸 URL（含 postgresql:// 等非 HTTP 协议）无着色
+// 方案：hljs.highlight() 输出后，对 bash/shell 结果做二次处理
 function enhanceBashHighlighting(html) {
   let result = html
 
-  // 重新着色 bash 单引号字符串内的 JSON
+  // ① 重新着色 bash 单引号字符串内的 JSON
   // 模式：<span class="hljs-string">&#x27;{ ... }&#x27;</span>
   result = result.replace(
     /<span class="hljs-string">&#x27;(\{[\s\S]*?\})&#x27;<\/span>/g,
@@ -150,7 +152,7 @@ function enhanceBashHighlighting(html) {
     }
   )
 
-  // 重新着色 bash 双引号字符串内的 JSON
+  // ② 重新着色 bash 双引号字符串内的 JSON
   // 模式：<span class="hljs-string">&quot;{ ... }&quot;</span>
   result = result.replace(
     /<span class="hljs-string">&quot;(\{[\s\S]*?\})&quot;<\/span>/g,
@@ -166,12 +168,45 @@ function enhanceBashHighlighting(html) {
     }
   )
 
-  // 标记裸 URL（不在已有 span 内的各种协议链接）
-  // 方案：按 <span>/<span/> 标签拆分 HTML，仅在 depth=0（span 外部）的文本节点中匹配 URL
-  // 这样避免两个问题：
-  //   1. lookbehind (?<![="]) 会误拒 VAR=postgresql://... 也会部分匹配 ttps://
-  //   2. 已在 <span class="hljs-string"> 内的 URL 不应被重复包装
-  const URL_RE = /[a-z][a-z0-9+.-]*:\/\/[^\s<"'\\]+/g
+  // ③④ 对 span 外部的文本节点做增强：命令着色 + flag 着色 + URL 着色
+  // 方案：按 <span>/<span/> 标签拆分 HTML，仅在 depth=0 的文本节点中处理
+  // hljs-built_in 映射为 cm-variable（命令），hljs-attr 映射为 cm-property（flag）
+  const DEV_COMMANDS = [
+    // 多部分命令需排最前（最长优先匹配，避免 docker-compose 只匹配到 docker）
+    'docker-compose', 'apt-get',
+    // Node.js / JS ecosystem
+    'npm', 'npx', 'yarn', 'pnpm', 'bun', 'deno', 'node',
+    // Git / VCS
+    'git', 'svn', 'hg',
+    // Network
+    'curl', 'wget', 'ssh', 'scp', 'rsync', 'ping', 'nc',
+    // Docker / containers
+    'docker', 'podman', 'kubectl', 'helm',
+    // Python
+    'python', 'python3', 'pip', 'pip3', 'conda', 'poetry', 'uv',
+    // Build tools
+    'make', 'cmake', 'gradle', 'mvn', 'cargo', 'rustc',
+    // Cloud / infra
+    'aws', 'gcloud', 'az', 'terraform', 'ansible', 'vagrant',
+    // Package managers (system)
+    'apt', 'yum', 'dnf', 'brew', 'pacman', 'apk',
+    // Other dev tools
+    'jq', 'yq', 'rg', 'fd', 'bat', 'exa', 'eza', 'fzf',
+    'tsc', 'eslint', 'prettier', 'vite', 'webpack', 'rollup',
+    'rails', 'bundle', 'gem', 'go',
+  ]
+  // 按长度降序排列，确保 docker-compose 优先于 docker 匹配
+  DEV_COMMANDS.sort((a, b) => b.length - a.length)
+
+  // 命令正则：(^|[\s/]) = 左边界（行首或空白）；lookahead = 右边界（空白或 shell 元字符）
+  const commandPattern = new RegExp(
+    `(^|[\\s/])(${DEV_COMMANDS.join('|')})(?=[\\s&|;>($"\`']|$)`, 'g'
+  )
+  // flag 正则：-x 或 --xxx（前面必须是空白或行首/左括号）
+  const flagPattern = /(?:^|[\s(])(-{1,2}[a-zA-Z][\w-]*)/g
+  // URL 正则
+  const urlPattern = /[a-z][a-z0-9+.-]*:\/\/[^\s<"'\\]+/g
+
   const TAG_RE = /(<\/?span[^>]*>)/g
   const parts = result.split(TAG_RE)
   let depth = 0
@@ -185,11 +220,17 @@ function enhanceBashHighlighting(html) {
       return part
     }
     if (depth > 0) {
-      // 在 span 内部 — 不做 URL 增强
+      // 在 span 内部 — 不做增强
       return part
     }
-    // depth=0 — 文本节点，增强 URL
-    return part.replace(URL_RE, url => `<span class="hljs-link">${url}</span>`)
+    // depth=0 — 文本节点，依次增强
+    // 先标记 URL（避免 URL 中的 - 被误匹配为 flag）
+    part = part.replace(urlPattern, url => `<span class="hljs-link">${url}</span>`)
+    // 标记 flag
+    part = part.replace(flagPattern, (m, flag) => m.replace(flag, `<span class="hljs-attr">${flag}</span>`))
+    // 标记命令（保留前缀空白/斜杠）
+    part = part.replace(commandPattern, (_m, prefix, cmd) => `${prefix}<span class="hljs-built_in">${cmd}</span>`)
+    return part
   }).join('')
 
   return result
