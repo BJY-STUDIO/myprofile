@@ -124,34 +124,20 @@
     <MioFooter />
   </div>
 
-  <!-- ======== 加载失败 — 错误状态 ======== -->
-  <div class="editorial" v-else-if="fetchError">
-    <div class="content-container no-toc">
-      <article class="blog-section">
-        <div class="error-state">
-          <md-icon class="error-icon">cloud_off</md-icon>
-          <h2>无法加载文章</h2>
-          <p class="error-body">服务器暂时无法响应，请稍后重试。</p>
-          <md-filled-button @click="manualRetry">
-            <md-icon slot="icon">refresh</md-icon>
-            重新加载
-          </md-filled-button>
-        </div>
-      </article>
-    </div>
-    <MioFooter />
-  </div>
+  <!-- ======== 缓冲进度条（加载中显示，加载完成后 fade 消失） ======== -->
+  <md-linear-progress
+    v-if="loadingActive"
+    :class="{ 'loading-progress--fading': loadingFading }"
+    class="loading-progress"
+    :value="progressValue"
+    :buffer="progressBuffer"
+  ></md-linear-progress>
 
   <!-- ======== 骨架屏（文章加载中 — 整页切换，非逐段消失） ======== -->
-  <div class="editorial" v-else>
+  <div class="editorial" v-if="!article">
     <div class="content-container no-toc">
       <article class="blog-section">
-        <!-- 重试中提示 -->
-        <div class="retry-banner" v-if="retrying">
-          <md-circular-progress indeterminate :size="20"></md-circular-progress>
-          <span>正在重试… ({{ retryCount }}/{{ maxRetries }})</span>
-        </div>
-        <div class="authors" :class="{ 'authors--with-banner': retrying }">
+        <div class="authors">
           <p class="overline skeleton" style="height:14px;width:80px;"></p>
           <div class="byline">
             <div class="skeleton" style="width:40px;height:40px;border-radius:50%;"></div>
@@ -196,7 +182,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { getArticle, getArticleIndex, retryArticleFetch, retryArticleIndexFetch, getResolvedSource, resetApiDetection } from '@/services/articleService'
+import { getArticle, getArticleIndex, retryArticleFetch, retryArticleIndexFetch, getResolvedSource } from '@/services/articleService'
 import MioFooter from '@/components/common/MioFooter.vue'
 
 const route = useRoute()
@@ -212,11 +198,11 @@ const article = ref(null)
 const articleList = ref({})  // 用于 Up Next
 const resolvedSource = ref('local')
 
-// ======== 重试状态管理 ========
-const fetchError = ref(false)   // 所有重试耗尽，显示错误状态
-const retrying = ref(false)     // 正在后台重试中
-const retryCount = ref(0)       // 当前重试轮次
-const maxRetries = 5            // 对应 articleService 的 MAX_RETRY_ATTEMPTS
+// ======== 缓冲进度条状态 ========
+const loadingActive = ref(false)   // 进度条是否可见
+const loadingFading = ref(false)   // 正在 fade 消失
+const progressValue = ref(0)       // 已确认进度
+const progressBuffer = ref(0.2)    // 预期缓冲进度
 
 // 异步加载文章列表（用于 Up Next）
 let cancelListRetry = null
@@ -245,10 +231,11 @@ async function loadArticleList() {
 let cancelArticleRetry = null
 
 async function resolveArticle(slug) {
-  // 重置状态
-  fetchError.value = false
-  retrying.value = false
-  retryCount.value = 0
+  // 重置进度条状态
+  loadingActive.value = true
+  loadingFading.value = false
+  progressValue.value = 0
+  progressBuffer.value = 0.2
 
   // 取消之前的重试
   if (cancelArticleRetry) {
@@ -260,67 +247,74 @@ async function resolveArticle(slug) {
     const data = await getArticle(slug)
     if (data) {
       article.value = data
+      // 加载成功 → fade 进度条
+      fadeOutProgress()
+
       // 如果返回的是本地文章（API 暂不可达），启动后台重试
       const resolved = await getResolvedSource()
       if (resolved === 'local') {
+        loadingActive.value = true
+        loadingFading.value = false
+        progressValue.value = 0.15
+        progressBuffer.value = 0.35
         cancelArticleRetry = retryArticleFetch(
           slug,
           (apiArticle) => {
-            // 重试成功：更新文章数据
+            // 重试成功：静默更新文章数据
             article.value = apiArticle
             resolvedSource.value = 'api'
-            retrying.value = false
-            fetchError.value = false
+            fadeOutProgress()
           },
           ({ attempt }) => {
-            // 每轮重试开始
-            retrying.value = true
-            retryCount.value = attempt
+            // 每轮重试：更新进度
+            progressValue.value = Math.min(0.15 + attempt * 0.15, 0.85)
+            progressBuffer.value = Math.min(0.35 + attempt * 0.12, 0.95)
           },
           () => {
-            // 所有重试耗尽
-            retrying.value = false
-            // 有本地文章就不显示错误状态，用户已经能看到内容
+            // 所有重试耗尽（有本地文章兜底，用户已能看到内容）
+            fadeOutProgress()
           }
         )
       }
     } else {
       // getArticle 返回 null — 无本地降级的纯 API 文章
-      // 启动后台重试
+      // 保持进度条可见，启动后台重试
+      progressValue.value = 0.05
+      progressBuffer.value = 0.2
       cancelArticleRetry = retryArticleFetch(
         slug,
         (apiArticle) => {
           article.value = apiArticle
           resolvedSource.value = 'api'
-          retrying.value = false
-          fetchError.value = false
+          fadeOutProgress()
         },
         ({ attempt }) => {
-          retrying.value = true
-          retryCount.value = attempt
+          progressValue.value = Math.min(attempt * 0.15, 0.85)
+          progressBuffer.value = Math.min(0.2 + attempt * 0.14, 0.95)
         },
         () => {
-          // 所有重试耗尽，无本地降级
-          retrying.value = false
-          fetchError.value = true
+          // 所有重试耗尽，进度条保持显示（无内容可展示）
+          progressValue.value = progressBuffer.value
         }
       )
     }
   } catch {
-    // getArticle 本身异常
-    fetchError.value = true
+    // getArticle 本身异常，进度条保持显示
+    progressValue.value = progressBuffer.value
   }
   // TOC 通过 watch(article) 自动重建
 }
 
 /**
- * 手动重试（用户点击"重新加载"按钮）
- * 重置 API 检测状态，重新走一遍 resolveArticle 流程
+ * 进度条 fade 消失
+ * 先添加 fade class → CSS 过渡完成后再移除元素
  */
-function manualRetry() {
-  resetApiDetection()
-  article.value = null
-  resolveArticle(route.params.slug)
+function fadeOutProgress() {
+  loadingFading.value = true
+  setTimeout(() => {
+    loadingActive.value = false
+    loadingFading.value = false
+  }, 400)  // 与 CSS transition 时长一致
 }
 
 // 初始解析
@@ -981,69 +975,23 @@ watch(() => route.params.slug, () => {
 }
 
 /* ================================================================
-   错误状态（所有重试耗尽）
-   M3 风格：居中、柔和色调、可操作的 CTA
+   缓冲进度条（md-linear-progress）
+   桌面端：右侧内容区顶端 full-width，不在 nav rail 区域
+   移动端：top app bar 正下方 0 margin
+   加载完成后 fade 消失
    ================================================================ */
-.error-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 80px 24px;
-  margin: 80px 24px 0;
+.loading-progress {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  width: 100%;
+  --md-linear-progress-active-indicator-color: var(--md-sys-color-primary, #6750a4);
+  --md-linear-progress-track-color: var(--md-sys-color-surface-container-highest, #e6e0e9);
+  transition: opacity 400ms ease-out;
 }
 
-.error-state .error-icon {
-  font-size: 48px;
-  width: 48px;
-  height: 48px;
-  color: var(--md-sys-color-on-surface-variant, #4d4256);
-  margin-bottom: 24px;
-}
-
-.error-state h2 {
-  font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
-  font-size: 22px;
-  font-weight: 400;
-  line-height: 28px;
-  color: var(--md-sys-color-on-surface, #1d1b20);
-  margin: 0 0 12px;
-}
-
-.error-state .error-body {
-  font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 20px;
-  letter-spacing: 0.25px;
-  color: var(--md-sys-color-on-surface-variant, #4d4256);
-  margin: 0 0 24px;
-}
-
-/* ================================================================
-   重试 Banner（覆盖在骨架屏顶部）
-   M3 风格：低调的提示条，不干扰骨架屏视觉
-   ================================================================ */
-.retry-banner {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  margin: 80px 24px 0;
-  border-radius: 12px;
-  background: var(--md-sys-color-surface-container-low, #f7f2fa);
-  font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 20px;
-  letter-spacing: 0.25px;
-  color: var(--md-sys-color-on-surface-variant, #4d4256);
-}
-
-/* 重试 banner 显示时，骨架屏 authors 去掉顶部 80px margin */
-.authors--with-banner {
-  margin-top: 0 !important;
+.loading-progress--fading {
+  opacity: 0;
 }
 
 /* ================================================================
