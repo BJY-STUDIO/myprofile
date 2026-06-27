@@ -40,37 +40,19 @@ import hljs from 'highlight.js/lib/core'
 import { highlightWithLezer, isLezerSupported } from './lezerHighlight.js'
 
 // 按需注册 highlight.js 语言（仅 Lezer 不支持的语言）
-// Lezer 支持：javascript, js, typescript, ts, html, css, json, python, py, java, xml, markdown, md
-// hljs 保留：bash, shell, yaml, yml, sql
+// Lezer 支持：javascript, js, typescript, ts, html, css, json, python, py, java, xml
+// hljs 保留：bash, shell, yaml, yml, sql（Lezer 无对应语法包）
 import bash from 'highlight.js/lib/languages/bash'
-import python from 'highlight.js/lib/languages/python'
 import sql from 'highlight.js/lib/languages/sql'
 import yaml from 'highlight.js/lib/languages/yaml'
 import shell from 'highlight.js/lib/languages/shell'
-import javascript from 'highlight.js/lib/languages/javascript'
-import xml from 'highlight.js/lib/languages/xml'
-import css from 'highlight.js/lib/languages/css'
-import json from 'highlight.js/lib/languages/json'
-import java from 'highlight.js/lib/languages/java'
-import typescript from 'highlight.js/lib/languages/typescript'
 
 hljs.registerLanguage('bash', bash)
 hljs.registerLanguage('shell', shell)
-hljs.registerLanguage('python', python)
-hljs.registerLanguage('py', python)
+hljs.registerLanguage('sh', shell)
 hljs.registerLanguage('sql', sql)
 hljs.registerLanguage('yaml', yaml)
 hljs.registerLanguage('yml', yaml)
-// hljs 后备注册（Lezer 主用，hljs 作为回退）
-hljs.registerLanguage('javascript', javascript)
-hljs.registerLanguage('js', javascript)
-hljs.registerLanguage('xml', xml)
-hljs.registerLanguage('html', xml)
-hljs.registerLanguage('css', css)
-hljs.registerLanguage('json', json)
-hljs.registerLanguage('java', java)
-hljs.registerLanguage('typescript', typescript)
-hljs.registerLanguage('ts', typescript)
 
 // ===== hljs → CodeMirror token 类名映射 =====
 // M3 官方使用 CodeMirror 的 cm-s-neo 主题，token 类名为 cm-variable / cm-keyword 等
