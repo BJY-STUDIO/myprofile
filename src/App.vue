@@ -586,7 +586,10 @@ const bodyMarginLeft = computed(() => {
   opacity: 0;
 }
 
-/* ======== 移动端顶部 App Bar ======== */
+/* ======== 移动端顶部 App Bar（严格对照 M3 Small Top App Bar specs） ======== */
+/* M3 specs: container height=64dp, leading icon padding=16dp, trailing icon padding=16dp */
+/* M3 specs: title font=22sp/28lh/400, title start=32dp from container edge (with leading icon) */
+/* M3 specs: trailing icon spacing=12dp */
 .mobile-top-bar {
   display: none;
   position: sticky;
@@ -595,14 +598,22 @@ const bodyMarginLeft = computed(() => {
   height: 64px;
   background-color: var(--md-sys-color-surface, #fffbfe);
   align-items: center;
-  padding: 0 4px 0 4px;
-  gap: 4px;
+  padding: 0 4px;
 }
 
+/* M3 specs: leading icon = 48x48dp icon button, padding 16dp from container edge */
+/* M3 live: btn left=4dp → bar padding-left:4dp provides this, no extra margin needed */
 .mobile-top-bar__menu-btn {
   --md-icon-button-icon-size: 24px;
+  --md-icon-button-icon-color: var(--md-sys-color-on-surface-variant, #49454f);
+  width: 48px;
+  height: 48px;
 }
 
+/* M3 specs: title 22sp, line-height 28sp, font-weight 400 */
+/* M3 specs: title start padding = 32dp from container edge (with leading icon) */
+/* M3 live: btn right(52) + 6px gap = title-left 58px */
+/* current: 4px bar-pad + 48px btn + 6px margin = 58px ✓ */
 .mobile-top-bar__title {
   flex: 1;
   font-size: 22px;
@@ -610,12 +621,14 @@ const bodyMarginLeft = computed(() => {
   color: var(--md-sys-color-on-surface, #1c1b1f);
   line-height: 28px;
   text-decoration: none;
+  margin-left: 6px;
 }
 
+/* M3 specs: trailing icon spacing = 12dp between icons */
 .mobile-top-bar__actions {
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: 12px;
 }
 
 .mobile-top-bar__icon-btn {
@@ -1430,10 +1443,17 @@ const bodyMarginLeft = computed(() => {
   border-left-color: var(--md-sys-color-surface-variant, #49454f);
 }
 
-:global([data-theme="dark"]) .mobile-top-bar__menu-btn,
+:global([data-theme="dark"]) .mobile-top-bar__menu-btn {
+  --md-icon-button-icon-color: var(--md-sys-color-on-surface-variant, #cac4d0);
+}
+
 :global([data-theme="dark"]) .mobile-top-bar__icon-btn,
 :global([data-theme="dark"]) .mobile-top-bar__theme-btn {
   color: var(--md-sys-color-on-surface-variant, #cac4d0);
+}
+
+:global([data-theme="dark"]) .mobile-top-bar__theme-btn {
+  --md-icon-button-icon-color: var(--md-sys-color-on-surface-variant, #cac4d0);
 }
 
 :global([data-theme="dark"]) .theme-panel__header-icon {
