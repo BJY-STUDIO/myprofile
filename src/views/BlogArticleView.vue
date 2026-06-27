@@ -123,12 +123,49 @@
     <!-- ======== Footer ======== -->
     <MioFooter />
   </div>
+
+  <!-- ======== 骨架屏（文章加载中） ======== -->
+  <div class="editorial" v-else>
+    <div class="content-container no-toc">
+      <article class="blog-section">
+        <div class="authors">
+          <p class="overline skeleton" style="height:14px;width:80px;"></p>
+          <div class="byline">
+            <div class="skeleton" style="width:40px;height:40px;border-radius:50%;"></div>
+            <div class="author-info">
+              <span class="skeleton" style="display:block;height:14px;width:90px;margin-bottom:4px;"></span>
+              <span class="skeleton" style="display:block;height:12px;width:60px;"></span>
+            </div>
+          </div>
+        </div>
+        <hr class="separator" />
+        <div class="blog-content skeleton-article">
+          <div class="skeleton-block">
+            <div class="skeleton skeleton-heading"></div>
+            <div class="skeleton skeleton-paragraph" style="width:95%;"></div>
+            <div class="skeleton skeleton-paragraph" style="width:85%;"></div>
+            <div class="skeleton skeleton-paragraph" style="width:70%;"></div>
+            <div class="skeleton skeleton-code"></div>
+            <div class="skeleton skeleton-paragraph" style="width:90%;"></div>
+            <div class="skeleton skeleton-paragraph" style="width:60%;"></div>
+          </div>
+          <div class="skeleton-block">
+            <div class="skeleton skeleton-heading"></div>
+            <div class="skeleton skeleton-paragraph" style="width:95%;"></div>
+            <div class="skeleton skeleton-paragraph" style="width:80%;"></div>
+            <div class="skeleton skeleton-code"></div>
+            <div class="skeleton skeleton-paragraph" style="width:85%;"></div>
+          </div>
+        </div>
+      </article>
+    </div>
+    <MioFooter />
+  </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { articles as localArticles, defaultSlug as localDefaultSlug } from '@/articles'
 import { getArticle, getArticleIndex, retryArticleFetch, retryArticleIndexFetch, getResolvedSource } from '@/services/articleService'
 import MioFooter from '@/components/common/MioFooter.vue'
 
@@ -139,9 +176,10 @@ const route = useRoute()
 //   - auto 模式：优先 API，不可达时回退本地
 //   - local 模式：直接本地
 //   - api 模式：仅 API
+// 加载中 article=null → 显示骨架屏
 
 const article = ref(null)
-const articleList = ref(localArticles)  // 用于 Up Next，初始用本地（同步可立即显示）
+const articleList = ref({})  // 用于 Up Next
 const resolvedSource = ref('local')
 
 // 异步加载文章列表（用于 Up Next）
@@ -163,7 +201,7 @@ async function loadArticleList() {
       })
     }
   } catch {
-    // 保持本地数据
+    // 保持空数据，骨架屏继续显示
   }
 }
 
@@ -179,10 +217,10 @@ async function resolveArticle(slug) {
 
   try {
     const data = await getArticle(slug)
-    article.value = data || localArticles[slug] || localArticles[localDefaultSlug] || Object.values(localArticles)[0]
-
+    if (data) {
+      article.value = data
+    }
     // 如果返回的是本地文章（API 暂不可达），启动后台重试
-    // 判断依据：resolvedSource 是 local，或者 article 没有 content（纯本地无content文章）
     const resolved = await getResolvedSource()
     if (resolved === 'local') {
       cancelArticleRetry = retryArticleFetch(slug, (apiArticle) => {
@@ -191,8 +229,7 @@ async function resolveArticle(slug) {
       })
     }
   } catch {
-    // 降级到本地
-    article.value = localArticles[slug] || localArticles[localDefaultSlug] || Object.values(localArticles)[0]
+    // 文章获取失败，保持 article=null 显示骨架屏
   }
   // TOC 通过 watch(article) 自动重建
 }
@@ -1069,10 +1106,16 @@ watch(() => route.params.slug, () => {
    字体: Google Sans Mono 15px/500/32px, GRAD 0, opsz 17
    ================================================================ */
 
-/* mio-code-snippet 外层 display:block, margin-top:56px */
+/* mio-code-snippet 外层 display:block, margin-top:56px, margin-bottom:24px（对照 M3 官方） */
 .blog-content :deep(mio-code-snippet) {
   display: block;
   margin-top: 56px;
+  margin-bottom: 0;
+}
+
+/* p 紧跟在 mio-code-snippet 之后 — 对照 M3: margin-top 56px（视觉分隔代码块与正文） */
+.blog-content :deep(mio-code-snippet + p) {
+  margin-top: 32px;
 }
 
 /* mio-code-snippet__container — 纯 wrapper，无 bg/padding/margin */
@@ -1091,6 +1134,12 @@ watch(() => route.params.slug, () => {
   line-height: normal;
   position: relative;
   overflow: hidden;
+}
+
+/* .CodeMirror-scroll — 对照 M3 官方: overflow-x scroll（移动端长代码横向滚动） */
+.blog-content :deep(.mio-code-snippet__container .CodeMirror-scroll) {
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 /* .CodeMirror-lines padding */
@@ -1129,6 +1178,16 @@ watch(() => route.params.slug, () => {
   .blog-content :deep(.mio-code-snippet__container pre.CodeMirror-line) {
     padding-left: 16px;
     padding-right: 16px;
+  }
+}
+
+/* 移动端 ≤600px: code snippet 更紧凑的间距 */
+@media screen and (max-width: 600px) {
+  .blog-content :deep(mio-code-snippet) {
+    margin-top: 32px;
+  }
+  .blog-content :deep(mio-code-snippet + p) {
+    margin-top: 24px;
   }
 }
 
@@ -1730,44 +1789,56 @@ watch(() => route.params.slug, () => {
   color: #eeffff;
 }
 
-/* 暗色主题 — 语法高亮色彩（对照 m3 cm-s-material-darker） */
+/* 暗色主题 — 语法高亮色彩（同时覆盖 cm-s-neo 和 cm-s-material-darker） */
+:global([data-theme="dark"] .blog-content .cm-s-neo .cm-variable),
+:global([data-theme="dark"] .blog-content .cm-s-neo .cm-qualifier),
 :global([data-theme="dark"] .blog-content .cm-s-material-darker .cm-variable) {
   color: #f07178;
 }
 
+:global([data-theme="dark"] .blog-content .cm-s-neo .cm-keyword),
+:global([data-theme="dark"] .blog-content .cm-s-neo .cm-property),
 :global([data-theme="dark"] .blog-content .cm-s-material-darker .cm-keyword),
 :global([data-theme="dark"] .blog-content .cm-s-material-darker .cm-property) {
   color: #c792ea;
 }
 
+:global([data-theme="dark"] .blog-content .cm-s-neo .cm-number),
 :global([data-theme="dark"] .blog-content .cm-s-material-darker .cm-number) {
   color: #ff5370;
 }
 
+:global([data-theme="dark"] .blog-content .cm-s-neo .cm-atom),
 :global([data-theme="dark"] .blog-content .cm-s-material-darker .cm-atom) {
   color: #f78c6c;
 }
 
+:global([data-theme="dark"] .blog-content .cm-s-neo .cm-string),
 :global([data-theme="dark"] .blog-content .cm-s-material-darker .cm-string) {
   color: #c3e88d;
 }
 
+:global([data-theme="dark"] .blog-content .cm-s-neo .cm-operator),
 :global([data-theme="dark"] .blog-content .cm-s-material-darker .cm-operator) {
   color: #89ddff;
 }
 
+:global([data-theme="dark"] .blog-content .cm-s-neo .cm-comment),
 :global([data-theme="dark"] .blog-content .cm-s-material-darker .cm-comment) {
   color: #545454;
 }
 
-:global([data-theme="dark"] .blog-content .cm-s-material-darker .cm-def) {
-  color: #82aaff;
-}
-
+:global([data-theme="dark"] .blog-content .cm-s-neo .cm-tag),
 :global([data-theme="dark"] .blog-content .cm-s-material-darker .cm-tag) {
   color: #ff5370;
 }
 
+:global([data-theme="dark"] .blog-content .cm-s-neo .cm-def),
+:global([data-theme="dark"] .blog-content .cm-s-material-darker .cm-def) {
+  color: #82aaff;
+}
+
+:global([data-theme="dark"] .blog-content .cm-s-neo .cm-attribute),
 :global([data-theme="dark"] .blog-content .cm-s-material-darker .cm-attribute) {
   color: #c792ea;
 }

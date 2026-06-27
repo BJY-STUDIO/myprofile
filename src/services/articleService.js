@@ -36,6 +36,94 @@
 
 import { defineAsyncComponent } from 'vue'
 import { marked, Renderer } from 'marked'
+import hljs from 'highlight.js/lib/core'
+
+// 按需注册 highlight.js 语言（减小 bundle 体积）
+import javascript from 'highlight.js/lib/languages/javascript'
+import xml from 'highlight.js/lib/languages/xml'
+import css from 'highlight.js/lib/languages/css'
+import json from 'highlight.js/lib/languages/json'
+import bash from 'highlight.js/lib/languages/bash'
+import python from 'highlight.js/lib/languages/python'
+import sql from 'highlight.js/lib/languages/sql'
+import yaml from 'highlight.js/lib/languages/yaml'
+import java from 'highlight.js/lib/languages/java'
+import typescript from 'highlight.js/lib/languages/typescript'
+import shell from 'highlight.js/lib/languages/shell'
+hljs.registerLanguage('javascript', javascript)
+hljs.registerLanguage('js', javascript)
+hljs.registerLanguage('xml', xml)
+hljs.registerLanguage('html', xml)
+hljs.registerLanguage('css', css)
+hljs.registerLanguage('json', json)
+hljs.registerLanguage('bash', bash)
+hljs.registerLanguage('shell', shell)
+hljs.registerLanguage('python', python)
+hljs.registerLanguage('py', python)
+hljs.registerLanguage('sql', sql)
+hljs.registerLanguage('yaml', yaml)
+hljs.registerLanguage('yml', yaml)
+hljs.registerLanguage('java', java)
+hljs.registerLanguage('typescript', typescript)
+hljs.registerLanguage('ts', typescript)
+
+// ===== hljs → CodeMirror token 类名映射 =====
+// M3 官方使用 CodeMirror 的 cm-s-neo 主题，token 类名为 cm-variable / cm-keyword 等
+// highlight.js 使用 hljs-title / hljs-keyword 等，需要映射以复用现有 CSS
+const hljsToCm = {
+  'hljs-keyword': 'cm-keyword',
+  'hljs-built_in': 'cm-variable',
+  'hljs-type': 'cm-variable',
+  'hljs-literal': 'cm-atom',
+  'hljs-number': 'cm-number',
+  'hljs-operator': 'cm-operator',
+  'hljs-punctuation': 'cm-operator',
+  'hljs-property': 'cm-property',
+  'hljs-title': 'cm-property',
+  'hljs-title class_': 'cm-variable',
+  'hljs-title function_': 'cm-variable',
+  'hljs-class': 'cm-variable',
+  'hljs-function': 'cm-variable',
+  'hljs-variable': 'cm-variable',
+  'hljs-variable language_': 'cm-variable',
+  'hljs-variable constant_': 'cm-number',
+  'hljs-symbol': 'cm-number',
+  'hljs-attr': 'cm-property',
+  'hljs-attribute': 'cm-property',
+  'hljs-selector-tag': 'cm-tag',
+  'hljs-selector-class': 'cm-variable',
+  'hljs-selector-id': 'cm-variable',
+  'hljs-selector-attr': 'cm-property',
+  'hljs-name': 'cm-tag',
+  'hljs-tag': 'cm-tag',
+  'hljs-subst': 'cm-variable',
+  'hljs-template-tag': 'cm-keyword',
+  'hljs-template-variable': 'cm-variable',
+  'hljs-comment': 'cm-comment',
+  'hljs-doctag': 'cm-comment',
+  'hljs-meta': 'cm-comment',
+  'hljs-string': 'cm-string',
+  'hljs-regexp': 'cm-string',
+  'hljs-addition': 'cm-string',
+  'hljs-deletion': 'cm-string',
+  'hljs-params': 'cm-variable',
+  'hljs-section': 'cm-keyword',
+}
+
+/**
+ * 将 highlight.js 输出的 HTML 中的 hljs-* 类名替换为 cm-* 类名
+ * hljs 输出格式: <span class="hljs-keyword">const</span>
+ * 目标格式: <span class="cm-keyword">const</span>
+ */
+function remapHljsToCm(html) {
+  return html.replace(/class="([^"]*hljs[^"]*)"/g, (match, classList) => {
+    const classes = classList.split(/\s+/)
+    const mapped = classes.map(cls => hljsToCm[cls] || cls)
+    // 去重并过滤掉残留的 hljs-* 类
+    const unique = [...new Set(mapped.filter(c => !c.startsWith('hljs')))]
+    return unique.length > 0 ? `class="${unique.join(' ')}"` : ''
+  })
+}
 
 // ===== 配置 =====
 const ARTICLE_SOURCE = import.meta.env.VITE_ARTICLE_SOURCE || 'auto'
@@ -79,19 +167,43 @@ m3Renderer.code = function(code, infostring, escaped) {
   // 兼容不同 marked 版本的参数格式：
   // - marked v12 CJS: code(code, infostring, escaped)
   // - marked v13+: code({text, lang, escaped})
-  let codeText
+  let codeText, lang
   if (typeof code === 'object' && code !== null) {
     codeText = code.text
+    lang = code.lang
   } else {
     codeText = code
+    lang = infostring
   }
-  const escapedCode = codeText
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .trimEnd()
-  const lines = escapedCode.split('\n')
-  const preLines = lines.map(line => `<pre class="CodeMirror-line">${line}</pre>`).join('')
+
+  // 使用 highlight.js 进行语法高亮
+  let highlighted
+  if (lang && hljs.getLanguage(lang)) {
+    try {
+      highlighted = hljs.highlight(codeText, { language: lang }).value
+    } catch {
+      highlighted = codeText
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+    }
+  } else {
+    // 无语言标识或不支持的语言，尝试自动检测
+    try {
+      highlighted = hljs.highlightAuto(codeText).value
+    } catch {
+      highlighted = codeText
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+    }
+  }
+
+  // 将 hljs-* 类名映射为 CodeMirror cm-* 类名
+  const remapped = remapHljsToCm(highlighted)
+  // 按行拆分并包裹在 <pre class="CodeMirror-line"> 中
+  const lines = remapped.trimEnd().split('\n')
+  const preLines = lines.map(line => `<pre class="CodeMirror-line"><span role="presentation" style="padding-right: 0.1px;">${line || ' '}</span></pre>`).join('')
   return `<mio-code-snippet><div class="mio-code-snippet__container"><div class="CodeMirror cm-s-neo CodeMirror-wrap" translate="no"><div class="CodeMirror-scroll"><div class="CodeMirror-sizer"><div class="CodeMirror-lines"><div class="CodeMirror-code">${preLines}</div></div></div></div></div></div></mio-code-snippet>`
 }
 

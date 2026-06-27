@@ -65,6 +65,30 @@
 
           <!-- card-set（对照 m3: mio-card-set, grid, gap 8px） -->
           <div class="card-set">
+            <!-- 加载中：骨架屏 -->
+            <template v-if="apiArticles === null">
+              <div v-if="si === 0 && section.id === 's-featured'" class="skeleton-feature-card">
+                <div style="padding: 24px;">
+                  <div class="skeleton skeleton-line" style="height:14px;width:80px;margin-bottom:12px;"></div>
+                  <div class="skeleton skeleton-line--title"></div>
+                  <div class="skeleton skeleton-line--desc"></div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:center;">
+                  <div class="skeleton skeleton-thumb"></div>
+                </div>
+              </div>
+              <div v-for="n in (si === 0 ? 3 : 2)" :key="'sk-' + n" class="skeleton-card">
+                <div class="skeleton skeleton-thumb"></div>
+                <div style="margin-top: 16px;">
+                  <div class="skeleton skeleton-line" style="height:14px;width:80px;margin-bottom:8px;"></div>
+                  <div class="skeleton skeleton-line--title"></div>
+                  <div class="skeleton skeleton-line--desc"></div>
+                </div>
+              </div>
+            </template>
+
+            <!-- 已加载：真实卡片 -->
+            <template v-else>
             <!-- feature-block 长卡（对照 m3: mio-card.feature-block > a.thumbnail, grid 1fr 1fr） -->
             <a
               v-if="section.feature"
@@ -103,6 +127,7 @@
                 <span class="material-symbols-rounded thumb-icon">{{ post.icon || 'article' }}</span>
               </div>
             </a>
+            </template>
           </div>
         </div>
       </article>

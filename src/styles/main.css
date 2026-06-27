@@ -121,3 +121,143 @@ md-dialog {
   滚动功能不受影响（鼠标滚轮 / 触控板 / 键盘仍可滚动）。
   md-dialog 未暴露 ::part()，需通过全局样式表注入 Shadow DOM。
 */
+
+/* ================================================================
+   Skeleton 骨架屏动画（对照 M3: surface-container + shimmer 效果）
+   用于文章/卡片数据加载中时的占位展示
+   ================================================================ */
+@keyframes skeleton-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--md-sys-color-surface-container, #ece7e9) 25%,
+    var(--md-sys-color-surface-container-high, #f0eef0) 50%,
+    var(--md-sys-color-surface-container, #ece7e9) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* 骨架屏卡片 */
+.skeleton-card {
+  display: inline-flex;
+  flex-direction: column-reverse;
+  width: 302px;
+  min-height: 248px;
+  padding: 24px;
+  box-sizing: border-box;
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container, #ece7e9);
+  overflow: hidden;
+}
+
+.skeleton-card .skeleton-line {
+  height: 16px;
+  margin-bottom: 8px;
+}
+
+.skeleton-card .skeleton-line--title {
+  height: 24px;
+  width: 70%;
+  margin-bottom: 12px;
+}
+
+.skeleton-card .skeleton-line--desc {
+  height: 14px;
+  width: 90%;
+}
+
+.skeleton-card .skeleton-thumb {
+  width: 100%;
+  height: 80px;
+  margin-top: 16px;
+  border-radius: 12px;
+}
+
+/* 骨架屏 feature 卡片（大卡片） */
+.skeleton-feature-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+  min-height: 248px;
+  padding: 24px;
+  box-sizing: border-box;
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container, #ece7e9);
+  overflow: hidden;
+}
+
+.skeleton-feature-card .skeleton-line {
+  height: 16px;
+  margin-bottom: 8px;
+}
+
+.skeleton-feature-card .skeleton-line--title {
+  height: 28px;
+  width: 60%;
+  margin-bottom: 12px;
+}
+
+.skeleton-feature-card .skeleton-thumb {
+  width: 80%;
+  height: 100px;
+  margin: auto;
+  border-radius: 12px;
+}
+
+/* 骨架屏文章内容 */
+.skeleton-article {
+  padding: 0;
+}
+
+.skeleton-article .skeleton-block {
+  margin: 80px 0 24px 0;
+}
+
+.skeleton-article .skeleton-heading {
+  height: 32px;
+  width: 40%;
+  margin-bottom: 16px;
+}
+
+.skeleton-article .skeleton-paragraph {
+  height: 16px;
+  margin-bottom: 24px;
+}
+
+.skeleton-article .skeleton-paragraph:nth-child(3) { width: 85%; }
+.skeleton-article .skeleton-paragraph:nth-child(4) { width: 70%; }
+.skeleton-article .skeleton-paragraph:nth-child(5) { width: 95%; }
+
+.skeleton-article .skeleton-code {
+  height: 120px;
+  margin: 56px 0 0 0;
+  border-radius: 16px;
+}
+
+/* 暗色主题骨架屏 */
+[data-theme="dark"] .skeleton-card,
+[data-theme="dark"] .skeleton-feature-card {
+  background: var(--md-sys-color-surface-container, #2b292b);
+}
+
+@keyframes skeleton-shimmer-dark {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+[data-theme="dark"] .skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--md-sys-color-surface-container, #2b292b) 25%,
+    var(--md-sys-color-surface-container-high, #33302f) 50%,
+    var(--md-sys-color-surface-container, #2b292b) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer-dark 1.5s ease-in-out infinite;
+}
