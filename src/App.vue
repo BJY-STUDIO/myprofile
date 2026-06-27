@@ -723,6 +723,8 @@ const bodyMarginLeft = computed(() => {
 
 .nav-drawer__close-btn {
   --md-icon-button-icon-size: 24px;
+  width: 48px;
+  height: 48px;
   margin: 0 0 8px 12px;
 }
 
@@ -809,7 +811,7 @@ const bodyMarginLeft = computed(() => {
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
-  margin: 0 12px; /* 匹配 .nav-drawer__items 的 padding: 0 12px（M3 specs active indicator padding = 12dp） */
+  margin: 0 8px; /* 匹配 .nav-drawer__items 的 padding: 0 8px（M3 topic-wrapper margin: 0 8px） */
 }
 
 /* m3: .main-menu:hover = background: on-surface-variant-2, color: on-surface */
@@ -866,11 +868,11 @@ const bodyMarginLeft = computed(() => {
 }
 
 /* ======== Drawer 项目列表容器 ======== */
-/* m3 实测: topic-wrapper margin: 0 12px; nav-drawer-section padding-bottom: 24px */
-/* m3 specs: active indicator padding = 12dp */
+/* m3 实测: topic-wrapper margin: 0 8px; nav-drawer-section padding-bottom: 24px */
+/* m3 specs: active indicator padding = 12dp (left/right padding on items = 8px container + 16px item = 24px half-width) */
 .nav-drawer__items {
   flex: 1;
-  padding: 0 12px 24px;
+  padding: 0 8px 24px;
   display: flex;
   flex-direction: column;
   gap: 0;
