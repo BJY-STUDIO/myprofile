@@ -114,20 +114,60 @@
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { usePage } from '@/stores/blogStore'
 import store from '@/stores/blogStore'
+import { getArticleIndex, retryArticleIndexFetch } from '@/services/articleService'
 
 const pageApi = usePage('home')
 
 const activeSection = ref(-1) // -1 = 无激活态（hide 状态）
+
+// ===== 文章卡片数据：API 优先 → blogStore 回退 =====
+const apiArticles = ref(null)  // null = 尚未加载; {} = 空结果
+let cancelRetry = null
 
 // 动态指示器位置：存储每个 item 的 top 和 height（对照 m3: item 高度随文字长度 36/56px 动态变化）
 const indicatorTop = ref(0)   // 指示器 top（相对于 nav）
 const indicatorY = ref(0)     // translateY（当前激活 item 的相对偏移）
 const indicatorH = ref(36)    // 指示器高度（匹配 item 高度）
 
-// 从 blogStore 读取页面数据
+// 将 articleService 的文章格式映射为 blogStore 卡片格式
+function mapArticleToCard(article, id) {
+  return {
+    id: id || `api-${article.slug}`,
+    title: article.title,
+    excerpt: article.description,
+    date: article.date,
+    icon: article.icon || 'article',
+    route: `/article/${article.slug}`,
+    image: '',
+  }
+}
+
+// 动态 sections：Featured 区由 API 数据填充，其余保留 blogStore
 const sections = computed(() => {
   const page = store.pages.home
   if (!page?.sections) return []
+
+  // 如果 API 数据已加载，用 API 文章替换 Featured section
+  if (apiArticles.value !== null && Object.keys(apiArticles.value).length > 0) {
+    const sortedSlugs = Object.values(apiArticles.value)
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .map(a => a.slug)
+
+    const Articles = sortedSlugs.map((slug, i) => mapArticleToCard(apiArticles.value[slug], `api-${slug}`))
+
+    // 第一篇为 feature，其余为 regular items
+    const feature = Articles[0] || null
+    const items = Articles.slice(1)
+
+    return page.sections.map((section, i) => {
+      if (i === 0 && section.id === 's-featured') {
+        return { ...section, feature, items }
+      }
+      return section
+    })
+  }
+
+  // API 未加载或无数据：使用 blogStore 默认
   return page.sections
 })
 
@@ -322,6 +362,20 @@ function isCjk(text) {
 }
 
 onMounted(() => {
+  // 加载文章数据（API 优先，失败回退 blogStore）
+  getArticleIndex().then(index => {
+    if (index.source === 'api' && Object.keys(index.articles).length > 0) {
+      apiArticles.value = index.articles
+    } else {
+      // API 不可用，启动后台重试（覆盖 Render 冷启动场景）
+      cancelRetry = retryArticleIndexFetch(index => {
+        if (index.source === 'api' && Object.keys(index.articles).length > 0) {
+          apiArticles.value = index.articles
+        }
+      })
+    }
+  })
+
   nextTick(() => {
     // 计算 indicator top 基准位置：取第一个 list-item 相对于 nav 的 top
     const nav = document.querySelector('.toc nav')
@@ -339,6 +393,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  if (cancelRetry) cancelRetry()
   if (observer) observer.disconnect()
   if (scrollRoot) scrollRoot.removeEventListener('scroll', onScroll)
 })
