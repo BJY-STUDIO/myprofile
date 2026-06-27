@@ -1338,6 +1338,10 @@ watch(() => route.params.slug, () => {
     padding: 10px 12px;
     font-size: 13px;
   }
+
+  .blog-content :deep(.mio-table + p) {
+    margin-top: 24px;
+  }
 }
 
 /* ── 暗色主题表格 ── */
