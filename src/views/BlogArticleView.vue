@@ -177,7 +177,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { articles as localArticles, defaultSlug as localDefaultSlug } from '@/articles'
-import { getArticle, getArticleSource } from '@/services/articleService'
+import { getArticle, getArticleIndex, retryArticleFetch, retryArticleIndexFetch, getResolvedSource } from '@/services/articleService'
 
 const route = useRoute()
 
@@ -196,27 +196,71 @@ onMounted(() => {
 })
 
 // ======== 文章数据 ========
-// Local 模式：同步使用 localArticles（保持原有行为，零延迟）
-// API 模式：异步从 articleService 获取，article 在 onMounted/watch 中按需加载
-
-const articleSource = getArticleSource()
+// 统一通过 articleService 异步获取：
+//   - auto 模式：优先 API，不可达时回退本地
+//   - local 模式：直接本地
+//   - api 模式：仅 API
 
 const article = ref(null)
+const articleList = ref(localArticles)  // 用于 Up Next，初始用本地（同步可立即显示）
+const resolvedSource = ref('local')
 
-function resolveArticle(slug) {
-  if (articleSource === 'api') {
-    // API 模式：异步获取，合并本地 contentComponent
-    getArticle(slug).then(data => {
-      article.value = data || localArticles[slug] || localArticles[localDefaultSlug] || Object.values(localArticles)[0]
-    })
-  } else {
-    // Local 模式：同步
+// 异步加载文章列表（用于 Up Next）
+let cancelListRetry = null
+
+async function loadArticleList() {
+  try {
+    const index = await getArticleIndex()
+    if (index.articles && Object.keys(index.articles).length > 0) {
+      articleList.value = index.articles
+      resolvedSource.value = index.source
+    }
+    // 如果源是 local（API 暂不可达），启动后台重试
+    if (index.source === 'local') {
+      if (cancelListRetry) cancelListRetry()
+      cancelListRetry = retryArticleIndexFetch((apiIndex) => {
+        articleList.value = apiIndex.articles
+        resolvedSource.value = apiIndex.source
+      })
+    }
+  } catch {
+    // 保持本地数据
+  }
+}
+
+// 异步加载当前文章
+let cancelArticleRetry = null
+
+async function resolveArticle(slug) {
+  // 取消之前的重试
+  if (cancelArticleRetry) {
+    cancelArticleRetry()
+    cancelArticleRetry = null
+  }
+
+  try {
+    const data = await getArticle(slug)
+    article.value = data || localArticles[slug] || localArticles[localDefaultSlug] || Object.values(localArticles)[0]
+
+    // 如果返回的是本地文章（API 暂不可达），启动后台重试
+    // 判断依据：resolvedSource 是 local，或者 article 没有 content（纯本地无content文章）
+    const resolved = await getResolvedSource()
+    if (resolved === 'local') {
+      cancelArticleRetry = retryArticleFetch(slug, (apiArticle) => {
+        article.value = apiArticle
+        resolvedSource.value = 'api'
+      })
+    }
+  } catch {
+    // 降级到本地
     article.value = localArticles[slug] || localArticles[localDefaultSlug] || Object.values(localArticles)[0]
   }
+  // TOC 通过 watch(article) 自动重建
 }
 
 // 初始解析
 resolveArticle(route.params.slug)
+loadArticleList()
 
 // 路由变化时重新解析
 watch(() => route.params.slug, (slug) => {
@@ -403,13 +447,10 @@ function scrollToHeading(id) {
   }
 }
 
-// Up Next 数据（Local 模式使用 localArticles，API 模式后续扩展）
+// Up Next 数据 — 使用 articleList（可能是 API 数据或本地数据）
 const upNextArticles = computed(() => {
   const currentSlug = route.params.slug
-  // API 模式下 articleService 的列表缓存尚不完善，暂用 localArticles
-  // 后续可通过 getArticleIndex() 异步获取
-  const source = articleSource === 'api' ? localArticles : localArticles
-  return Object.values(source)
+  return Object.values(articleList.value)
     .filter(a => a.slug !== currentSlug)
     .slice(0, 2)
 })
@@ -466,62 +507,53 @@ function recalcIndicatorTop() {
 }
 
 onMounted(() => {
-  // 监听 blog-content DOM 变化，异步组件加载完时再构建 TOC
-  contentMutationObserver = new MutationObserver(() => {
+  // 计算 indicator top 基准位置
+  recalcIndicatorTop()
+})
+
+// 当文章数据变化时，设置 MutationObserver 等 DOM 就绪后构建 TOC
+watch(article, (val) => {
+  if (!val) return
+  tocItems.value = []
+  activeTocIndex.value = -1
+  if (contentMutationObserver) contentMutationObserver.disconnect()
+
+  nextTick(() => {
+    if (!blogContentRef.value) return
+
+    // 尝试立即构建 TOC（v-html 内容在 nextTick 后已就绪）
     const built = buildToc()
     if (built) {
       setupScrollObserver()
-      contentMutationObserver?.disconnect()
       nextTick(recalcIndicatorTop)
+      return
     }
-  })
-  nextTick(() => {
-    if (blogContentRef.value) {
-      contentMutationObserver.observe(blogContentRef.value, { childList: true, subtree: true })
+
+    // 对于 contentComponent（异步组件），需要 MutationObserver 等待 DOM 变化
+    contentMutationObserver = new MutationObserver(() => {
       const built = buildToc()
       if (built) {
         setupScrollObserver()
-        contentMutationObserver.disconnect()
+        contentMutationObserver?.disconnect()
         nextTick(recalcIndicatorTop)
       }
-    }
-
-    // 计算 indicator top 基准位置
-    recalcIndicatorTop()
+    })
+    contentMutationObserver.observe(blogContentRef.value, { childList: true, subtree: true })
   })
-})
+}, { immediate: true })
 
 onUnmounted(() => {
   if (observer) observer.disconnect()
   if (contentMutationObserver) contentMutationObserver.disconnect()
+  if (cancelArticleRetry) cancelArticleRetry()
+  if (cancelListRetry) cancelListRetry()
 })
 
 watch(() => route.params.slug, () => {
   // 同组件路由切换时滚动到顶部（滚动容器是 main.app-main，不是 window）
   const main = document.querySelector('main.app-main')
   if (main) main.scrollTo({ top: 0, behavior: 'instant' })
-  tocItems.value = []
-  activeTocIndex.value = -1
-  nextTick(() => {
-    if (blogContentRef.value) {
-      if (contentMutationObserver) contentMutationObserver.disconnect()
-      contentMutationObserver = new MutationObserver(() => {
-        const built = buildToc()
-        if (built) {
-          setupScrollObserver()
-          contentMutationObserver?.disconnect()
-          nextTick(recalcIndicatorTop)
-        }
-      })
-      contentMutationObserver.observe(blogContentRef.value, { childList: true, subtree: true })
-      const built = buildToc()
-      if (built) {
-        setupScrollObserver()
-        contentMutationObserver.disconnect()
-        nextTick(recalcIndicatorTop)
-      }
-    }
-  })
+  // TOC 将通过 watch(article) 重新构建
 })
 </script>
 

@@ -2,49 +2,85 @@
  * 文章数据统一访问层
  *
  * 支持两种数据源模式：
- *   - local（默认）：使用 import.meta.glob 自动发现 src/articles/ 下的 .js 文件
- *   - api：从远程 Headless CMS / REST API 获取文章数据
+ *   - auto（默认）：优先从 Strapi API 获取，不可达时回退到本地
+ *   - local：仅使用 import.meta.glob 自动发现 src/articles/ 下的 .js 文件
+ *   - api：仅从 Strapi REST API 获取
  *
  * 配置方式：
- *   环境变量 VITE_ARTICLE_SOURCE=local|api
- *   环境变量 VITE_API_BASE_URL=https://your-cms.example.com/api
+ *   环境变量 VITE_ARTICLE_SOURCE=auto|local|api
+ *   环境变量 VITE_API_BASE_URL=http://localhost:1337/api
  *
- * API 响应格式约定：
- *   GET /articles          → { data: ArticleMeta[] }
- *   GET /articles/:slug    → ArticleDetail
+ * Strapi 响应格式（v5）：
+ *   GET /api/articles?populate=*
+ *   → { data: [{ id, documentId, title, slug, description, content, tags, publishedAt, author: { ... } }], meta: { pagination } }
  *
+ *   GET /api/articles?filters[slug][$eq]=xxx&populate=*
+ *   → { data: [Article], meta: { pagination } }
+ *
+ * 内部统一格式：
  *   ArticleMeta {
  *     slug: string
  *     title: string
  *     description: string
  *     date: string          // 'Jul 1, 2026' 格式
- *     icon?: string         // Material Symbols Rounded 名称
- *     authors: { name: string, role: string }[]
+ *     icon?: string
+ *     authors: { name: string, role: string, avatar?: string }[]
+ *     tags?: string[]
  *   }
  *
  *   ArticleDetail extends ArticleMeta {
- *     content?: string      // HTML 或 Markdown 字符串（v-html 渲染）
- *     contentFormat?: 'html' | 'markdown'  // 默认 html
- *     // contentComponent 不由 API 返回 — 交互式组件只能通过本地 .js 文件注册
+ *     content?: string      // HTML 字符串（v-html 渲染）
+ *     contentComponent?: Component  // 本地交互式组件（优先于 content）
  *   }
- *
- * CMS 迁移步骤：
- *   1. 部署 Headless CMS（Strapi / Sanity / 自建）
- *   2. 按上述格式实现 API 端点
- *   3. 设置 VITE_ARTICLE_SOURCE=api, VITE_API_BASE_URL=...
- *   4. 需要交互式组件的文章仍保留本地 .js 文件（contentComponent 优先于 content）
- *   5. 纯文本文章可完全由 API 交付，无需前端代码修改
  */
 
 import { defineAsyncComponent } from 'vue'
+import { marked, Renderer } from 'marked'
 
 // ===== 配置 =====
-const ARTICLE_SOURCE = import.meta.env.VITE_ARTICLE_SOURCE || 'local'
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+const ARTICLE_SOURCE = import.meta.env.VITE_ARTICLE_SOURCE || 'auto'
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:1337/api').replace(/\/$/, '')
+
+// ===== 日期格式化：ISO → 'Jul 1, 2026' =====
+function formatDate(isoString) {
+  if (!isoString) return ''
+  const d = new Date(isoString)
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`
+}
+
+// ===== Markdown → HTML（使用 marked，自定义 renderer 匹配 M3 结构） =====
+
+const m3Renderer = new Renderer()
+
+m3Renderer.heading = function({ text, depth }) {
+  if (depth === 2) {
+    const id = text.toLowerCase().replace(/[^\w\u4e00-\u9fff]+/g, '-').replace(/^-|-$/g, '')
+    return `<div class="block" id="${id}"><div class="copy-button-container focusable"><div class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to ${text} section">link</div><div class="copy-button-background"></div><div class="tooltip"><span class="deactivated">Copy link</span><span aria-live="polite" class="activated">Link copied</span></div></div><div class="scroll-target"></div><div class="text-chunk"><h2 class="linkable" tabindex="-1">${text}</h2></div></div>`
+  }
+  return `<h${depth}>${text}</h${depth}>`
+}
+
+m3Renderer.code = function({ text, lang }) {
+  const escaped = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .trimEnd()
+  const lines = escaped.split('\n')
+  const preLines = lines.map(line => `<pre class="CodeMirror-line">${line}</pre>`).join('')
+  return `<mio-code-snippet><div class="mio-code-snippet__container"><div class="CodeMirror cm-s-neo CodeMirror-wrap" translate="no"><div class="CodeMirror-scroll"><div class="CodeMirror-sizer"><div class="CodeMirror-lines"><div class="CodeMirror-code">${preLines}</div></div></div></div></div></div></mio-code-snippet>`
+}
+
+marked.use({ renderer: m3Renderer })
+
+function markdownToHtml(md) {
+  if (!md) return ''
+  return marked.parse(md)
+}
 
 // ===== Local 模式：import.meta.glob 自动发现 =====
 
-// 延迟加载，避免在生产环境 API 模式下仍执行 glob
 let _localArticles = null
 let _localSortedSlugs = null
 let _localDefaultSlug = null
@@ -76,50 +112,122 @@ function getLocalArticles() {
   return _localArticles
 }
 
-// ===== API 模式：远程获取 =====
+// ===== Strapi API 映射 =====
 
+/**
+ * 将 Strapi v5 文章对象映射为内部 ArticleMeta/ArticleDetail 格式
+ */
+function mapStrapiArticle(strapiArticle, includeContent = false) {
+  if (!strapiArticle) return null
+
+  const result = {
+    slug: strapiArticle.slug || '',
+    title: strapiArticle.title || '',
+    description: strapiArticle.description || '',
+    date: formatDate(strapiArticle.publishedAt || strapiArticle.createdAt),
+    icon: 'article',
+    tags: strapiArticle.tags || [],
+    authors: [],
+  }
+
+  // 作者映射
+  if (strapiArticle.author) {
+    result.authors = [{
+      name: strapiArticle.author.name || 'Unknown',
+      role: strapiArticle.author.role || '',
+      avatar: strapiArticle.author.avatar?.url || '',
+    }]
+  }
+
+  // 内容映射
+  if (includeContent && strapiArticle.content) {
+    result.content = markdownToHtml(strapiArticle.content)
+    result.contentFormat = 'html'
+  }
+
+  return result
+}
+
+// ===== API 检测与超时配置 =====
+
+// 首次请求超时：15s（API 热启动 1-3s 足够）
+const API_FETCH_TIMEOUT = 15000
+// 重试超时：60s（覆盖 Render 冷启动 30-50s）
+const API_RETRY_TIMEOUT = 60000
+// 首次失败后等待 2s 再重试（Render 正在启动中）
+const API_RETRY_DELAY = 2000
+
+let _apiAvailable = null  // null=未检测, true=已确认可用。永远不缓存 false
 let _apiCache = { list: null, detail: {} }
-let _apiFetchPromise = null
+let _apiListPromise = null
 
-async function fetchArticleList() {
+/**
+ * 带超时的 fetch 封装
+ */
+async function fetchWithTimeout(url, timeoutMs) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    const res = await fetch(url, { signal: controller.signal })
+    clearTimeout(timer)
+    return res
+  } catch (e) {
+    clearTimeout(timer)
+    throw e
+  }
+}
+
+async function fetchArticleList(timeoutMs = API_FETCH_TIMEOUT) {
   if (_apiCache.list) return _apiCache.list
 
-  if (!_apiFetchPromise) {
-    _apiFetchPromise = fetch(`${API_BASE_URL}/articles`)
+  if (!_apiListPromise) {
+    _apiListPromise = fetchWithTimeout(`${API_BASE_URL}/articles?populate=*`, timeoutMs)
       .then(res => {
         if (!res.ok) throw new Error(`API ${res.status}`)
         return res.json()
       })
       .then(json => {
-        _apiCache.list = (json.data || []).reduce((acc, a) => {
-          acc[a.slug] = a
+        const items = json.data || []
+        _apiCache.list = items.reduce((acc, item) => {
+          const mapped = mapStrapiArticle(item, false)
+          if (mapped) acc[mapped.slug] = mapped
           return acc
         }, {})
-        _apiFetchPromise = null
+        _apiListPromise = null
+        _apiAvailable = true
         return _apiCache.list
       })
       .catch(err => {
         console.error('[ArticleService] fetchArticleList failed:', err)
-        _apiFetchPromise = null
-        _apiCache.list = {} // 降级为空
-        return _apiCache.list
+        _apiListPromise = null
+        // 不缓存 _apiAvailable = false，下次调用会重试
+        return null  // 返回 null 表示失败，调用方决定降级策略
       })
   }
 
-  return _apiFetchPromise
+  return _apiListPromise
 }
 
-async function fetchArticleDetail(slug) {
+async function fetchArticleDetail(slug, timeoutMs = API_FETCH_TIMEOUT) {
   if (_apiCache.detail[slug]) return _apiCache.detail[slug]
 
   try {
-    const res = await fetch(`${API_BASE_URL}/articles/${slug}`)
+    const res = await fetchWithTimeout(
+      `${API_BASE_URL}/articles?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=*`,
+      timeoutMs
+    )
     if (!res.ok) throw new Error(`API ${res.status}`)
-    const data = await res.json()
-    _apiCache.detail[slug] = data
-    return data
+    const json = await res.json()
+    const items = json.data || []
+    if (items.length === 0) return null
+
+    const mapped = mapStrapiArticle(items[0], true)
+    _apiCache.detail[slug] = mapped
+    _apiAvailable = true
+    return mapped
   } catch (err) {
     console.error(`[ArticleService] fetchArticleDetail(${slug}) failed:`, err)
+    // 不缓存 _apiAvailable = false，下次调用会重试
     return null
   }
 }
@@ -132,127 +240,171 @@ function invalidateCache(slug) {
   }
 }
 
-// ===== Markdown → HTML 简易转换 =====
-// 对于需要完整 Markdown 支持的场景，推荐安装 marked 或 markdown-it
-// 这里提供一个最小实现，仅处理前端展示常用的 Markdown 子集
-
-function markdownToHtml(md) {
-  if (!md) return ''
-  let html = md
-
-  // 代码块 (```)
-  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
-    const escaped = code
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .trimEnd()
-    return `<mio-code-snippet><div class="mio-code-snippet__container"><div class="CodeMirror cm-s-neo CodeMirror-wrap" translate="no"><div class="CodeMirror-scroll"><div class="CodeMirror-sizer"><div class="CodeMirror-lines"><div class="CodeMirror-code"><pre class="CodeMirror-line">${escaped.split('\n').join('</pre><pre class="CodeMirror-line">')}</pre></div></div></div></div></div></div></mio-code-snippet>`
-  })
-
-  // 行内代码
-  html = html.replace(/`([^`]+)`/g, '<code>$1</code>')
-
-  // 标题 h2-h4
-  html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>')
-  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>')
-  html = html.replace(/^## (.+)$/gm, (_, text) => {
-    const id = text.toLowerCase().replace(/[^\w\u4e00-\u9fff]+/g, '-').replace(/^-|-$/g, '')
-    return `<div class="block" id="${id}"><div class="copy-button-container focusable"><div class="material-symbols-rounded copy-button" role="button" tabindex="0" aria-label="copy link to ${text} section">link</div><div class="copy-button-background"></div><div class="tooltip"><span class="deactivated">Copy link</span><span aria-live="polite" class="activated">Link copied</span></div></div><div class="scroll-target"></div><div class="text-chunk"><h2 class="linkable" tabindex="-1">${text}</h2></div></div>`
-  })
-
-  // 粗体 / 斜体
-  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>')
-
-  // 有序列表
-  html = html.replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>')
-  html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ol>$1</ol>')
-
-  // 无序列表
-  html = html.replace(/^[-*] (.+)$/gm, '<li>$1</li>')
-  // 合并相邻 li 为 ul（排除已在 ol 中的）
-  html = html.replace(/(<li>(?!<).*<\/li>\n?(?!<\/ol>))/g, (match) => {
-    return match
-  })
-
-  // 段落：非标签行包裹为 <p>
-  html = html.replace(/^(?!<[ohmdub]|$)(.+)$/gm, '<p>$1</p>')
-
-  // 清理多余空行
-  html = html.replace(/\n{3,}/g, '\n\n')
-
-  return html
-}
-
 // ===== 统一接口 =====
 
 /**
  * 获取文章列表（元数据）
- * - local 模式：同步返回
- * - api 模式：异步获取
- * @returns {Promise<{ articles: Object, sortedSlugs: string[], defaultSlug: string }>}
+ * auto 模式：先尝试 API（15s 超时），失败则回退本地
+ * @returns {Promise<{ articles: Object, sortedSlugs: string[], defaultSlug: string, source: string }>}
  */
 export async function getArticleIndex() {
-  if (ARTICLE_SOURCE === 'api') {
-    const list = await fetchArticleList()
-    const sortedSlugs = Object.values(list)
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
-      .map(a => a.slug)
-    const defaultSlug = sortedSlugs[0] || ''
-    return { articles: list, sortedSlugs, defaultSlug }
+  // local 模式：直接本地
+  if (ARTICLE_SOURCE === 'local') {
+    getLocalArticles()
+    return {
+      articles: _localArticles,
+      sortedSlugs: _localSortedSlugs,
+      defaultSlug: _localDefaultSlug,
+      source: 'local',
+    }
   }
 
-  // Local 模式
+  // api 或 auto 模式：先尝试 API
+  if (ARTICLE_SOURCE === 'api' || ARTICLE_SOURCE === 'auto') {
+    const list = await fetchArticleList(API_FETCH_TIMEOUT)
+    if (list && Object.keys(list).length > 0) {
+      const sortedSlugs = Object.values(list)
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .map(a => a.slug)
+      const defaultSlug = sortedSlugs[0] || ''
+      return { articles: list, sortedSlugs, defaultSlug, source: 'api' }
+    }
+
+    // API 失败且 auto 模式 → 回退本地
+    if (ARTICLE_SOURCE === 'auto') {
+      getLocalArticles()
+      return {
+        articles: _localArticles,
+        sortedSlugs: _localSortedSlugs,
+        defaultSlug: _localDefaultSlug,
+        source: 'local',
+      }
+    }
+
+    // api 模式：API 失败，返回空
+    return { articles: {}, sortedSlugs: [], defaultSlug: '', source: 'api' }
+  }
+
+  // 兜底
   getLocalArticles()
   return {
     articles: _localArticles,
     sortedSlugs: _localSortedSlugs,
     defaultSlug: _localDefaultSlug,
+    source: 'local',
   }
 }
 
 /**
  * 获取单篇文章详情
- * - local 模式：直接从 articles 对象获取（contentComponent 可能有）
- * - api 模式：从 API 获取，content 字段转为 HTML
- * - 优先级：本地 contentComponent > API content > 本地无 contentComponent 的降级
+ * - 优先级：API 内容 > 本地 contentComponent > 降级
+ * - auto 模式：先尝试 API（15s 超时），失败则回退本地
  *
  * @param {string} slug
  * @returns {Promise<Object|null>}
  */
 export async function getArticle(slug) {
-  // 无论何种模式，先查本地（可能有交互式 contentComponent）
-  getLocalArticles()
+  getLocalArticles()  // 始终预加载本地数据
   const localArticle = _localArticles[slug]
 
-  if (ARTICLE_SOURCE === 'api') {
-    const apiArticle = await fetchArticleDetail(slug)
-
-    if (!apiArticle && !localArticle) return null
-
-    // API 文章 + 本地交互组件：合并
-    if (apiArticle && localArticle?.contentComponent) {
-      return {
-        ...apiArticle,
-        contentComponent: localArticle.contentComponent,
-      }
-    }
-
-    // 纯 API 文章：转换 content 为 HTML
-    if (apiArticle) {
-      if (apiArticle.contentFormat === 'markdown' && apiArticle.content) {
-        apiArticle.content = markdownToHtml(apiArticle.content)
-      }
-      return apiArticle
-    }
-
-    // 降级到本地
+  // local 模式
+  if (ARTICLE_SOURCE === 'local') {
     return localArticle || null
   }
 
-  // Local 模式
+  // api 或 auto 模式：先尝试 API
+  const apiArticle = await fetchArticleDetail(slug, API_FETCH_TIMEOUT)
+
+  if (apiArticle) {
+    // API 文章 + 本地交互组件：合并
+    if (localArticle?.contentComponent) {
+      return { ...apiArticle, contentComponent: localArticle.contentComponent }
+    }
+    return apiArticle
+  }
+
+  // API 失败 → auto 模式回退本地
+  if (ARTICLE_SOURCE === 'auto') {
+    return localArticle || null
+  }
+
+  // api 模式且 API 失败
   return localArticle || null
+}
+
+/**
+ * 后台重试获取文章（用于 Render 冷启动场景）
+ * 首次 15s 超时失败后，等待 2s 再用 60s 超时重试
+ * @param {string} slug
+ * @param {function} onUpdate — 重试成功时回调，参数为文章数据
+ * @returns {function} 取消函数
+ */
+export function retryArticleFetch(slug, onUpdate) {
+  if (ARTICLE_SOURCE === 'local') return () => {}
+  if (_apiAvailable === true) return () => {}
+
+  let cancelled = false
+
+  setTimeout(async () => {
+    if (cancelled) return
+    try {
+      const apiArticle = await fetchArticleDetail(slug, API_RETRY_TIMEOUT)
+      if (cancelled) return
+      if (apiArticle) {
+        getLocalArticles()
+        const localArticle = _localArticles[slug]
+        if (localArticle?.contentComponent) {
+          onUpdate({ ...apiArticle, contentComponent: localArticle.contentComponent })
+        } else {
+          onUpdate(apiArticle)
+        }
+      }
+    } catch {
+      // 重试也失败，放弃本次
+    }
+  }, API_RETRY_DELAY)
+
+  return () => { cancelled = true }
+}
+
+/**
+ * 后台重试获取文章列表（用于 Up Next 等场景）
+ * @param {function} onUpdate — 重试成功时回调，参数为 index 对象
+ * @returns {function} 取消函数
+ */
+export function retryArticleIndexFetch(onUpdate) {
+  if (ARTICLE_SOURCE === 'local') return () => {}
+  if (_apiAvailable === true) return () => {}
+
+  let cancelled = false
+
+  setTimeout(async () => {
+    if (cancelled) return
+    try {
+      const list = await fetchArticleList(API_RETRY_TIMEOUT)
+      if (cancelled) return
+      if (list && Object.keys(list).length > 0) {
+        const sortedSlugs = Object.values(list)
+          .sort((a, b) => new Date(b.date) - new Date(a.date))
+          .map(a => a.slug)
+        const defaultSlug = sortedSlugs[0] || ''
+        onUpdate({ articles: list, sortedSlugs, defaultSlug, source: 'api' })
+      }
+    } catch {
+      // 重试也失败
+    }
+  }, API_RETRY_DELAY)
+
+  return () => { cancelled = true }
+}
+
+/**
+ * 异步获取实际数据源状态
+ */
+export async function getResolvedSource() {
+  if (ARTICLE_SOURCE !== 'auto') return ARTICLE_SOURCE
+  if (_apiAvailable === true) return 'api'
+  return 'local'
 }
 
 /**
@@ -264,8 +416,15 @@ export function clearArticleCache(slug) {
 }
 
 /**
- * 当前数据源模式
+ * 当前配置的数据源模式
  */
 export function getArticleSource() {
   return ARTICLE_SOURCE
+}
+
+/**
+ * 重置 API 可用性检测（用于重新检测）
+ */
+export function resetApiDetection() {
+  _apiAvailable = null
 }
