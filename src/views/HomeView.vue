@@ -19,7 +19,7 @@
     <div class="content-container">
       <!-- TOC 占位：骨架屏时预留同尺寸空间防 layout shift；加载后显示真实 TOC -->
       <aside v-if="showSkeleton" class="toc toc--placeholder"></aside>
-      <aside v-else class="toc">
+      <aside v-else class="toc toc--fade-in">
         <nav aria-label="page content">
           <div class="toc__overline">On this page</div>
           <h2 class="toc__title">{{ pageTitle }}</h2>
@@ -727,6 +727,21 @@ onBeforeUnmount(() => {
 /* TOC 占位：骨架屏时预留同尺寸空间，防止加载后 layout shift */
 .toc--placeholder {
   visibility: hidden;
+}
+
+.toc--fade-in {
+  animation: toc-fade-in 200ms linear forwards;
+}
+
+@keyframes toc-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* 骨架屏标题动画条 */
