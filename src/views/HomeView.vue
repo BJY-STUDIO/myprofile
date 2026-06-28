@@ -18,17 +18,16 @@
     <!-- ======== content-container（对照 m3: flex row-reverse, TOC右 + posts左） ======== -->
     <div class="content-container">
       <!-- TOC 目录（对照 m3: mio-toc > nav, sticky, 156px宽, indicator border-only） -->
-      <aside class="toc">
+      <aside v-if="!showSkeleton" class="toc">
         <nav aria-label="page content">
           <div class="toc__overline">On this page</div>
           <h2 class="toc__title">{{ pageTitle }}</h2>
           <div
-            v-if="!showSkeleton"
             class="toc__indicator"
             :class="{ 'toc__indicator--hide': activeSection < 0 }"
             :style="indicatorStyle"
           ></div>
-          <ul v-if="!showSkeleton" class="toc__list">
+          <ul class="toc__list">
             <li
               v-for="(tocItem, i) in tocSections"
               :key="i"
