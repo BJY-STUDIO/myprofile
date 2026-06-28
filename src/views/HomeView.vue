@@ -17,8 +17,9 @@
 
     <!-- ======== content-container（对照 m3: flex row-reverse, TOC右 + posts左） ======== -->
     <div class="content-container">
-      <!-- TOC 目录（对照 m3: mio-toc > nav, sticky, 156px宽, indicator border-only） -->
-      <aside v-if="!showSkeleton" class="toc">
+      <!-- TOC 占位：骨架屏时预留同尺寸空间防 layout shift；加载后显示真实 TOC -->
+      <aside v-if="showSkeleton" class="toc toc--placeholder"></aside>
+      <aside v-else class="toc">
         <nav aria-label="page content">
           <div class="toc__overline">On this page</div>
           <h2 class="toc__title">{{ pageTitle }}</h2>
@@ -51,10 +52,10 @@
       <!-- posts-container（对照 m3: article.posts-container, 996px宽） -->
       <article class="posts-container">
         <!-- 加载中：骨架屏（3 个默认 section 结构，匹配真实布局） -->
-        <template v-if="showSkeleton">
+        <div v-if="showSkeleton" class="posts-inner posts-inner--skeleton">
           <div v-for="si in 3" :key="'sk-section-' + si" class="section">
             <div class="section-header">
-              <h2 :class="si > 1 ? 'sub-heading' : ''">&nbsp;</h2>
+              <h2 :class="si > 1 ? 'sub-heading' : ''"><span class="skeleton skeleton-heading" :style="si === 1 ? 'width:35%' : 'width:25%'"></span></h2>
             </div>
             <div class="card-set">
               <!-- feature 骨架屏（对照 feature-card.thumbnail: grid 1fr 1fr） -->
@@ -77,10 +78,10 @@
               </div>
             </div>
           </div>
-        </template>
+        </div>
 
         <!-- 已加载：真实内容 -->
-        <template v-else>
+        <div v-else class="posts-inner posts-inner--loaded">
         <!-- 每个 section（对照 m3: div.section, margin 72px/96px top/bottom） -->
         <div
           v-for="(section, si) in sections"
@@ -136,7 +137,7 @@
             </a>
           </div>
         </div>
-        </template>
+        </div>
       </article>
     </div>
 
@@ -721,6 +722,50 @@ onBeforeUnmount(() => {
 .posts-container {
   flex: 1 1 auto;
   min-width: 0;
+}
+
+/* TOC 占位：骨架屏时预留同尺寸空间，防止加载后 layout shift */
+.toc--placeholder {
+  visibility: hidden;
+}
+
+/* 骨架屏标题动画条 */
+.skeleton-heading {
+  display: inline-block;
+  height: 28px;
+  vertical-align: middle;
+  border-radius: 8px;
+}
+
+.sub-heading .skeleton-heading {
+  height: 24px;
+}
+
+/* fade 过渡：骨架屏→真实内容 */
+.posts-inner {
+  transition: opacity 200ms linear, transform 200ms linear;
+}
+
+.posts-inner--skeleton {
+  /* 骨架屏正常显示 */
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.posts-inner--loaded {
+  /* 真实内容淡入：M3 官方 fadeIn 动画（opacity 0→1 + translateY 10px→0, 200ms） */
+  animation: posts-fade-in 200ms linear forwards;
+}
+
+@keyframes posts-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ================================================================
