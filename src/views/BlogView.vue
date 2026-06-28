@@ -214,14 +214,22 @@ function openPost(post) {
 }
 
 .blog-header__title {
-  font-size: 32px;
-  font-weight: 400;
+  font-family: var(--md-sys-typescale-headline-l-font-family);
+  font-size: var(--md-sys-typescale-headline-l-font-size);
+  font-weight: var(--md-sys-typescale-headline-l-font-weight);
+  letter-spacing: var(--md-sys-typescale-headline-l-letter-spacing);
+  line-height: var(--md-sys-typescale-headline-l-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-headline-l-font-variation-GRAD), "opsz" var(--md-sys-typescale-headline-l-font-variation-opsz);
   color: var(--md-sys-color-on-surface, #1c1b1f);
-  line-height: 40px;
 }
 
 .blog-header__desc {
-  font-size: 14px;
+  font-family: var(--md-sys-typescale-body-m-font-family);
+  font-size: var(--md-sys-typescale-body-m-font-size);
+  font-weight: var(--md-sys-typescale-body-m-font-weight);
+  letter-spacing: var(--md-sys-typescale-body-m-letter-spacing);
+  line-height: var(--md-sys-typescale-body-m-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-body-m-font-variation-GRAD), "opsz" var(--md-sys-typescale-body-m-font-variation-opsz);
   color: var(--md-sys-color-on-surface-variant, #49454f);
   margin-top: 4px;
 }
@@ -275,27 +283,38 @@ function openPost(post) {
   display: inline-flex;
   padding: 2px 10px;
   border-radius: 8px;
-  font-size: 11px;
-  font-weight: 500;
+  font-family: var(--md-sys-typescale-label-s-font-family);
+  font-size: var(--md-sys-typescale-label-s-font-size);
+  font-weight: var(--md-sys-typescale-label-s-font-weight);
+  letter-spacing: var(--md-sys-typescale-label-s-letter-spacing);
+  line-height: var(--md-sys-typescale-label-s-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-label-s-font-variation-GRAD), "opsz" var(--md-sys-typescale-label-s-font-variation-opsz);
   background-color: var(--md-sys-color-primary, #6750a4);
   color: var(--md-sys-color-on-primary, #ffffff);
   margin-bottom: 8px;
 }
 
 .post-card__title {
-  font-size: 18px;
-  font-weight: 500;
+  font-family: var(--md-sys-typescale-title-l-font-family);
+  font-size: var(--md-sys-typescale-title-l-font-size);
+  font-weight: var(--md-sys-typescale-title-l-font-weight);
+  letter-spacing: var(--md-sys-typescale-title-l-letter-spacing);
+  line-height: var(--md-sys-typescale-title-l-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-title-l-font-variation-GRAD), "opsz" var(--md-sys-typescale-title-l-font-variation-opsz);
   color: var(--md-sys-color-on-surface, #1c1b1f);
-  line-height: 24px;
   margin-bottom: 8px;
   position: relative;
   z-index: 1;
 }
 
 .post-card__excerpt {
-  font-size: 14px;
+  font-family: var(--md-sys-typescale-body-m-font-family);
+  font-size: var(--md-sys-typescale-body-m-font-size);
+  font-weight: var(--md-sys-typescale-body-m-font-weight);
+  letter-spacing: var(--md-sys-typescale-body-m-letter-spacing);
+  line-height: var(--md-sys-typescale-body-m-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-body-m-font-variation-GRAD), "opsz" var(--md-sys-typescale-body-m-font-variation-opsz);
   color: var(--md-sys-color-on-surface-variant, #49454f);
-  line-height: 20px;
   position: relative;
   z-index: 1;
 }
@@ -317,14 +336,23 @@ function openPost(post) {
 .post-card__tag {
   padding: 2px 8px;
   border-radius: 6px;
-  font-size: 11px;
-  font-weight: 500;
+  font-family: var(--md-sys-typescale-label-s-font-family);
+  font-size: var(--md-sys-typescale-label-s-font-size);
+  font-weight: var(--md-sys-typescale-label-s-font-weight);
+  letter-spacing: var(--md-sys-typescale-label-s-letter-spacing);
+  line-height: var(--md-sys-typescale-label-s-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-label-s-font-variation-GRAD), "opsz" var(--md-sys-typescale-label-s-font-variation-opsz);
   background-color: var(--md-sys-color-secondary-container, #e8def8);
   color: var(--md-sys-color-on-secondary-container, #1d192b);
 }
 
 .post-card__date {
-  font-size: 12px;
+  font-family: var(--md-sys-typescale-label-m-font-family);
+  font-size: var(--md-sys-typescale-label-m-font-size);
+  font-weight: var(--md-sys-typescale-label-m-font-weight);
+  letter-spacing: var(--md-sys-typescale-label-m-letter-spacing);
+  line-height: var(--md-sys-typescale-label-m-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-label-m-font-variation-GRAD), "opsz" var(--md-sys-typescale-label-m-font-variation-opsz);
   color: var(--md-sys-color-outline, #79747e);
 }
 
@@ -361,38 +389,58 @@ function openPost(post) {
   display: inline-flex;
   padding: 4px 12px;
   border-radius: 8px;
-  font-size: 12px;
-  font-weight: 500;
+  font-family: var(--md-sys-typescale-label-m-font-family);
+  font-size: var(--md-sys-typescale-label-m-font-size);
+  font-weight: var(--md-sys-typescale-label-m-font-weight);
+  letter-spacing: var(--md-sys-typescale-label-m-letter-spacing);
+  line-height: var(--md-sys-typescale-label-m-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-label-m-font-variation-GRAD), "opsz" var(--md-sys-typescale-label-m-font-variation-opsz);
   background-color: var(--md-sys-color-primary, #6750a4);
   color: var(--md-sys-color-on-primary, #ffffff);
   margin-bottom: 16px;
 }
 
 .post-detail__title {
-  font-size: 28px;
-  font-weight: 400;
+  font-family: var(--md-sys-typescale-headline-m-font-family);
+  font-size: var(--md-sys-typescale-headline-m-font-size);
+  font-weight: var(--md-sys-typescale-headline-m-font-weight);
+  letter-spacing: var(--md-sys-typescale-headline-m-letter-spacing);
+  line-height: var(--md-sys-typescale-headline-m-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-headline-m-font-variation-GRAD), "opsz" var(--md-sys-typescale-headline-m-font-variation-opsz);
   color: var(--md-sys-color-on-surface, #1c1b1f);
-  line-height: 36px;
   margin-bottom: 8px;
 }
 
 .post-detail__meta {
   display: flex;
   gap: 8px;
-  font-size: 13px;
+  font-family: var(--md-sys-typescale-body-s-font-family);
+  font-size: var(--md-sys-typescale-body-s-font-size);
+  font-weight: var(--md-sys-typescale-body-s-font-weight);
+  letter-spacing: var(--md-sys-typescale-body-s-letter-spacing);
+  line-height: var(--md-sys-typescale-body-s-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-body-s-font-variation-GRAD), "opsz" var(--md-sys-typescale-body-s-font-variation-opsz);
   color: var(--md-sys-color-on-surface-variant, #49454f);
   margin-bottom: 20px;
 }
 
 .post-detail__body {
-  font-size: 15px;
+  font-family: var(--md-sys-typescale-body-l-font-family);
+  font-size: var(--md-sys-typescale-body-l-font-size);
+  font-weight: var(--md-sys-typescale-body-l-font-weight);
+  letter-spacing: var(--md-sys-typescale-body-l-letter-spacing);
+  line-height: var(--md-sys-typescale-body-l-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-body-l-font-variation-GRAD), "opsz" var(--md-sys-typescale-body-l-font-variation-opsz);
   color: var(--md-sys-color-on-surface, #1c1b1f);
-  line-height: 26px;
 }
 
 .post-detail__body h2 {
-  font-size: 20px;
-  font-weight: 500;
+  font-family: var(--md-sys-typescale-title-l-font-family);
+  font-size: var(--md-sys-typescale-title-l-font-size);
+  font-weight: var(--md-sys-typescale-title-l-font-weight);
+  letter-spacing: var(--md-sys-typescale-title-l-letter-spacing);
+  line-height: var(--md-sys-typescale-title-l-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-title-l-font-variation-GRAD), "opsz" var(--md-sys-typescale-title-l-font-variation-opsz);
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin-top: 28px;
   margin-bottom: 12px;
@@ -406,8 +454,12 @@ function openPost(post) {
   padding: 2px 6px;
   border-radius: 4px;
   background-color: var(--md-sys-color-surface-container, #f3edf7);
-  font-size: 13px;
-  font-family: 'Roboto Mono', monospace;
+  font-family: var(--md-sys-typescale-code-m-font-family);
+  font-size: var(--md-sys-typescale-code-m-font-size);
+  font-weight: var(--md-sys-typescale-code-m-font-weight);
+  letter-spacing: var(--md-sys-typescale-code-m-letter-spacing);
+  line-height: var(--md-sys-typescale-code-m-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-code-m-font-variation-GRAD), "opsz" var(--md-sys-typescale-code-m-font-variation-opsz);
 }
 
 /* ======== 暗色主题 ======== */

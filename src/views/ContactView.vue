@@ -149,14 +149,22 @@ const socialLinks = ref([
 }
 
 .contact-header__title {
-  font-size: 32px;
-  font-weight: 400;
+  font-family: var(--md-sys-typescale-headline-l-font-family);
+  font-size: var(--md-sys-typescale-headline-l-font-size);
+  font-weight: var(--md-sys-typescale-headline-l-font-weight);
+  letter-spacing: var(--md-sys-typescale-headline-l-letter-spacing);
+  line-height: var(--md-sys-typescale-headline-l-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-headline-l-font-variation-GRAD), "opsz" var(--md-sys-typescale-headline-l-font-variation-opsz);
   color: var(--md-sys-color-on-surface, #1c1b1f);
-  line-height: 40px;
 }
 
 .contact-header__desc {
-  font-size: 14px;
+  font-family: var(--md-sys-typescale-body-m-font-family);
+  font-size: var(--md-sys-typescale-body-m-font-size);
+  font-weight: var(--md-sys-typescale-body-m-font-weight);
+  letter-spacing: var(--md-sys-typescale-body-m-letter-spacing);
+  line-height: var(--md-sys-typescale-body-m-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-body-m-font-variation-GRAD), "opsz" var(--md-sys-typescale-body-m-font-variation-opsz);
   color: var(--md-sys-color-on-surface-variant, #49454f);
   margin-top: 4px;
 }
@@ -191,10 +199,13 @@ const socialLinks = ref([
 
 /* ======== Social Section ======== */
 .social-section__title {
-  font-size: 22px;
-  font-weight: 400;
+  font-family: var(--md-sys-typescale-title-l-font-family);
+  font-size: var(--md-sys-typescale-title-l-font-size);
+  font-weight: var(--md-sys-typescale-title-l-font-weight);
+  letter-spacing: var(--md-sys-typescale-title-l-letter-spacing);
+  line-height: var(--md-sys-typescale-title-l-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-title-l-font-variation-GRAD), "opsz" var(--md-sys-typescale-title-l-font-variation-opsz);
   color: var(--md-sys-color-on-surface, #1c1b1f);
-  line-height: 28px;
   margin-bottom: 16px;
 }
 
@@ -253,14 +264,23 @@ const socialLinks = ref([
 
 .social-card__name {
   display: block;
-  font-size: 14px;
+  font-family: var(--md-sys-typescale-body-m-font-family);
+  font-size: var(--md-sys-typescale-body-m-font-size);
   font-weight: 500;
+  letter-spacing: var(--md-sys-typescale-body-m-letter-spacing);
+  line-height: var(--md-sys-typescale-body-m-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-body-m-font-variation-GRAD), "opsz" var(--md-sys-typescale-body-m-font-variation-opsz);
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
 .social-card__desc {
   display: block;
-  font-size: 13px;
+  font-family: var(--md-sys-typescale-body-s-font-family);
+  font-size: var(--md-sys-typescale-body-s-font-size);
+  font-weight: var(--md-sys-typescale-body-s-font-weight);
+  letter-spacing: var(--md-sys-typescale-body-s-letter-spacing);
+  line-height: var(--md-sys-typescale-body-s-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-body-s-font-variation-GRAD), "opsz" var(--md-sys-typescale-body-s-font-variation-opsz);
   color: var(--md-sys-color-on-surface-variant, #49454f);
   margin-top: 2px;
 }
@@ -286,7 +306,12 @@ const socialLinks = ref([
   border-radius: 12px;
   background-color: var(--md-sys-color-inverse-surface, #322f35);
   color: var(--md-sys-color-inverse-on-surface, #f5eff7);
-  font-size: 14px;
+  font-family: var(--md-sys-typescale-body-m-font-family);
+  font-size: var(--md-sys-typescale-body-m-font-size);
+  font-weight: var(--md-sys-typescale-body-m-font-weight);
+  letter-spacing: var(--md-sys-typescale-body-m-letter-spacing);
+  line-height: var(--md-sys-typescale-body-m-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-body-m-font-variation-GRAD), "opsz" var(--md-sys-typescale-body-m-font-variation-opsz);
   z-index: 600;
   cursor: pointer;
   animation: toast-in 0.3s cubic-bezier(0.2, 0, 0, 1);

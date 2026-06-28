@@ -544,18 +544,23 @@ onBeforeUnmount(() => {
 }
 
 .primary-container .wrapper .title h1 {
-  font-size: 96px;
-  font-weight: 475;
-  line-height: 96px;
-  letter-spacing: normal;
+  font-family: var(--md-sys-typescale-home-hero-font-family);
+  font-size: var(--md-sys-typescale-home-hero-font-size);
+  font-weight: var(--md-sys-typescale-home-hero-font-weight);
+  letter-spacing: var(--md-sys-typescale-home-hero-letter-spacing);
+  line-height: var(--md-sys-typescale-home-hero-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-home-hero-font-variation-GRAD), "opsz" var(--md-sys-typescale-home-hero-font-variation-opsz);
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0 0 16px;
 }
 
 .primary-container .wrapper .title .description {
-  font-size: 22px;
-  font-weight: 400;
-  line-height: 30px;
+  font-family: var(--md-sys-typescale-home-desc-font-family);
+  font-size: var(--md-sys-typescale-home-desc-font-size);
+  font-weight: var(--md-sys-typescale-home-desc-font-weight);
+  letter-spacing: var(--md-sys-typescale-home-desc-letter-spacing);
+  line-height: var(--md-sys-typescale-home-desc-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-home-desc-font-variation-GRAD), "opsz" var(--md-sys-typescale-home-desc-font-variation-opsz);
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
@@ -588,20 +593,9 @@ onBeforeUnmount(() => {
   background-size: contain;
 }
 
-/* h1 字体响应式（对照 m3 源码变量系统） */
-/* >1294px: hero 96px/475/96px（已在上方设置） */
-/* 601px-1294px: display-l 57px/475/64px */
-/* ≤600px: display-m 45px/475/52px */
+/* h1 字体响应式现已由 :root home-hero/home-desc token 断点自动处理 */
 @media screen and (min-width: 601px) and (max-width: 1294px) {
-  .primary-container .wrapper .title h1 {
-    font-size: 57px;
-    font-weight: 475;
-    line-height: 64px;
-  }
-  .primary-container .wrapper .title .description {
-    font-size: 22px;
-    line-height: 30px;
-  }
+  /* tablet: home-hero → display-l, home-desc → title-l (均由 token 处理) */
 }
 
 @media screen and (max-width: 600px) {
@@ -611,15 +605,9 @@ onBeforeUnmount(() => {
   .primary-container {
     padding: 32px;
   }
-  .primary-container .wrapper .title h1 {
-    font-size: 45px;
-    font-weight: 475;
-    line-height: 52px;
-  }
+  /* mobile: home-hero → display-m, home-desc → body-l + font-weight: 425 for CJK 偏好 */
   .primary-container .wrapper .title .description {
-    font-size: 16px;
-  font-weight: 425;
-    line-height: 24px;
+    font-weight: 425;
   }
   .split-asset-image__foreground {
     position: absolute;
@@ -657,18 +645,23 @@ onBeforeUnmount(() => {
 }
 
 .toc__overline {
-  font-size: 11px;
-  font-weight: 500;
-  line-height: 16px;
-  letter-spacing: 0.1px;
+  font-family: var(--md-sys-typescale-label-s-font-family);
+  font-size: var(--md-sys-typescale-label-s-font-size);
+  font-weight: var(--md-sys-typescale-label-s-font-weight);
+  letter-spacing: var(--md-sys-typescale-label-s-letter-spacing);
+  line-height: var(--md-sys-typescale-label-s-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-label-s-font-variation-GRAD), "opsz" var(--md-sys-typescale-label-s-font-variation-opsz);
   color: var(--md-sys-color-on-surface-variant, #4d4256);
   margin: 0 16px 8px;
 }
 
 .toc__title {
-  font-size: 24px;
+  font-family: var(--md-sys-typescale-headline-s-font-family);
+  font-size: var(--md-sys-typescale-headline-s-font-size);
   font-weight: 475;
-  line-height: 32px;
+  letter-spacing: var(--md-sys-typescale-headline-s-letter-spacing);
+  line-height: var(--md-sys-typescale-headline-s-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-headline-s-font-variation-GRAD), "opsz" var(--md-sys-typescale-headline-s-font-variation-opsz);
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0 16px 8px;
 }
@@ -723,14 +716,15 @@ onBeforeUnmount(() => {
 
 /* 对照 m3: .toc-item — body-m 字号 */
 .toc__link {
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 20px;
-  letter-spacing: 0.1px;
+  font-family: var(--md-sys-typescale-body-m-font-family);
+  font-size: var(--md-sys-typescale-body-m-font-size);
+  font-weight: var(--md-sys-typescale-body-m-font-weight);
+  letter-spacing: var(--md-sys-typescale-body-m-letter-spacing);
+  line-height: var(--md-sys-typescale-body-m-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-body-m-font-variation-GRAD), "opsz" var(--md-sys-typescale-body-m-font-variation-opsz);
   color: var(--md-sys-color-on-surface-variant, #49454f);
   text-decoration: none;
   border-radius: 4px;
-  font-variation-settings: "GRAD" 0;
   transition: color 200ms cubic-bezier(0.2, 0, 0, 1),
               font-variation-settings 200ms cubic-bezier(0.2, 0, 0, 1);
 }
@@ -775,18 +769,23 @@ onBeforeUnmount(() => {
 }
 
 .section-header h2 {
-  font-size: 57px;
-  font-weight: 475;
-  line-height: 64px;
-  letter-spacing: normal;
+  font-family: var(--md-sys-typescale-display-l-font-family);
+  font-size: var(--md-sys-typescale-display-l-font-size);
+  font-weight: var(--md-sys-typescale-display-l-font-weight);
+  letter-spacing: var(--md-sys-typescale-display-l-letter-spacing);
+  line-height: var(--md-sys-typescale-display-l-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-display-l-font-variation-GRAD), "opsz" var(--md-sys-typescale-display-l-font-variation-opsz);
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0 0 8px;
 }
 
 .section-header h2.sub-heading {
-  font-size: 28px;
-  font-weight: 475;
-  line-height: 36px;
+  font-family: var(--md-sys-typescale-headline-m-font-family);
+  font-size: var(--md-sys-typescale-headline-m-font-size);
+  font-weight: var(--md-sys-typescale-headline-m-font-weight);
+  letter-spacing: var(--md-sys-typescale-headline-m-letter-spacing);
+  line-height: var(--md-sys-typescale-headline-m-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-headline-m-font-variation-GRAD), "opsz" var(--md-sys-typescale-headline-m-font-variation-opsz);
   margin: 48px 0 8px;
 }
 
@@ -905,9 +904,12 @@ onBeforeUnmount(() => {
 }
 
 .thumbnail > .content-container .date {
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 24px;
+  font-family: var(--md-sys-typescale-body-l-font-family);
+  font-size: var(--md-sys-typescale-body-l-font-size);
+  font-weight: var(--md-sys-typescale-body-l-font-weight);
+  letter-spacing: var(--md-sys-typescale-body-l-letter-spacing);
+  line-height: var(--md-sys-typescale-body-l-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-body-l-font-variation-GRAD), "opsz" var(--md-sys-typescale-body-l-font-variation-opsz);
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0 0 8px;
   display: block;
@@ -921,13 +923,14 @@ onBeforeUnmount(() => {
 }
 
 .thumbnail > .content-container .title {
-  font-size: 24px;
+  font-family: var(--md-sys-typescale-headline-s-font-family);
+  font-size: var(--md-sys-typescale-headline-s-font-size);
   font-weight: 475;
-  line-height: 32px;
+  letter-spacing: var(--md-sys-typescale-headline-s-letter-spacing);
+  line-height: var(--md-sys-typescale-headline-s-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-headline-s-font-variation-GRAD), "opsz" var(--md-sys-typescale-headline-s-font-variation-opsz);
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0;
-  /* M3 官方格式：GRAD 轴 + opsz 光学尺寸轴 */
-  font-variation-settings: "GRAD" 0, "opsz" 18;
   /* 可变字体：GRAD 轴 + font-weight（仅 CJK 标题）均支持平滑插值过渡 */
   transition: font-variation-settings 0.3s cubic-bezier(0.2, 0, 0, 1),
               font-weight 0.3s cubic-bezier(0.2, 0, 0, 1);
@@ -956,9 +959,12 @@ onBeforeUnmount(() => {
 }
 
 .thumbnail > .content-container .description {
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 24px;
+  font-family: var(--md-sys-typescale-body-l-font-family);
+  font-size: var(--md-sys-typescale-body-l-font-size);
+  font-weight: var(--md-sys-typescale-body-l-font-weight);
+  letter-spacing: var(--md-sys-typescale-body-l-letter-spacing);
+  line-height: var(--md-sys-typescale-body-l-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-body-l-font-variation-GRAD), "opsz" var(--md-sys-typescale-body-l-font-variation-opsz);
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0;
 }

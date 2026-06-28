@@ -131,7 +131,7 @@
   <Teleport to="body">
     <div
       class="back-to-top"
-      :class="{ 'back-to-top--show': showBackToTop, 'back-to-top--scrolldown-hide': mobileScrollDownHide }"
+      :class="{ 'back-to-top--show': showBackToTop }"
       role="button"
       aria-label="go back to top"
       tabindex="0"
@@ -669,9 +669,8 @@ function onCardDown(e) {
 const thumbBg = 'var(--md-sys-color-secondary-container, #e8def8)'
 
 // ======== Back-to-top 按钮（对照 M3: .back-to-top） ========
+// 仅在 tablet（601-1293px）显示，桌面和移动端均 display:none
 const showBackToTop = ref(false)
-const mobileScrollDownHide = ref(false)
-let lastScrollTop = 0
 let backToTopScrollHandler = null
 
 function scrollToTop() {
@@ -692,17 +691,18 @@ function setupBackToTopObserver() {
   const sr = document.querySelector('main.app-main')
   if (!sr) return
 
+  // 对照 M3 官方：displayBackToTop = mio-compile-component.getBoundingClientRect().y < 0
+  // 即文章正文区域（.blog-content）顶部滚出视口上方时才显示按钮
   backToTopScrollHandler = () => {
-    const scrollTop = sr.scrollTop
-    // 滚动超过 300px 时显示按钮（对照 M3 阈值）
-    showBackToTop.value = scrollTop > 300
-    // 移动端下滑时隐藏按钮
-    if (window.innerWidth <= 600) {
-      mobileScrollDownHide.value = scrollTop > lastScrollTop && scrollTop > 300
+    // 文章未加载完成（骨架屏状态）时不触发
+    if (!article.value) { showBackToTop.value = false; return }
+    const w = window.innerWidth
+    if (w >= 601 && w <= 1293) {
+      const blogContent = document.querySelector('.blog-content')
+      showBackToTop.value = blogContent ? blogContent.getBoundingClientRect().y < 0 : false
     } else {
-      mobileScrollDownHide.value = false
+      showBackToTop.value = false
     }
-    lastScrollTop = scrollTop
   }
   sr.addEventListener('scroll', backToTopScrollHandler, { passive: true })
 }
@@ -919,35 +919,35 @@ watch(() => route.params.slug, () => {
   margin: 0;
 }
 
-/* 文章页 date 行（对照 M3: title-m, 16px/500/24px, margin-bottom 16px） */
+/* 文章页 date 行 — 与 description 使用同一 token（响应式自动切换） */
 .date {
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 24px;
+  font-family: var(--md-sys-typescale-article-desc-font-family);
+  font-size: var(--md-sys-typescale-article-desc-font-size);
+  font-weight: var(--md-sys-typescale-article-desc-font-weight);
+  line-height: var(--md-sys-typescale-article-desc-line-height);
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0 0 16px;
   display: block;
-  font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
 }
 
-/* 文章页 h1: 对照 M3 wrapper.sm → hero-sm: 60px/475/65px */
+/* 文章页 h1: hero title，响应式由 :root --md-sys-typescale-article-hero-* 控制 */
 .primary-container .wrapper .title h1 {
-  font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
-  font-size: 60px;
-  font-weight: 475;
-  line-height: 65px;
-  letter-spacing: normal;
+  font-family: var(--md-sys-typescale-article-hero-font-family);
+  font-size: var(--md-sys-typescale-article-hero-font-size);
+  font-weight: var(--md-sys-typescale-article-hero-font-weight);
+  line-height: var(--md-sys-typescale-article-hero-line-height);
+  letter-spacing: var(--md-sys-typescale-article-hero-letter-spacing);
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0 0 8px;
-  font-variation-settings: "GRAD" 0, "opsz" 18;
+  font-variation-settings: "GRAD" var(--md-sys-typescale-article-hero-font-variation-GRAD), "opsz" var(--md-sys-typescale-article-hero-font-variation-opsz);
 }
 
-/* 文章页 description: 对照 M3 wrapper.sm → title-m: 16px/500/24px */
+/* 文章页 description，响应式由 :root --md-sys-typescale-article-desc-* 控制 */
 .primary-container .wrapper .title .description {
-  font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 24px;
+  font-family: var(--md-sys-typescale-article-desc-font-family);
+  font-size: var(--md-sys-typescale-article-desc-font-size);
+  font-weight: var(--md-sys-typescale-article-desc-font-weight);
+  line-height: var(--md-sys-typescale-article-desc-line-height);
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
@@ -981,25 +981,16 @@ watch(() => route.params.slug, () => {
   background-size: contain;
 }
 
-/* 对照 M3: 601-1294px, h1 → display-l: 57px/475/64px, desc → title-l: 22px/400/30px */
+/* ── 601-1294px: h1/desc 响应式由 :root 变量自动切换，此处仅处理布局调整 ── */
 @media screen and (min-width: 601px) and (max-width: 1294px) {
-  .primary-container .wrapper .title h1 {
-    font-size: 57px;
-    line-height: 64px;
-  }
-  .primary-container .wrapper .title .description {
-    font-size: 22px;
-    font-weight: 400;
-    line-height: 30px;
-  }
   .primary-container .wrapper .date {
-    font-size: 22px;
-    font-weight: 400;
-    line-height: 30px;
+    font-size: var(--md-sys-typescale-article-desc-font-size);
+    font-weight: var(--md-sys-typescale-article-desc-font-weight);
+    line-height: var(--md-sys-typescale-article-desc-line-height);
   }
 }
 
-/* 对照 M3: ≤600px, h1 → display-m: 45px/475/52px, desc → body-l: 16px/400/24px */
+/* ── ≤600px: h1/desc 响应式由 :root 变量自动切换，此处仅处理布局调整 ── */
 @media screen and (max-width: 600px) {
   .mio-header {
     grid-template-columns: 1fr;
@@ -1011,19 +1002,10 @@ watch(() => route.params.slug, () => {
   .split-asset-image {
     min-height: unset;
   }
-  .primary-container .wrapper .title h1 {
-    font-size: 45px;
-    line-height: 52px;
-  }
-  .primary-container .wrapper .title .description {
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 24px;
-  }
   .primary-container .wrapper .date {
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 24px;
+    font-size: var(--md-sys-typescale-article-desc-font-size);
+    font-weight: var(--md-sys-typescale-article-desc-font-weight);
+    line-height: var(--md-sys-typescale-article-desc-line-height);
   }
   .split-asset-image__foreground {
     position: absolute;
@@ -1279,11 +1261,12 @@ watch(() => route.params.slug, () => {
 }
 
 .authors .overline {
-  font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
-  font-size: 11px;
-  font-weight: 500;
-  line-height: 16px;
-  letter-spacing: 0.1px;
+  font-family: var(--md-sys-typescale-label-s-font-family);
+  font-size: var(--md-sys-typescale-label-s-font-size);
+  font-weight: var(--md-sys-typescale-label-s-font-weight);
+  line-height: var(--md-sys-typescale-label-s-line-height);
+  letter-spacing: var(--md-sys-typescale-label-s-letter-spacing);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-label-s-font-variation-GRAD), "opsz" var(--md-sys-typescale-label-s-font-variation-opsz);
   color: var(--md-sys-color-on-surface-variant, #4d4256);
   margin: 0 0 16px;
 }
@@ -1293,7 +1276,7 @@ watch(() => route.params.slug, () => {
   align-items: center;
   gap: 0;
   margin-top: 8px;
-  font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
+  font-family: var(--md-sys-typescale-article-body-font-family);
 }
 
 .author-avatar {
@@ -1312,16 +1295,17 @@ watch(() => route.params.slug, () => {
 }
 
 .author-name {
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 24px;
+  font-family: var(--md-sys-typescale-title-m-font-family);
+  font-size: var(--md-sys-typescale-title-m-font-size);
+  font-weight: var(--md-sys-typescale-title-m-font-weight);
+  line-height: var(--md-sys-typescale-title-m-line-height);
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
 .author-role {
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 24px;
+  font-size: var(--md-sys-typescale-article-body-font-size);
+  font-weight: var(--md-sys-typescale-article-body-font-weight);
+  line-height: var(--md-sys-typescale-article-body-line-height);
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
@@ -1341,47 +1325,67 @@ watch(() => route.params.slug, () => {
    对照 m3: h2 45px/475/52px, p 16px/400/24px, on-surface
    ================================================================ */
 .blog-content {
-  font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
+  font-family: var(--md-sys-typescale-article-body-font-family);
   padding: 0 24px;
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
 .blog-content :deep(h2.linkable) {
-  font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
-  font-size: 45px;
-  font-weight: 475;
-  line-height: 52px;
+  font-family: var(--md-sys-typescale-article-h2-font-family);
+  font-size: var(--md-sys-typescale-article-h2-font-size);
+  font-weight: var(--md-sys-typescale-article-h2-font-weight);
+  line-height: var(--md-sys-typescale-article-h2-line-height);
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0;
-  font-variation-settings: "GRAD" 0, "opsz" 18;
+  font-variation-settings: "GRAD" var(--md-sys-typescale-article-h2-font-variation-GRAD), "opsz" var(--md-sys-typescale-article-h2-font-variation-opsz);
 }
 
 /* block 容器中 h2 的 margin 由 .block 控制，不在 h2 上 */
 
 .blog-content :deep(h3) {
-  font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
-  font-size: 32px;
-  font-weight: 475;
-  line-height: 40px;
+  font-family: var(--md-sys-typescale-article-h3-font-family);
+  font-size: var(--md-sys-typescale-article-h3-font-size);
+  font-weight: var(--md-sys-typescale-article-h3-font-weight);
+  line-height: var(--md-sys-typescale-article-h3-line-height);
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 48px 0 16px 0;
-  font-variation-settings: "GRAD" 0, "opsz" 18;
+  font-variation-settings: "GRAD" var(--md-sys-typescale-article-h3-font-variation-GRAD), "opsz" var(--md-sys-typescale-article-h3-font-variation-opsz);
 }
 
 .blog-content :deep(h4) {
-  font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
-  font-size: 24px;
-  font-weight: 475;
-  line-height: 32px;
+  font-family: var(--md-sys-typescale-article-h4-font-family);
+  font-size: var(--md-sys-typescale-article-h4-font-size);
+  font-weight: var(--md-sys-typescale-article-h4-font-weight);
+  line-height: var(--md-sys-typescale-article-h4-line-height);
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 32px 0 12px 0;
-  font-variation-settings: "GRAD" 0, "opsz" 18;
+  font-variation-settings: "GRAD" var(--md-sys-typescale-article-h4-font-variation-GRAD), "opsz" var(--md-sys-typescale-article-h4-font-variation-opsz);
+}
+
+.blog-content :deep(h5) {
+  font-family: var(--md-sys-typescale-article-h5-font-family);
+  font-size: var(--md-sys-typescale-article-h5-font-size);
+  font-weight: var(--md-sys-typescale-article-h5-font-weight);
+  line-height: var(--md-sys-typescale-article-h5-line-height);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 24px 0 8px 0;
+  font-variation-settings: "GRAD" var(--md-sys-typescale-article-h5-font-variation-GRAD), "opsz" var(--md-sys-typescale-article-h5-font-variation-opsz);
+}
+
+.blog-content :deep(h6) {
+  font-family: var(--md-sys-typescale-article-h6-font-family);
+  font-size: var(--md-sys-typescale-article-h6-font-size);
+  font-weight: var(--md-sys-typescale-article-h6-font-weight);
+  line-height: var(--md-sys-typescale-article-h6-line-height);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 24px 0 8px 0;
+  font-variation-settings: "GRAD" var(--md-sys-typescale-article-h6-font-variation-GRAD), "opsz" var(--md-sys-typescale-article-h6-font-variation-opsz);
 }
 
 .blog-content :deep(p) {
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 24px;
+  font-size: var(--md-sys-typescale-article-body-font-size);
+  font-weight: var(--md-sys-typescale-article-body-font-weight);
+  line-height: var(--md-sys-typescale-article-body-line-height);
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin-bottom: 24px;
 }
@@ -1391,7 +1395,6 @@ watch(() => route.params.slug, () => {
   list-style: none;
   counter-reset: item 0;
   margin-top: 16px;
-  margin-bottom: 24px;
 }
 
 .blog-content :deep(ol > li) {
@@ -1402,11 +1405,11 @@ watch(() => route.params.slug, () => {
 }
 
 .blog-content :deep(ol > li::before) {
-  font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: 0;
-  font-variation-settings: "GRAD" 0, "opsz" 17;
+  font-family: var(--md-sys-typescale-article-ol-badge-font-family);
+  font-size: var(--md-sys-typescale-article-ol-badge-font-size);
+  font-weight: var(--md-sys-typescale-article-ol-badge-font-weight);
+  letter-spacing: var(--md-sys-typescale-article-ol-badge-letter-spacing);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-article-ol-badge-font-variation-GRAD), "opsz" var(--md-sys-typescale-article-ol-badge-font-variation-opsz);
   display: block;
   width: 24px;
   height: 32px;
@@ -1422,23 +1425,18 @@ watch(() => route.params.slug, () => {
   content: counter(item);
 }
 
-/* ── 移动端 ≤600px: ol pill badge font 12px（对照 M3: label-m） ── */
-@media screen and (max-width: 600px) {
-  .blog-content :deep(ol > li::before) {
-    font-size: 12px;
-  }
-}
+/* ── ol pill badge 响应式已由 :root 变量自动切换（label-l → label-m） ── */
 
 .blog-content :deep(ul) {
   list-style: none;
   padding-left: 0;
   margin-left: 22px;
-  margin-top: 56px;
-  margin-bottom: 24px;
+  margin-top: 16px;
 }
 
 .blog-content :deep(ul li) {
   position: relative;
+  margin-bottom: 16px;
 }
 
 .blog-content :deep(ul li::before) {
@@ -1455,13 +1453,25 @@ watch(() => route.params.slug, () => {
   content: "";
 }
 
-/* M3 body-large: li 字体与 p 一致（16px/24px/400），继承自 M3 官方博客 body-l 基线 */
+/* M3 body-large: li 字体与 p 一致，继承自 :root article-body token */
 .blog-content :deep(li) {
-  font-size: 16px;
-  font-weight: 400;
-  margin-bottom: 8px;
-  line-height: 24px;
+  font-size: var(--md-sys-typescale-article-body-font-size);
+  font-weight: var(--md-sys-typescale-article-body-font-weight);
+  line-height: var(--md-sys-typescale-article-body-line-height);
   color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+/* ── M3 官方：figure/image/video/code-snippet/table 后紧跟的 ol/ul 用 margin-top:56px ── */
+.blog-content :deep(mio-code-snippet + ol),
+.blog-content :deep(mio-code-snippet + ul),
+.blog-content :deep(figure + ol),
+.blog-content :deep(figure + ul) {
+  margin-top: 56px;
+}
+
+/* ── M3 官方：ol>li>ul>li 的 margin-top:16px（嵌套列表间距） ── */
+.blog-content :deep(ol > li > ul > li) {
+  margin-top: 16px;
 }
 
 .blog-content :deep(strong) {
@@ -1469,13 +1479,13 @@ watch(() => route.params.slug, () => {
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
-/* inline <code> — 对照 m3: Google Sans Mono 400 16px/24px, surface-container bg, 2px 8px padding, 2px radius */
+/* inline <code> — 对照 m3: code token, surface-container bg, 2px 8px padding, 2px radius */
 .blog-content :deep(code) {
-  font-family: 'Google Sans Mono', 'Courier New', monospace;
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 24px;
-  font-variation-settings: "GRAD" 0, "opsz" 17;
+  font-family: var(--md-sys-typescale-article-code-font-family);
+  font-size: var(--md-sys-typescale-article-code-font-size);
+  font-weight: var(--md-sys-typescale-article-code-font-weight);
+  line-height: var(--md-sys-typescale-article-code-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-article-code-font-variation-GRAD), "opsz" var(--md-sys-typescale-article-code-font-variation-opsz);
   background: var(--md-sys-color-surface-container, #ece7e9);
   padding: 2px 8px;
   border-radius: 2px;
@@ -1741,14 +1751,15 @@ watch(() => route.params.slug, () => {
 
 /* M3 body-large: blockquote 字体与 p/li 一致（16px/24px/400） */
 .blog-content :deep(blockquote) {
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 24px;
+  font-family: var(--md-sys-typescale-article-blockquote-font-family);
+  font-size: var(--md-sys-typescale-article-blockquote-font-size);
+  font-weight: var(--md-sys-typescale-article-blockquote-font-weight);
+  line-height: var(--md-sys-typescale-article-blockquote-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-article-blockquote-font-variation-GRAD), "opsz" var(--md-sys-typescale-article-blockquote-font-variation-opsz);
   border-left: 4px solid var(--md-sys-color-primary);
   padding-left: 20px;
-  margin: 24px 0;
+  margin: 56px 0;
   color: var(--md-sys-color-on-surface-variant);
-  font-style: italic;
 }
 
 .blog-content :deep(img) {
@@ -1938,12 +1949,11 @@ watch(() => route.params.slug, () => {
 }
 
 /* ================================================================
-   back-to-top 按钮（对照 M3: .back-to-top）
-   使用 :global() 因为 Teleport 到 body 后 Vue scoped 属性不生效
-   桌面端 >=1294px: 隐藏（TOC 侧栏已提供导航）
-   <=1294px: 滚动超过阈值后显示，fixed 固定在右下角
-   移动端 <=600px: 下滑时自动隐藏（mobile-scrolldown-hide）
-   ================================================================ */
+    back-to-top 按钮
+    仅在 tablet 宽度（601px - 1293px）显示
+    desktop (>=1294px): display: none（TOC 侧栏提供导航）
+    mobile (<=600px): display: none（空间有限，不需要）
+    ================================================================ */
 :global(.back-to-top) {
   display: none;
   position: fixed;
@@ -1961,12 +1971,23 @@ watch(() => route.params.slug, () => {
   align-items: center;
   justify-content: center;
   box-shadow: var(--md-sys-elevation-2, 0px 1px 2px 0px rgba(0,0,0,0.3), 0px 2px 6px 2px rgba(0,0,0,0.15));
-  transition: opacity 200ms cubic-bezier(0.2, 0, 0, 1);
   overflow: hidden;
 }
 
-:global(.back-to-top--show) {
-  display: flex;
+/* tablet 宽度：启用 back-to-top */
+@media screen and (min-width: 601px) and (max-width: 1293px) {
+  :global(.back-to-top) {
+    display: flex;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 200ms cubic-bezier(0.2, 0, 0, 1), visibility 0ms 200ms;
+  }
+
+  :global(.back-to-top--show) {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 200ms cubic-bezier(0.2, 0, 0, 1), visibility 0ms 0ms;
+  }
 }
 
 :global(.back-to-top .material-symbols-rounded) {
@@ -1997,21 +2018,9 @@ watch(() => route.params.slug, () => {
   outline-offset: 2px;
 }
 
-@media screen and (min-width: 1294px) {
-  :global(.back-to-top) {
-    display: none !important;
-  }
-}
+/* 桌面端（>=1294px）已由 base display:none 覆盖，无需额外规则 */
 
-@media screen and (max-width: 600px) {
-  :global(.back-to-top--scrolldown-hide) {
-    opacity: 0;
-  }
-  :global(.back-to-top) {
-    bottom: 16px;
-    right: 16px;
-  }
-}
+/* 移动端（<=600px）已由 base display:none 覆盖，无需额外规则 */
 
 /* ================================================================
    Up Next — 严格对照 M3 源代码架构

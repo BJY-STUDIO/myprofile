@@ -1,9 +1,472 @@
 /* ============================================
    基础样式重置
    语义色变量由 theme.js 动态管理
+   M3 排版令牌由 :root 响应式管理
    ============================================ */
 :root {
   --section-gap: 160px;
+
+  /* ================================================================
+     M3 Typography v2 Tokens — Desktop 默认值（>=1295px）
+     对照 m3 官方 mio-theme-v2 系统，每个 token 含 7 个子属性
+     断点覆盖见下方 @media 规则
+     ================================================================ */
+
+  /* ── Display：标题 h1/h2 用，Google Sans 475 ── */
+  --md-sys-typescale-display-l-font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
+  --md-sys-typescale-display-l-font-size: 57px;
+  --md-sys-typescale-display-l-font-weight: 475;
+  --md-sys-typescale-display-l-letter-spacing: 0;
+  --md-sys-typescale-display-l-line-height: 64px;
+  --md-sys-typescale-display-l-font-variation-GRAD: 0;
+  --md-sys-typescale-display-l-font-variation-opsz: 18;
+
+  --md-sys-typescale-display-m-font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
+  --md-sys-typescale-display-m-font-size: 45px;
+  --md-sys-typescale-display-m-font-weight: 475;
+  --md-sys-typescale-display-m-letter-spacing: 0;
+  --md-sys-typescale-display-m-line-height: 52px;
+  --md-sys-typescale-display-m-font-variation-GRAD: 0;
+  --md-sys-typescale-display-m-font-variation-opsz: 18;
+
+  --md-sys-typescale-display-s-font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
+  --md-sys-typescale-display-s-font-size: 36px;
+  --md-sys-typescale-display-s-font-weight: 475;
+  --md-sys-typescale-display-s-letter-spacing: 0;
+  --md-sys-typescale-display-s-line-height: 44px;
+  --md-sys-typescale-display-s-font-variation-GRAD: 0;
+  --md-sys-typescale-display-s-font-variation-opsz: 18;
+
+  /* ── Headline：标题 h3/h4/blockquote 用，Google Sans 475 ── */
+  --md-sys-typescale-headline-l-font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
+  --md-sys-typescale-headline-l-font-size: 32px;
+  --md-sys-typescale-headline-l-font-weight: 475;
+  --md-sys-typescale-headline-l-letter-spacing: 0;
+  --md-sys-typescale-headline-l-line-height: 40px;
+  --md-sys-typescale-headline-l-font-variation-GRAD: 0;
+  --md-sys-typescale-headline-l-font-variation-opsz: 18;
+
+  --md-sys-typescale-headline-m-font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
+  --md-sys-typescale-headline-m-font-size: 28px;
+  --md-sys-typescale-headline-m-font-weight: 475;
+  --md-sys-typescale-headline-m-letter-spacing: 0;
+  --md-sys-typescale-headline-m-line-height: 36px;
+  --md-sys-typescale-headline-m-font-variation-GRAD: 0;
+  --md-sys-typescale-headline-m-font-variation-opsz: 18;
+
+  --md-sys-typescale-headline-s-font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
+  --md-sys-typescale-headline-s-font-size: 24px;
+  --md-sys-typescale-headline-s-font-weight: 475;
+  --md-sys-typescale-headline-s-letter-spacing: 0;
+  --md-sys-typescale-headline-s-line-height: 32px;
+  --md-sys-typescale-headline-s-font-variation-GRAD: 0;
+  --md-sys-typescale-headline-s-font-variation-opsz: 18;
+
+  /* ── Title：标题 h5/h6 用，Google Sans Text 400/500 ── */
+  --md-sys-typescale-title-l-font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
+  --md-sys-typescale-title-l-font-size: 22px;
+  --md-sys-typescale-title-l-font-weight: 400;
+  --md-sys-typescale-title-l-letter-spacing: 0;
+  --md-sys-typescale-title-l-line-height: 30px;
+  --md-sys-typescale-title-l-font-variation-GRAD: 0;
+  --md-sys-typescale-title-l-font-variation-opsz: 17;
+
+  --md-sys-typescale-title-m-font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
+  --md-sys-typescale-title-m-font-size: 16px;
+  --md-sys-typescale-title-m-font-weight: 500;
+  --md-sys-typescale-title-m-letter-spacing: 0;
+  --md-sys-typescale-title-m-line-height: 24px;
+  --md-sys-typescale-title-m-font-variation-GRAD: 0;
+  --md-sys-typescale-title-m-font-variation-opsz: 17;
+
+  --md-sys-typescale-title-s-font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
+  --md-sys-typescale-title-s-font-size: 14px;
+  --md-sys-typescale-title-s-font-weight: 500;
+  --md-sys-typescale-title-s-letter-spacing: 0;
+  --md-sys-typescale-title-s-line-height: 20px;
+  --md-sys-typescale-title-s-font-variation-GRAD: 0;
+  --md-sys-typescale-title-s-font-variation-opsz: 17;
+
+  /* ── Body：正文 p/li 用，Google Sans Text 400 ── */
+  --md-sys-typescale-body-l-font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
+  --md-sys-typescale-body-l-font-size: 16px;
+  --md-sys-typescale-body-l-font-weight: 400;
+  --md-sys-typescale-body-l-letter-spacing: 0;
+  --md-sys-typescale-body-l-line-height: 24px;
+  --md-sys-typescale-body-l-font-variation-GRAD: 0;
+  --md-sys-typescale-body-l-font-variation-opsz: 17;
+
+  --md-sys-typescale-body-m-font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
+  --md-sys-typescale-body-m-font-size: 14px;
+  --md-sys-typescale-body-m-font-weight: 400;
+  --md-sys-typescale-body-m-letter-spacing: 0;
+  --md-sys-typescale-body-m-line-height: 20px;
+  --md-sys-typescale-body-m-font-variation-GRAD: 0;
+  --md-sys-typescale-body-m-font-variation-opsz: 17;
+
+  --md-sys-typescale-body-s-font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
+  --md-sys-typescale-body-s-font-size: 12px;
+  --md-sys-typescale-body-s-font-weight: 400;
+  --md-sys-typescale-body-s-letter-spacing: 0.1px;
+  --md-sys-typescale-body-s-line-height: 16px;
+  --md-sys-typescale-body-s-font-variation-GRAD: 0;
+  --md-sys-typescale-body-s-font-variation-opsz: 17;
+
+  /* ── Label：ol pill badge 用，Google Sans Text 500 ── */
+  --md-sys-typescale-label-l-font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
+  --md-sys-typescale-label-l-font-size: 14px;
+  --md-sys-typescale-label-l-font-weight: 500;
+  --md-sys-typescale-label-l-letter-spacing: 0;
+  --md-sys-typescale-label-l-line-height: 20px;
+  --md-sys-typescale-label-l-font-variation-GRAD: 0;
+  --md-sys-typescale-label-l-font-variation-opsz: 17;
+
+  --md-sys-typescale-label-m-font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
+  --md-sys-typescale-label-m-font-size: 12px;
+  --md-sys-typescale-label-m-font-weight: 500;
+  --md-sys-typescale-label-m-letter-spacing: 0.1px;
+  --md-sys-typescale-label-m-line-height: 16px;
+  --md-sys-typescale-label-m-font-variation-GRAD: 0;
+  --md-sys-typescale-label-m-font-variation-opsz: 17;
+
+  --md-sys-typescale-label-s-font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
+  --md-sys-typescale-label-s-font-size: 11px;
+  --md-sys-typescale-label-s-font-weight: 500;
+  --md-sys-typescale-label-s-letter-spacing: 0.1px;
+  --md-sys-typescale-label-s-line-height: 16px;
+  --md-sys-typescale-label-s-font-variation-GRAD: 0;
+  --md-sys-typescale-label-s-font-variation-opsz: 17;
+
+  /* ── Code：代码块用，Google Sans Mono 400 ── */
+  --md-sys-typescale-code-l-font-family: 'Google Sans Mono', 'Courier New', monospace;
+  --md-sys-typescale-code-l-font-size: 16px;
+  --md-sys-typescale-code-l-font-weight: 400;
+  --md-sys-typescale-code-l-letter-spacing: 0;
+  --md-sys-typescale-code-l-line-height: 24px;
+  --md-sys-typescale-code-l-font-variation-GRAD: 0;
+  --md-sys-typescale-code-l-font-variation-opsz: 17;
+
+  --md-sys-typescale-code-m-font-family: 'Google Sans Mono', 'Courier New', monospace;
+  --md-sys-typescale-code-m-font-size: 14px;
+  --md-sys-typescale-code-m-font-weight: 400;
+  --md-sys-typescale-code-m-letter-spacing: 0;
+  --md-sys-typescale-code-m-line-height: 20px;
+  --md-sys-typescale-code-m-font-variation-GRAD: 0;
+  --md-sys-typescale-code-m-font-variation-opsz: 17;
+
+  /* ================================================================
+     响应式排版映射 — 文章元素在不同断点使用的 token 级别
+     对照 M3 官方 mio-compile-component 断点规则
+     默认为 desktop (>=1295px)，<=600px 为 mobile，601-1294px 为 tablet
+     ================================================================ */
+
+  /* h1 hero 标题：desktop → 60px 自定义 / tablet → display-l (57px) / mobile → display-m (45px) */
+  --md-sys-typescale-article-hero-font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
+  --md-sys-typescale-article-hero-font-size: 60px;
+  --md-sys-typescale-article-hero-font-weight: 475;
+  --md-sys-typescale-article-hero-letter-spacing: 0;
+  --md-sys-typescale-article-hero-line-height: 65px;
+  --md-sys-typescale-article-hero-font-variation-GRAD: 0;
+  --md-sys-typescale-article-hero-font-variation-opsz: 18;
+
+  /* description 副标题：desktop → title-m (16px/500) / tablet → title-l (22px/400) / mobile → body-l (16px/400) */
+  --md-sys-typescale-article-desc-font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
+  --md-sys-typescale-article-desc-font-size: 16px;
+  --md-sys-typescale-article-desc-font-weight: 500;
+  --md-sys-typescale-article-desc-letter-spacing: 0;
+  --md-sys-typescale-article-desc-line-height: 24px;
+  --md-sys-typescale-article-desc-font-variation-GRAD: 0;
+  --md-sys-typescale-article-desc-font-variation-opsz: 17;
+
+  /* h2：desktop → display-l / tablet → display-m / mobile → display-s */
+  --md-sys-typescale-article-h2-font-family: var(--md-sys-typescale-display-l-font-family);
+  --md-sys-typescale-article-h2-font-size: var(--md-sys-typescale-display-l-font-size);
+  --md-sys-typescale-article-h2-font-weight: var(--md-sys-typescale-display-l-font-weight);
+  --md-sys-typescale-article-h2-letter-spacing: var(--md-sys-typescale-display-l-letter-spacing);
+  --md-sys-typescale-article-h2-line-height: var(--md-sys-typescale-display-l-line-height);
+  --md-sys-typescale-article-h2-font-variation-GRAD: var(--md-sys-typescale-display-l-font-variation-GRAD);
+  --md-sys-typescale-article-h2-font-variation-opsz: var(--md-sys-typescale-display-l-font-variation-opsz);
+
+  /* h3：desktop → headline-l / tablet → headline-l / mobile → headline-m */
+  --md-sys-typescale-article-h3-font-family: var(--md-sys-typescale-headline-l-font-family);
+  --md-sys-typescale-article-h3-font-size: var(--md-sys-typescale-headline-l-font-size);
+  --md-sys-typescale-article-h3-font-weight: var(--md-sys-typescale-headline-l-font-weight);
+  --md-sys-typescale-article-h3-letter-spacing: var(--md-sys-typescale-headline-l-letter-spacing);
+  --md-sys-typescale-article-h3-line-height: var(--md-sys-typescale-headline-l-line-height);
+  --md-sys-typescale-article-h3-font-variation-GRAD: var(--md-sys-typescale-headline-l-font-variation-GRAD);
+  --md-sys-typescale-article-h3-font-variation-opsz: var(--md-sys-typescale-headline-l-font-variation-opsz);
+
+  /* h4：desktop → headline-l / tablet → headline-s / mobile → headline-s */
+  --md-sys-typescale-article-h4-font-family: var(--md-sys-typescale-headline-l-font-family);
+  --md-sys-typescale-article-h4-font-size: var(--md-sys-typescale-headline-l-font-size);
+  --md-sys-typescale-article-h4-font-weight: var(--md-sys-typescale-headline-l-font-weight);
+  --md-sys-typescale-article-h4-letter-spacing: var(--md-sys-typescale-headline-l-letter-spacing);
+  --md-sys-typescale-article-h4-line-height: var(--md-sys-typescale-headline-l-line-height);
+  --md-sys-typescale-article-h4-font-variation-GRAD: var(--md-sys-typescale-headline-l-font-variation-GRAD);
+  --md-sys-typescale-article-h4-font-variation-opsz: var(--md-sys-typescale-headline-l-font-variation-opsz);
+
+  /* h5：desktop → title-l / tablet → title-m / mobile → title-m */
+  --md-sys-typescale-article-h5-font-family: var(--md-sys-typescale-title-l-font-family);
+  --md-sys-typescale-article-h5-font-size: var(--md-sys-typescale-title-l-font-size);
+  --md-sys-typescale-article-h5-font-weight: var(--md-sys-typescale-title-l-font-weight);
+  --md-sys-typescale-article-h5-letter-spacing: var(--md-sys-typescale-title-l-letter-spacing);
+  --md-sys-typescale-article-h5-line-height: var(--md-sys-typescale-title-l-line-height);
+  --md-sys-typescale-article-h5-font-variation-GRAD: var(--md-sys-typescale-title-l-font-variation-GRAD);
+  --md-sys-typescale-article-h5-font-variation-opsz: var(--md-sys-typescale-title-l-font-variation-opsz);
+
+  /* h6：desktop → title-m / tablet → title-m / mobile → title-m */
+  --md-sys-typescale-article-h6-font-family: var(--md-sys-typescale-title-m-font-family);
+  --md-sys-typescale-article-h6-font-size: var(--md-sys-typescale-title-m-font-size);
+  --md-sys-typescale-article-h6-font-weight: var(--md-sys-typescale-title-m-font-weight);
+  --md-sys-typescale-article-h6-letter-spacing: var(--md-sys-typescale-title-m-letter-spacing);
+  --md-sys-typescale-article-h6-line-height: var(--md-sys-typescale-title-m-line-height);
+  --md-sys-typescale-article-h6-font-variation-GRAD: var(--md-sys-typescale-title-m-font-variation-GRAD);
+  --md-sys-typescale-article-h6-font-variation-opsz: var(--md-sys-typescale-title-m-font-variation-opsz);
+
+  /* body/p：desktop → body-l / tablet → body-l / mobile → body-m */
+  --md-sys-typescale-article-body-font-family: var(--md-sys-typescale-body-l-font-family);
+  --md-sys-typescale-article-body-font-size: var(--md-sys-typescale-body-l-font-size);
+  --md-sys-typescale-article-body-font-weight: var(--md-sys-typescale-body-l-font-weight);
+  --md-sys-typescale-article-body-letter-spacing: var(--md-sys-typescale-body-l-letter-spacing);
+  --md-sys-typescale-article-body-line-height: var(--md-sys-typescale-body-l-line-height);
+  --md-sys-typescale-article-body-font-variation-GRAD: var(--md-sys-typescale-body-l-font-variation-GRAD);
+  --md-sys-typescale-article-body-font-variation-opsz: var(--md-sys-typescale-body-l-font-variation-opsz);
+
+  /* blockquote：desktop → headline-l / tablet → headline-m / mobile → headline-m */
+  --md-sys-typescale-article-blockquote-font-family: var(--md-sys-typescale-headline-l-font-family);
+  --md-sys-typescale-article-blockquote-font-size: var(--md-sys-typescale-headline-l-font-size);
+  --md-sys-typescale-article-blockquote-font-weight: var(--md-sys-typescale-headline-l-font-weight);
+  --md-sys-typescale-article-blockquote-letter-spacing: var(--md-sys-typescale-headline-l-letter-spacing);
+  --md-sys-typescale-article-blockquote-line-height: var(--md-sys-typescale-headline-l-line-height);
+  --md-sys-typescale-article-blockquote-font-variation-GRAD: var(--md-sys-typescale-headline-l-font-variation-GRAD);
+  --md-sys-typescale-article-blockquote-font-variation-opsz: var(--md-sys-typescale-headline-l-font-variation-opsz);
+
+  /* ol pill badge：desktop → label-l / tablet → label-l / mobile → label-m */
+  --md-sys-typescale-article-ol-badge-font-family: var(--md-sys-typescale-label-l-font-family);
+  --md-sys-typescale-article-ol-badge-font-size: var(--md-sys-typescale-label-l-font-size);
+  --md-sys-typescale-article-ol-badge-font-weight: var(--md-sys-typescale-label-l-font-weight);
+  --md-sys-typescale-article-ol-badge-letter-spacing: var(--md-sys-typescale-label-l-letter-spacing);
+  --md-sys-typescale-article-ol-badge-line-height: var(--md-sys-typescale-label-l-line-height);
+  --md-sys-typescale-article-ol-badge-font-variation-GRAD: var(--md-sys-typescale-label-l-font-variation-GRAD);
+  --md-sys-typescale-article-ol-badge-font-variation-opsz: var(--md-sys-typescale-label-l-font-variation-opsz);
+
+  /* code inline：desktop → code-l / tablet → code-l / mobile → code-m */
+  --md-sys-typescale-article-code-font-family: var(--md-sys-typescale-code-l-font-family);
+  --md-sys-typescale-article-code-font-size: var(--md-sys-typescale-code-l-font-size);
+  --md-sys-typescale-article-code-font-weight: var(--md-sys-typescale-code-l-font-weight);
+  --md-sys-typescale-article-code-letter-spacing: var(--md-sys-typescale-code-l-letter-spacing);
+  --md-sys-typescale-article-code-line-height: var(--md-sys-typescale-code-l-line-height);
+  --md-sys-typescale-article-code-font-variation-GRAD: var(--md-sys-typescale-code-l-font-variation-GRAD);
+  --md-sys-typescale-article-code-font-variation-opsz: var(--md-sys-typescale-code-l-font-variation-opsz);
+
+  /* ================================================================
+     响应式排版映射 — 首页元素
+     ================================================================ */
+
+  /* home hero h1：desktop → 96px 自定义 / tablet → display-l (57px) / mobile → display-m (45px) */
+  --md-sys-typescale-home-hero-font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
+  --md-sys-typescale-home-hero-font-size: 96px;
+  --md-sys-typescale-home-hero-font-weight: 475;
+  --md-sys-typescale-home-hero-letter-spacing: 0;
+  --md-sys-typescale-home-hero-line-height: 96px;
+  --md-sys-typescale-home-hero-font-variation-GRAD: 0;
+  --md-sys-typescale-home-hero-font-variation-opsz: 18;
+
+  /* home description：desktop → title-l (22px/400) / tablet → title-l / mobile → body-l (16px/400) */
+  --md-sys-typescale-home-desc-font-family: var(--md-sys-typescale-title-l-font-family);
+  --md-sys-typescale-home-desc-font-size: var(--md-sys-typescale-title-l-font-size);
+  --md-sys-typescale-home-desc-font-weight: var(--md-sys-typescale-title-l-font-weight);
+  --md-sys-typescale-home-desc-letter-spacing: var(--md-sys-typescale-title-l-letter-spacing);
+  --md-sys-typescale-home-desc-line-height: var(--md-sys-typescale-title-l-line-height);
+  --md-sys-typescale-home-desc-font-variation-GRAD: var(--md-sys-typescale-title-l-font-variation-GRAD);
+  --md-sys-typescale-home-desc-font-variation-opsz: var(--md-sys-typescale-title-l-font-variation-opsz);
+}
+
+/* ── Tablet 断点（601px - 1294px）：降一级 ── */
+@media screen and (min-width: 601px) and (max-width: 1294px) {
+  :root {
+    /* hero h1: 60px → display-l (57px) */
+    --md-sys-typescale-article-hero-font-family: var(--md-sys-typescale-display-l-font-family);
+    --md-sys-typescale-article-hero-font-size: var(--md-sys-typescale-display-l-font-size);
+    --md-sys-typescale-article-hero-font-weight: var(--md-sys-typescale-display-l-font-weight);
+    --md-sys-typescale-article-hero-letter-spacing: var(--md-sys-typescale-display-l-letter-spacing);
+    --md-sys-typescale-article-hero-line-height: var(--md-sys-typescale-display-l-line-height);
+    --md-sys-typescale-article-hero-font-variation-GRAD: var(--md-sys-typescale-display-l-font-variation-GRAD);
+    --md-sys-typescale-article-hero-font-variation-opsz: var(--md-sys-typescale-display-l-font-variation-opsz);
+
+    /* description: title-m → title-l */
+    --md-sys-typescale-article-desc-font-family: var(--md-sys-typescale-title-l-font-family);
+    --md-sys-typescale-article-desc-font-size: var(--md-sys-typescale-title-l-font-size);
+    --md-sys-typescale-article-desc-font-weight: var(--md-sys-typescale-title-l-font-weight);
+    --md-sys-typescale-article-desc-letter-spacing: var(--md-sys-typescale-title-l-letter-spacing);
+    --md-sys-typescale-article-desc-line-height: var(--md-sys-typescale-title-l-line-height);
+    --md-sys-typescale-article-desc-font-variation-GRAD: var(--md-sys-typescale-title-l-font-variation-GRAD);
+    --md-sys-typescale-article-desc-font-variation-opsz: var(--md-sys-typescale-title-l-font-variation-opsz);
+
+    /* h2: display-l → display-m */
+    --md-sys-typescale-article-h2-font-family: var(--md-sys-typescale-display-m-font-family);
+    --md-sys-typescale-article-h2-font-size: var(--md-sys-typescale-display-m-font-size);
+    --md-sys-typescale-article-h2-font-weight: var(--md-sys-typescale-display-m-font-weight);
+    --md-sys-typescale-article-h2-letter-spacing: var(--md-sys-typescale-display-m-letter-spacing);
+    --md-sys-typescale-article-h2-line-height: var(--md-sys-typescale-display-m-line-height);
+    --md-sys-typescale-article-h2-font-variation-GRAD: var(--md-sys-typescale-display-m-font-variation-GRAD);
+    --md-sys-typescale-article-h2-font-variation-opsz: var(--md-sys-typescale-display-m-font-variation-opsz);
+
+    /* h3: headline-l → headline-l (不变) */
+
+    /* h4: headline-l → headline-s */
+    --md-sys-typescale-article-h4-font-family: var(--md-sys-typescale-headline-s-font-family);
+    --md-sys-typescale-article-h4-font-size: var(--md-sys-typescale-headline-s-font-size);
+    --md-sys-typescale-article-h4-font-weight: var(--md-sys-typescale-headline-s-font-weight);
+    --md-sys-typescale-article-h4-letter-spacing: var(--md-sys-typescale-headline-s-letter-spacing);
+    --md-sys-typescale-article-h4-line-height: var(--md-sys-typescale-headline-s-line-height);
+    --md-sys-typescale-article-h4-font-variation-GRAD: var(--md-sys-typescale-headline-s-font-variation-GRAD);
+    --md-sys-typescale-article-h4-font-variation-opsz: var(--md-sys-typescale-headline-s-font-variation-opsz);
+
+    /* h5: title-l → title-m */
+    --md-sys-typescale-article-h5-font-family: var(--md-sys-typescale-title-m-font-family);
+    --md-sys-typescale-article-h5-font-size: var(--md-sys-typescale-title-m-font-size);
+    --md-sys-typescale-article-h5-font-weight: var(--md-sys-typescale-title-m-font-weight);
+    --md-sys-typescale-article-h5-letter-spacing: var(--md-sys-typescale-title-m-letter-spacing);
+    --md-sys-typescale-article-h5-line-height: var(--md-sys-typescale-title-m-line-height);
+    --md-sys-typescale-article-h5-font-variation-GRAD: var(--md-sys-typescale-title-m-font-variation-GRAD);
+    --md-sys-typescale-article-h5-font-variation-opsz: var(--md-sys-typescale-title-m-font-variation-opsz);
+
+    /* body: body-l (不变) */
+
+    /* blockquote: headline-l → headline-m */
+    --md-sys-typescale-article-blockquote-font-family: var(--md-sys-typescale-headline-m-font-family);
+    --md-sys-typescale-article-blockquote-font-size: var(--md-sys-typescale-headline-m-font-size);
+    --md-sys-typescale-article-blockquote-font-weight: var(--md-sys-typescale-headline-m-font-weight);
+    --md-sys-typescale-article-blockquote-letter-spacing: var(--md-sys-typescale-headline-m-letter-spacing);
+    --md-sys-typescale-article-blockquote-line-height: var(--md-sys-typescale-headline-m-line-height);
+    --md-sys-typescale-article-blockquote-font-variation-GRAD: var(--md-sys-typescale-headline-m-font-variation-GRAD);
+    --md-sys-typescale-article-blockquote-font-variation-opsz: var(--md-sys-typescale-headline-m-font-variation-opsz);
+
+    /* home hero: 96px → display-l (57px) */
+    --md-sys-typescale-home-hero-font-family: var(--md-sys-typescale-display-l-font-family);
+    --md-sys-typescale-home-hero-font-size: var(--md-sys-typescale-display-l-font-size);
+    --md-sys-typescale-home-hero-font-weight: var(--md-sys-typescale-display-l-font-weight);
+    --md-sys-typescale-home-hero-letter-spacing: var(--md-sys-typescale-display-l-letter-spacing);
+    --md-sys-typescale-home-hero-line-height: var(--md-sys-typescale-display-l-line-height);
+    --md-sys-typescale-home-hero-font-variation-GRAD: var(--md-sys-typescale-display-l-font-variation-GRAD);
+    --md-sys-typescale-home-hero-font-variation-opsz: var(--md-sys-typescale-display-l-font-variation-opsz);
+
+    /* home description: title-l → title-l (不变) */
+  }
+}
+
+/* ── Mobile 断点（<=600px）：降至最小级 ── */
+@media screen and (max-width: 600px) {
+  :root {
+    /* hero h1: 60px → display-m (45px) */
+    --md-sys-typescale-article-hero-font-family: var(--md-sys-typescale-display-m-font-family);
+    --md-sys-typescale-article-hero-font-size: var(--md-sys-typescale-display-m-font-size);
+    --md-sys-typescale-article-hero-font-weight: var(--md-sys-typescale-display-m-font-weight);
+    --md-sys-typescale-article-hero-letter-spacing: var(--md-sys-typescale-display-m-letter-spacing);
+    --md-sys-typescale-article-hero-line-height: var(--md-sys-typescale-display-m-line-height);
+    --md-sys-typescale-article-hero-font-variation-GRAD: var(--md-sys-typescale-display-m-font-variation-GRAD);
+    --md-sys-typescale-article-hero-font-variation-opsz: var(--md-sys-typescale-display-m-font-variation-opsz);
+
+    /* description: title-m → body-l */
+    --md-sys-typescale-article-desc-font-family: var(--md-sys-typescale-body-l-font-family);
+    --md-sys-typescale-article-desc-font-size: var(--md-sys-typescale-body-l-font-size);
+    --md-sys-typescale-article-desc-font-weight: var(--md-sys-typescale-body-l-font-weight);
+    --md-sys-typescale-article-desc-letter-spacing: var(--md-sys-typescale-body-l-letter-spacing);
+    --md-sys-typescale-article-desc-line-height: var(--md-sys-typescale-body-l-line-height);
+    --md-sys-typescale-article-desc-font-variation-GRAD: var(--md-sys-typescale-body-l-font-variation-GRAD);
+    --md-sys-typescale-article-desc-font-variation-opsz: var(--md-sys-typescale-body-l-font-variation-opsz);
+
+    /* h2: display-l → display-s */
+    --md-sys-typescale-article-h2-font-family: var(--md-sys-typescale-display-s-font-family);
+    --md-sys-typescale-article-h2-font-size: var(--md-sys-typescale-display-s-font-size);
+    --md-sys-typescale-article-h2-font-weight: var(--md-sys-typescale-display-s-font-weight);
+    --md-sys-typescale-article-h2-letter-spacing: var(--md-sys-typescale-display-s-letter-spacing);
+    --md-sys-typescale-article-h2-line-height: var(--md-sys-typescale-display-s-line-height);
+    --md-sys-typescale-article-h2-font-variation-GRAD: var(--md-sys-typescale-display-s-font-variation-GRAD);
+    --md-sys-typescale-article-h2-font-variation-opsz: var(--md-sys-typescale-display-s-font-variation-opsz);
+
+    /* h3: headline-l → headline-m */
+    --md-sys-typescale-article-h3-font-family: var(--md-sys-typescale-headline-m-font-family);
+    --md-sys-typescale-article-h3-font-size: var(--md-sys-typescale-headline-m-font-size);
+    --md-sys-typescale-article-h3-font-weight: var(--md-sys-typescale-headline-m-font-weight);
+    --md-sys-typescale-article-h3-letter-spacing: var(--md-sys-typescale-headline-m-letter-spacing);
+    --md-sys-typescale-article-h3-line-height: var(--md-sys-typescale-headline-m-line-height);
+    --md-sys-typescale-article-h3-font-variation-GRAD: var(--md-sys-typescale-headline-m-font-variation-GRAD);
+    --md-sys-typescale-article-h3-font-variation-opsz: var(--md-sys-typescale-headline-m-font-variation-opsz);
+
+    /* h4: headline-l → headline-s */
+    --md-sys-typescale-article-h4-font-family: var(--md-sys-typescale-headline-s-font-family);
+    --md-sys-typescale-article-h4-font-size: var(--md-sys-typescale-headline-s-font-size);
+    --md-sys-typescale-article-h4-font-weight: var(--md-sys-typescale-headline-s-font-weight);
+    --md-sys-typescale-article-h4-letter-spacing: var(--md-sys-typescale-headline-s-letter-spacing);
+    --md-sys-typescale-article-h4-line-height: var(--md-sys-typescale-headline-s-line-height);
+    --md-sys-typescale-article-h4-font-variation-GRAD: var(--md-sys-typescale-headline-s-font-variation-GRAD);
+    --md-sys-typescale-article-h4-font-variation-opsz: var(--md-sys-typescale-headline-s-font-variation-opsz);
+
+    /* h5: title-l → title-m */
+    --md-sys-typescale-article-h5-font-family: var(--md-sys-typescale-title-m-font-family);
+    --md-sys-typescale-article-h5-font-size: var(--md-sys-typescale-title-m-font-size);
+    --md-sys-typescale-article-h5-font-weight: var(--md-sys-typescale-title-m-font-weight);
+    --md-sys-typescale-article-h5-letter-spacing: var(--md-sys-typescale-title-m-letter-spacing);
+    --md-sys-typescale-article-h5-line-height: var(--md-sys-typescale-title-m-line-height);
+    --md-sys-typescale-article-h5-font-variation-GRAD: var(--md-sys-typescale-title-m-font-variation-GRAD);
+    --md-sys-typescale-article-h5-font-variation-opsz: var(--md-sys-typescale-title-m-font-variation-opsz);
+
+    /* body: body-l → body-m */
+    --md-sys-typescale-article-body-font-family: var(--md-sys-typescale-body-m-font-family);
+    --md-sys-typescale-article-body-font-size: var(--md-sys-typescale-body-m-font-size);
+    --md-sys-typescale-article-body-font-weight: var(--md-sys-typescale-body-m-font-weight);
+    --md-sys-typescale-article-body-letter-spacing: var(--md-sys-typescale-body-m-letter-spacing);
+    --md-sys-typescale-article-body-line-height: var(--md-sys-typescale-body-m-line-height);
+    --md-sys-typescale-article-body-font-variation-GRAD: var(--md-sys-typescale-body-m-font-variation-GRAD);
+    --md-sys-typescale-article-body-font-variation-opsz: var(--md-sys-typescale-body-m-font-variation-opsz);
+
+    /* blockquote: headline-l → headline-m */
+    --md-sys-typescale-article-blockquote-font-family: var(--md-sys-typescale-headline-m-font-family);
+    --md-sys-typescale-article-blockquote-font-size: var(--md-sys-typescale-headline-m-font-size);
+    --md-sys-typescale-article-blockquote-font-weight: var(--md-sys-typescale-headline-m-font-weight);
+    --md-sys-typescale-article-blockquote-letter-spacing: var(--md-sys-typescale-headline-m-letter-spacing);
+    --md-sys-typescale-article-blockquote-line-height: var(--md-sys-typescale-headline-m-line-height);
+    --md-sys-typescale-article-blockquote-font-variation-GRAD: var(--md-sys-typescale-headline-m-font-variation-GRAD);
+    --md-sys-typescale-article-blockquote-font-variation-opsz: var(--md-sys-typescale-headline-m-font-variation-opsz);
+
+    /* ol badge: label-l → label-m */
+    --md-sys-typescale-article-ol-badge-font-family: var(--md-sys-typescale-label-m-font-family);
+    --md-sys-typescale-article-ol-badge-font-size: var(--md-sys-typescale-label-m-font-size);
+    --md-sys-typescale-article-ol-badge-font-weight: var(--md-sys-typescale-label-m-font-weight);
+    --md-sys-typescale-article-ol-badge-letter-spacing: var(--md-sys-typescale-label-m-letter-spacing);
+    --md-sys-typescale-article-ol-badge-line-height: var(--md-sys-typescale-label-m-line-height);
+    --md-sys-typescale-article-ol-badge-font-variation-GRAD: var(--md-sys-typescale-label-m-font-variation-GRAD);
+    --md-sys-typescale-article-ol-badge-font-variation-opsz: var(--md-sys-typescale-label-m-font-variation-opsz);
+
+    /* code: code-l → code-m */
+    --md-sys-typescale-article-code-font-family: var(--md-sys-typescale-code-m-font-family);
+    --md-sys-typescale-article-code-font-size: var(--md-sys-typescale-code-m-font-size);
+    --md-sys-typescale-article-code-font-weight: var(--md-sys-typescale-code-m-font-weight);
+    --md-sys-typescale-article-code-letter-spacing: var(--md-sys-typescale-code-m-letter-spacing);
+    --md-sys-typescale-article-code-line-height: var(--md-sys-typescale-code-m-line-height);
+    --md-sys-typescale-article-code-font-variation-GRAD: var(--md-sys-typescale-code-m-font-variation-GRAD);
+    --md-sys-typescale-article-code-font-variation-opsz: var(--md-sys-typescale-code-m-font-variation-opsz);
+
+    /* home hero: 96px → display-m (45px) */
+    --md-sys-typescale-home-hero-font-family: var(--md-sys-typescale-display-m-font-family);
+    --md-sys-typescale-home-hero-font-size: var(--md-sys-typescale-display-m-font-size);
+    --md-sys-typescale-home-hero-font-weight: var(--md-sys-typescale-display-m-font-weight);
+    --md-sys-typescale-home-hero-letter-spacing: var(--md-sys-typescale-display-m-letter-spacing);
+    --md-sys-typescale-home-hero-line-height: var(--md-sys-typescale-display-m-line-height);
+    --md-sys-typescale-home-hero-font-variation-GRAD: var(--md-sys-typescale-display-m-font-variation-GRAD);
+    --md-sys-typescale-home-hero-font-variation-opsz: var(--md-sys-typescale-display-m-font-variation-opsz);
+
+    /* home description: title-l → body-l */
+    --md-sys-typescale-home-desc-font-family: var(--md-sys-typescale-body-l-font-family);
+    --md-sys-typescale-home-desc-font-size: var(--md-sys-typescale-body-l-font-size);
+    --md-sys-typescale-home-desc-font-weight: var(--md-sys-typescale-body-l-font-weight);
+    --md-sys-typescale-home-desc-letter-spacing: var(--md-sys-typescale-body-l-letter-spacing);
+    --md-sys-typescale-home-desc-line-height: var(--md-sys-typescale-body-l-line-height);
+    --md-sys-typescale-home-desc-font-variation-GRAD: var(--md-sys-typescale-body-l-font-variation-GRAD);
+    --md-sys-typescale-home-desc-font-variation-opsz: var(--md-sys-typescale-body-l-font-variation-opsz);
+  }
 }
 
 *,
@@ -23,12 +486,12 @@ body {
   color: var(--md-sys-color-on-surface, #1c1b1f);
   background: var(--mio-bg, var(--md-sys-color-surface, #fefbff));
   transition: color 0.3s ease, background-color 0.3s ease;
-  line-height: 1.6;
-  font-family:
-    'Google Sans',
-    'Noto Sans SC',
-    sans-serif;
-  font-size: 14px;
+  font-family: var(--md-sys-typescale-article-body-font-family);
+  font-size: var(--md-sys-typescale-article-body-font-size);
+  font-weight: var(--md-sys-typescale-article-body-font-weight);
+  letter-spacing: var(--md-sys-typescale-article-body-letter-spacing);
+  line-height: var(--md-sys-typescale-article-body-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-article-body-font-variation-GRAD), "opsz" var(--md-sys-typescale-article-body-font-variation-opsz);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
