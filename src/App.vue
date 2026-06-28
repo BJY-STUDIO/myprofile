@@ -624,11 +624,12 @@ const bodyMarginLeft = computed(() => {
   margin-left: 6px;
 }
 
-/* M3 specs: trailing icon spacing = 12dp between icons */
+/* M3 specs: trailing icon spacing — buttons are 48dp with 12dp internal padding each side,
+   so with gap:4px the visual icon-to-icon distance is 28dp, matching M3 tight arrangement */
 .mobile-top-bar__actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 4px;
 }
 
 .mobile-top-bar__icon-btn {

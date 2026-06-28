@@ -1,5 +1,5 @@
 <template>
-  <div class="editorial" v-if="article">
+  <div class="editorial article-fadein" v-if="article">
     <!-- ======== mio-header（复用 HomeView 的 header 结构，文章页多了 date + wrapper--article） ======== -->
     <header class="mio-header">
       <div class="primary-container">
@@ -1068,6 +1068,26 @@ watch(() => route.params.slug, () => {
 
 .loading-progress--fading {
   opacity: 0;
+}
+
+/* ================================================================
+   文章内容 fadeIn 进场动画
+   对照 M3 ng-trigger-fadeIn: opacity 0→1 + translateY(10px→0)
+   FADE_IN = 200ms delay + 200ms linear（与 App.vue page-fade 一致）
+   ================================================================ */
+@keyframes article-fadein-keyframes {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.article-fadein {
+  animation: article-fadein-keyframes 200ms linear 200ms both;
 }
 
 /* ================================================================
