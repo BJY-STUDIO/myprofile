@@ -354,7 +354,7 @@ const bodyMarginLeft = computed(() => {
         >
           <span class="material-symbols-rounded">{{ drawerOpen ? 'menu_open' : 'menu' }}</span>
         </md-icon-button>
-        <a class="mobile-top-bar__title" href="/">Kernel's Blog</a>
+        <a class="mobile-top-bar__title" href="/" @click.prevent="$router.push('/')">Kernel's Blog</a>
         <div class="mobile-top-bar__actions">
           <a
             class="mobile-top-bar__icon-btn"

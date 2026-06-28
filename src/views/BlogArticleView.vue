@@ -1,5 +1,7 @@
 <template>
-  <div class="editorial article-fadein" v-if="article">
+  <div class="blog-article-view">
+    <!-- 单根包裹：避免 Fragment 导致 <Transition mode="out-in"> 无法正确检测离开动画结束 -->
+    <div class="editorial article-fadein" v-if="article">
     <!-- ======== mio-header（复用 HomeView 的 header 结构，文章页多了 date + wrapper--article） ======== -->
     <header class="mio-header">
       <div class="primary-container">
@@ -193,6 +195,7 @@
       </article>
     </div>
     <MioFooter />
+  </div>
   </div>
 </template>
 
