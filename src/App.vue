@@ -347,6 +347,7 @@ const bodyMarginLeft = computed(() => {
       <header class="mobile-top-bar">
         <md-icon-button
           class="mobile-top-bar__menu-btn"
+          touch-target="none"
           :aria-label="drawerOpen ? 'close menu' : 'open menu'"
           :title="drawerOpen ? 'Close' : 'Menu'"
           @click="toggleDrawer"
@@ -370,6 +371,7 @@ const bodyMarginLeft = computed(() => {
           <md-icon-button
             id="theme-btn-mobile"
             class="mobile-top-bar__theme-btn"
+            touch-target="none"
             aria-label="Toggle theme"
             title="Toggle theme"
           >
@@ -606,6 +608,9 @@ const bodyMarginLeft = computed(() => {
 .mobile-top-bar__menu-btn {
   --md-icon-button-icon-size: 24px;
   --md-icon-button-icon-color: var(--md-sys-color-on-surface-variant, #49454f);
+  --md-icon-button-state-layer-width: 48px;
+  --md-icon-button-state-layer-height: 48px;
+  --md-icon-button-state-layer-shape: 9999px;
   width: 48px;
   height: 48px;
 }
@@ -624,12 +629,12 @@ const bodyMarginLeft = computed(() => {
   margin-left: 6px;
 }
 
-/* M3 specs: trailing icon spacing — buttons are 48dp with 12dp internal padding each side,
-   so with gap:4px the visual icon-to-icon distance is 28dp, matching M3 tight arrangement */
+/* M3 small top app bar: trailing icons are 48dp buttons placed edge-to-edge (0dp gap).
+   Each button occupies 48dp×48dp with 12dp internal padding on each side. */
 .mobile-top-bar__actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0;
 }
 
 .mobile-top-bar__icon-btn {
@@ -681,12 +686,15 @@ const bodyMarginLeft = computed(() => {
   z-index: 1;
 }
 
-/* 主题按钮：使用 md-icon-button CSS 变量覆盖，避免与 WC 交互冲突 */
+/* 主题按钮：强制 48dp 尺寸 + touch-target=none 禁止额外 margin，
+   与 GitHub 手动按钮保持一致，符合 M3 top app bar trailing icon 规格 */
 .mobile-top-bar__theme-btn {
   --md-icon-button-icon-size: 24px;
   --md-icon-button-state-layer-width: 48px;
   --md-icon-button-state-layer-height: 48px;
-  --md-icon-button-state-layer-shape: 24px;
+  --md-icon-button-state-layer-shape: 9999px;
+  width: 48px;
+  height: 48px;
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 

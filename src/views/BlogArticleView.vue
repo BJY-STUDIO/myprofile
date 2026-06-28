@@ -26,7 +26,7 @@
 
     <!-- ======== content-container（复用 HomeView 的 flex row-reverse 布局） ======== -->
     <div class="content-container" :class="{ 'no-toc': tocItems.length === 0 }">
-      <!-- TOC 目录（复用 HomeView 的 .toc 结构和 indicator，始终渲染容器） -->
+      <!-- TOC 目录（桌面端：右侧 sticky 侧栏；移动端：inline 显示在 article 上方） -->
       <aside class="toc" v-show="tocItems.length > 0">
         <nav aria-label="page content">
           <div class="toc__overline">On this page</div>
@@ -123,6 +123,23 @@
     <!-- ======== Footer ======== -->
     <MioFooter />
   </div>
+
+  <!-- ======== Back to top（对照 M3: .back-to-top，<=1294px 可见）
+       使用 Teleport 传送到 body，避免被 .editorial 的 transform 吞掉 fixed 定位 ======== -->
+  <Teleport to="body">
+    <div
+      class="back-to-top"
+      :class="{ 'back-to-top--show': showBackToTop, 'back-to-top--scrolldown-hide': mobileScrollDownHide }"
+      role="button"
+      aria-label="go back to top"
+      tabindex="0"
+      @click="scrollToTop"
+      @keydown.enter="scrollToTop"
+    >
+      <div class="back-to-top__state-overlay"></div>
+      <span class="material-symbols-rounded">vertical_align_top</span>
+    </div>
+  </Teleport>
 
   <!-- ======== 缓冲进度条（加载中显示，加载完成后 fade 消失） ======== -->
   <md-linear-progress
@@ -566,45 +583,138 @@ const upNextArticles = computed(() => {
     .slice(0, 2)
 })
 
-// 卡片涟漪动效（复用 HomeView 的 onCardDown）
+// 卡片涟漪动效（严格对照 @material/web ripple/internal/ripple.ts 实现）
+// 核心原理：mousedown 创建 <div class="ripple">，Web Animations API 驱动 translate+scale
+// 从点击位置 scale(1) 展开 → translate 到容器中心 + scale(N) 覆盖整个容器
+// opacity: 0.12 → 0，单段动画，时长 450ms，M3 EASING.STANDARD 曲线
+const RIPPLE_PRESS_GROW_MS = 450                         // @material/web PRESS_GROW_MS
+const RIPPLE_OPACITY = 0.12                              // M3 spec: pressed state layer opacity
+const RIPPLE_COLOR = '#001d35'                           // M3 官方硬编码色值
+const RIPPLE_INITIAL_ORIGIN_SCALE = 0.2                  // @material/web INITIAL_ORIGIN_SCALE
+const RIPPLE_PADDING = 10                                // @material/web PADDING
+const RIPPLE_SOFT_EDGE_CONTAINER_RATIO = 0.35            // @material/web SOFT_EDGE_CONTAINER_RATIO
+const RIPPLE_SOFT_EDGE_MINIMUM_SIZE = 75                 // @material/web SOFT_EDGE_MINIMUM_SIZE
+
+function onCardDown(e) {
+  const card = e.currentTarget
+
+  let ripple = card.querySelector(':scope > .ripple')
+  if (!ripple) {
+    ripple = document.createElement('div')
+    ripple.className = 'ripple'
+    for (const attr of card.attributes) {
+      if (attr.name.startsWith('data-v-')) ripple.setAttribute(attr.name, '')
+    }
+    card.appendChild(ripple)
+  }
+
+  const prevAnim = ripple.getAnimations()
+  prevAnim.forEach(a => a.cancel())
+
+  const rect = card.getBoundingClientRect()
+  const containerW = rect.width
+  const containerH = rect.height
+
+  // determineRippleSize：严格对照 @material/web ripple.ts
+  const maxDim = Math.max(containerW, containerH)
+  const softEdgeSize = Math.max(
+    RIPPLE_SOFT_EDGE_CONTAINER_RATIO * maxDim,
+    RIPPLE_SOFT_EDGE_MINIMUM_SIZE
+  )
+  const initialSize = Math.floor(maxDim * RIPPLE_INITIAL_ORIGIN_SCALE)
+  const hypotenuse = Math.sqrt(containerW ** 2 + containerH ** 2)
+  const maxRadius = hypotenuse + RIPPLE_PADDING
+  const rippleScale = (maxRadius + softEdgeSize) / initialSize
+
+  const clickX = e.clientX ?? (rect.left + containerW / 2)
+  const clickY = e.clientY ?? (rect.top + containerH / 2)
+
+  // 起点变换：ripple 圆心对齐点击位置
+  const startX = clickX - rect.left - initialSize / 2
+  const startY = clickY - rect.top - initialSize / 2
+  const startTransform = `translate(${startX}px, ${startY}px) scale(1)`
+
+  // 终点变换：移至容器中心 + scale 覆盖
+  const endX = (containerW - initialSize) / 2
+  const endY = (containerH - initialSize) / 2
+  const endTransform = `translate(${endX}px, ${endY}px) scale(${rippleScale})`
+
+  const anim = ripple.animate([
+    {
+      display: 'block',
+      opacity: RIPPLE_OPACITY,
+      width: `${initialSize}px`,
+      height: `${initialSize}px`,
+      background: RIPPLE_COLOR,
+      transform: startTransform
+    },
+    {
+      opacity: 0,
+      transform: endTransform
+    }
+  ], {
+    duration: RIPPLE_PRESS_GROW_MS,
+    easing: 'cubic-bezier(0.2, 0, 0, 1)',   // @material/web EASING.STANDARD
+    fill: 'forwards'
+  })
+
+  anim.onfinish = () => {
+    ripple.style.display = 'none'
+  }
+}
+
 const thumbBg = 'var(--md-sys-color-secondary-container, #e8def8)'
+
+// ======== Back-to-top 按钮（对照 M3: .back-to-top） ========
+const showBackToTop = ref(false)
+const mobileScrollDownHide = ref(false)
+let lastScrollTop = 0
+let backToTopScrollHandler = null
+
+function scrollToTop() {
+  // 对照 M3 官方：back-to-top 滚动到 TOC 区域，而非页面顶端
+  const sr = document.querySelector('main.app-main')
+  if (!sr) return
+  // 移动端（<=1294px）TOC 是 inline，滚动到 .toc 顶部即可看到
+  // 桌面端（>=1295px）不会显示 back-to-top 按钮（display:none）
+  const tocEl = document.querySelector('.editorial .toc')
+  if (tocEl) {
+    tocEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  } else {
+    sr.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+function setupBackToTopObserver() {
+  const sr = document.querySelector('main.app-main')
+  if (!sr) return
+
+  backToTopScrollHandler = () => {
+    const scrollTop = sr.scrollTop
+    // 滚动超过 300px 时显示按钮（对照 M3 阈值）
+    showBackToTop.value = scrollTop > 300
+    // 移动端下滑时隐藏按钮
+    if (window.innerWidth <= 600) {
+      mobileScrollDownHide.value = scrollTop > lastScrollTop && scrollTop > 300
+    } else {
+      mobileScrollDownHide.value = false
+    }
+    lastScrollTop = scrollTop
+  }
+  sr.addEventListener('scroll', backToTopScrollHandler, { passive: true })
+}
+
+function teardownBackToTopObserver() {
+  if (backToTopScrollHandler) {
+    const sr = document.querySelector('main.app-main')
+    if (sr) sr.removeEventListener('scroll', backToTopScrollHandler)
+    backToTopScrollHandler = null
+  }
+}
 
 function isCjk(text) {
   if (!text) return false
   return /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/.test(text)
-}
-
-function onCardDown(e) {
-  const card = e.currentTarget
-  const rect = card.getBoundingClientRect()
-  const x = e.clientX - rect.left
-  const y = e.clientY - rect.top
-  const maxDist = Math.max(
-    Math.hypot(x, y),
-    Math.hypot(rect.width - x, y),
-    Math.hypot(x, rect.height - y),
-    Math.hypot(rect.width - x, rect.height - y)
-  )
-  const size = maxDist * 2
-  const ripple = document.createElement('div')
-  ripple.className = 'ripple'
-  for (const attr of card.attributes) {
-    if (attr.name.startsWith('data-v-')) ripple.setAttribute(attr.name, '')
-  }
-  ripple.style.width = size + 'px'
-  ripple.style.height = size + 'px'
-  ripple.style.left = (x - size / 2) + 'px'
-  ripple.style.top = (y - size / 2) + 'px'
-  card.appendChild(ripple)
-  requestAnimationFrame(() => ripple.classList.add('ripple--active'))
-  const onUp = () => {
-    window.removeEventListener('mouseup', onUp)
-    ripple.classList.remove('ripple--active')
-    ripple.classList.add('ripple--fade-out')
-    ripple.addEventListener('animationend', () => ripple.remove(), { once: true })
-    setTimeout(() => { if (ripple.parentNode) ripple.remove() }, 500)
-  }
-  window.addEventListener('mouseup', onUp)
 }
 
 function recalcIndicatorTop() {
@@ -659,6 +769,8 @@ function bindVHtmlEvents() {
 onMounted(() => {
   // 计算 indicator top 基准位置
   recalcIndicatorTop()
+  // 设置 back-to-top 滚动监听
+  setupBackToTopObserver()
 })
 
 // 当文章数据变化时，设置 MutationObserver 等 DOM 就绪后构建 TOC
@@ -724,6 +836,7 @@ onUnmounted(() => {
   if (cancelArticleRetry) cancelArticleRetry()
   if (cancelListRetry) cancelListRetry()
   stopProgressAnimation()
+  teardownBackToTopObserver()
   // 清理 v-html 事件委托
   if (blogContentRef.value) {
     blogContentRef.value.removeEventListener('click', handleVHtmlClick)
@@ -1024,11 +1137,75 @@ watch(() => route.params.slug, () => {
 }
 
 @media screen and (max-width: 1294px) {
+  /* TOC 从右侧 sticky 侧栏切换为 inline 模式（对照 M3: <=1294px nav inline） */
   .toc {
+    flex: 1 1 100%;
+    width: 100%;
+    margin: 0;
+    max-width: none;
+    order: -1;  /* 确保 TOC 在 article 上方 */
+  }
+  .toc nav {
+    position: static;  /* 不再 sticky */
+    margin: 64px 88px 0;
+    max-width: 840px;
+  }
+  /* indicator 在移动端隐藏 */
+  .toc__indicator {
+    opacity: 0;
+    pointer-events: none;
+  }
+  /* title 在移动端隐藏 */
+  .toc__title {
     display: none;
   }
+  /* TOC items 变为 pill 样式（对照 M3: border-radius: 20px, width: fit-content） */
+  .toc__item {
+    width: fit-content;
+    border-radius: 20px;
+  }
+  /* hover/active 仅桌面端 */
+  .toc__item:hover {
+    background: none;
+  }
+  /* 文字样式调整（对照 M3: title-m 16px/500, primary 色） */
+  .toc__link {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    color: var(--md-sys-color-primary, #6750a4);
+    letter-spacing: 0;
+  }
+  .toc__link--selected {
+    color: var(--md-sys-color-on-secondary-container, #1d192b);
+    font-weight: 500;
+  }
+  /* content-container 切换为 column 布局 */
   .content-container {
     flex-direction: column;
+  }
+}
+
+@media screen and (max-width: 960px) {
+  .toc nav {
+    margin-left: 40px;
+    margin-right: 40px;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .toc nav {
+    margin-left: 24px;
+    margin-right: 24px;
+  }
+  /* 移动端 TOC list 左侧紧凑，看起来更美观 */
+  .toc__overline {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .toc__item {
+    padding-left: 8px;
+    padding-right: 12px;
   }
 }
 
@@ -1275,7 +1452,10 @@ watch(() => route.params.slug, () => {
   content: "";
 }
 
+/* M3 body-large: li 字体与 p 一致（16px/24px/400），继承自 M3 官方博客 body-l 基线 */
 .blog-content :deep(li) {
+  font-size: 16px;
+  font-weight: 400;
   margin-bottom: 8px;
   line-height: 24px;
   color: var(--md-sys-color-on-surface, #1c1b1f);
@@ -1556,7 +1736,11 @@ watch(() => route.params.slug, () => {
   background: var(--md-sys-color-surface-container, #2b292b);
 }
 
+/* M3 body-large: blockquote 字体与 p/li 一致（16px/24px/400） */
 .blog-content :deep(blockquote) {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
   border-left: 4px solid var(--md-sys-color-primary);
   padding-left: 20px;
   margin: 24px 0;
@@ -1746,7 +1930,83 @@ watch(() => route.params.slug, () => {
   }
 
   .blog-content :deep(.copy-button-container) {
-    display: none;
+     display: none;
+  }
+}
+
+/* ================================================================
+   back-to-top 按钮（对照 M3: .back-to-top）
+   使用 :global() 因为 Teleport 到 body 后 Vue scoped 属性不生效
+   桌面端 >=1294px: 隐藏（TOC 侧栏已提供导航）
+   <=1294px: 滚动超过阈值后显示，fixed 固定在右下角
+   移动端 <=600px: 下滑时自动隐藏（mobile-scrolldown-hide）
+   ================================================================ */
+:global(.back-to-top) {
+  display: none;
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--md-sys-color-primary-container, #e8def8);
+  color: var(--md-sys-color-on-primary-container, #1d192b);
+  cursor: pointer;
+  z-index: 50;
+  border: none;
+  outline: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--md-sys-elevation-2, 0px 1px 2px 0px rgba(0,0,0,0.3), 0px 2px 6px 2px rgba(0,0,0,0.15));
+  transition: opacity 200ms cubic-bezier(0.2, 0, 0, 1);
+  overflow: hidden;
+}
+
+:global(.back-to-top--show) {
+  display: flex;
+}
+
+:global(.back-to-top .material-symbols-rounded) {
+  font-size: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+:global(.back-to-top__state-overlay) {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--md-sys-color-on-primary-container, #1d192b);
+  opacity: 0;
+  transition: opacity 150ms linear;
+}
+
+:global(.back-to-top:hover .back-to-top__state-overlay) {
+  opacity: 0.08;
+}
+
+:global(.back-to-top:active .back-to-top__state-overlay) {
+  opacity: 0.12;
+}
+
+:global(.back-to-top:focus-visible) {
+  outline: 2px solid var(--md-sys-color-primary, #6750a4);
+  outline-offset: 2px;
+}
+
+@media screen and (min-width: 1294px) {
+  :global(.back-to-top) {
+    display: none !important;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  :global(.back-to-top--scrolldown-hide) {
+    opacity: 0;
+  }
+  :global(.back-to-top) {
+    bottom: 16px;
+    right: 16px;
   }
 }
 
@@ -1907,34 +2167,20 @@ watch(() => route.params.slug, () => {
   outline: initial;
 }
 
-/* ripple */
+/* ripple 涟漪动效（严格对照 @material/web ripple/internal/ripple.ts + M3 官方 .ripple CSS）
+   Web Animations API 控制 translate+scale，单段动画 opacity 0.12→0
+   初试尺寸 = maxDim × 20%，从点击位置 scale(1) 展开到容器中心 scale(N)
+   z-index: 0 使 ripple 画在 content-container(2) 和 thumb-container(1) 下方 */
 .thumbnail > .ripple {
   position: absolute;
+  top: 0;
+  left: 0;
   border-radius: 50%;
-  background-color: var(--md-sys-color-on-secondary-container, #1d192b);
-  opacity: 0;
   pointer-events: none;
-  transform: scale(0);
+  display: none;
   z-index: 0;
+  transform-origin: center center;
   filter: blur(4px);
-}
-
-.thumbnail > .ripple.ripple--active {
-  animation: ripple-expand 0.4s cubic-bezier(0.2, 0, 0, 1) forwards;
-}
-
-.thumbnail > .ripple.ripple--fade-out {
-  animation: ripple-fade 0.3s cubic-bezier(0.2, 0, 0, 1) forwards;
-}
-
-@keyframes ripple-expand {
-  0% { transform: scale(0); opacity: 0.12; }
-  100% { transform: scale(1); opacity: 0.12; }
-}
-
-@keyframes ripple-fade {
-  0% { opacity: 0.12; }
-  100% { opacity: 0; }
 }
 
 /* 卡片内部 content-container */

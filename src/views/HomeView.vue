@@ -338,54 +338,89 @@ function scrollToSection(i) {
   }
 }
 
-// Ripple: 对照 m3 mioripple 指令 — mousedown 创建 ripple DOM, mouseup 移除
-// 每次点击创建全新 ripple 实例，避免长按取消后 class 残留导致下次失效
+// Ripple: 严格对照 @material/web ripple/internal/ripple.ts 实现
+// 核心原理：mousedown 创建 <div class="ripple">，Web Animations API 驱动 translate+scale
+// 从点击位置 scale(1) 展开 → translate 到容器中心 + scale(N) 覆盖整个容器
+// opacity: 0.12 → 0，单段动画，时长 450ms，M3 EASING.STANDARD 曲线
+const RIPPLE_PRESS_GROW_MS = 450                         // @material/web PRESS_GROW_MS
+const RIPPLE_OPACITY = 0.12                              // M3 spec: pressed state layer opacity
+const RIPPLE_COLOR = '#001d35'                           // M3 官方硬编码色值
+const RIPPLE_INITIAL_ORIGIN_SCALE = 0.2                  // @material/web INITIAL_ORIGIN_SCALE
+const RIPPLE_PADDING = 10                                // @material/web PADDING
+const RIPPLE_SOFT_EDGE_CONTAINER_RATIO = 0.35            // @material/web SOFT_EDGE_CONTAINER_RATIO
+const RIPPLE_SOFT_EDGE_MINIMUM_SIZE = 75                 // @material/web SOFT_EDGE_MINIMUM_SIZE
+
 function onCardDown(e) {
   const card = e.currentTarget
-  const rect = card.getBoundingClientRect()
-  const x = e.clientX - rect.left
-  const y = e.clientY - rect.top
 
-  // 计算涟漪半径：从点击位置到卡片四角的最大距离
-  const maxDist = Math.max(
-    Math.hypot(x, y),
-    Math.hypot(rect.width - x, y),
-    Math.hypot(x, rect.height - y),
-    Math.hypot(rect.width - x, rect.height - y)
-  )
-  const size = maxDist * 2
-
-  // 创建 ripple DOM
-  const ripple = document.createElement('div')
-  ripple.className = 'ripple'
-  // 复制 Vue scoped data-v- 属性，使 scoped CSS 规则能匹配动态创建的元素
-  for (const attr of card.attributes) {
-    if (attr.name.startsWith('data-v-')) {
-      ripple.setAttribute(attr.name, '')
+  // 复用或创建 ripple 元素（每个卡片只维护 1 个）
+  let ripple = card.querySelector(':scope > .ripple')
+  if (!ripple) {
+    ripple = document.createElement('div')
+    ripple.className = 'ripple'
+    for (const attr of card.attributes) {
+      if (attr.name.startsWith('data-v-')) ripple.setAttribute(attr.name, '')
     }
+    card.appendChild(ripple)
   }
-  ripple.style.width = size + 'px'
-  ripple.style.height = size + 'px'
-  ripple.style.left = (x - size / 2) + 'px'
-  ripple.style.top = (y - size / 2) + 'px'
-  card.appendChild(ripple)
 
-  // 触发动画（下一帧添加 active class）
-  requestAnimationFrame(() => {
-    ripple.classList.add('ripple--active')
+  // 取消上一次动画（若还在播放）
+  const prevAnim = ripple.getAnimations()
+  prevAnim.forEach(a => a.cancel())
+
+  const rect = card.getBoundingClientRect()
+  const containerW = rect.width
+  const containerH = rect.height
+
+  // determineRippleSize：严格对照 @material/web ripple.ts
+  const maxDim = Math.max(containerW, containerH)
+  const softEdgeSize = Math.max(
+    RIPPLE_SOFT_EDGE_CONTAINER_RATIO * maxDim,
+    RIPPLE_SOFT_EDGE_MINIMUM_SIZE
+  )
+  const initialSize = Math.floor(maxDim * RIPPLE_INITIAL_ORIGIN_SCALE)
+  const hypotenuse = Math.sqrt(containerW ** 2 + containerH ** 2)
+  const maxRadius = hypotenuse + RIPPLE_PADDING
+  const rippleScale = (maxRadius + softEdgeSize) / initialSize
+
+  // 点击位置（相对于视口），若键盘触发则居中
+  const clickX = e.clientX ?? (rect.left + containerW / 2)
+  const clickY = e.clientY ?? (rect.top + containerH / 2)
+
+  // 起点变换：ripple 圆心对齐点击位置
+  const startX = clickX - rect.left - initialSize / 2
+  const startY = clickY - rect.top - initialSize / 2
+  const startTransform = `translate(${startX}px, ${startY}px) scale(1)`
+
+  // 终点变换：ripple 圆心移至容器中心，scale 覆盖整个容器
+  const endX = (containerW - initialSize) / 2
+  const endY = (containerH - initialSize) / 2
+  const endTransform = `translate(${endX}px, ${endY}px) scale(${rippleScale})`
+
+  // Web Animations API：单段动画，opacity 0.12→0，同时 translate+scale
+  const anim = ripple.animate([
+    {
+      display: 'block',
+      opacity: RIPPLE_OPACITY,
+      width: `${initialSize}px`,
+      height: `${initialSize}px`,
+      background: RIPPLE_COLOR,
+      transform: startTransform
+    },
+    {
+      opacity: 0,
+      transform: endTransform
+    }
+  ], {
+    duration: RIPPLE_PRESS_GROW_MS,
+    easing: 'cubic-bezier(0.2, 0, 0, 1)',   // @material/web EASING.STANDARD
+    fill: 'forwards'
   })
 
-  // 对照 m3: window mouseup 触发 deactivation
-  const onUp = () => {
-    window.removeEventListener('mouseup', onUp)
-    ripple.classList.remove('ripple--active')
-    ripple.classList.add('ripple--fade-out')
-    // fade-out 动画结束后移除 DOM
-    ripple.addEventListener('animationend', () => ripple.remove(), { once: true })
-    // 兜底：如果 animationend 未触发（如元素被移除），300ms 后强制清理
-    setTimeout(() => { if (ripple.parentNode) ripple.remove() }, 500)
+  anim.onfinish = () => {
+    // 动画完成后重置（不删除 DOM，下次复用）
+    ripple.style.display = 'none'
   }
-  window.addEventListener('mouseup', onUp)
 }
 
 const thumbBg = 'var(--md-sys-color-secondary-container, #e8def8)'
@@ -836,48 +871,20 @@ onBeforeUnmount(() => {
   outline: initial;
 }
 
-/* ripple 涟漪动效（对照 m3 mioripple 指令：动态创建 DOM） */
-/* z-index: 0 使 ripple 画在 content-container(2) 和 thumb-container(1) 下方 */
+/* ripple 涟漪动效（严格对照 @material/web ripple/internal/ripple.ts + M3 官方 .ripple CSS）
+   Web Animations API 控制 translate+scale，单段动画 opacity 0.12→0
+   初试尺寸 = maxDim × 20%，从点击位置 scale(1) 展开到容器中心 scale(N)
+   z-index: 0 使 ripple 画在 content-container(2) 和 thumb-container(1) 下方 */
 .thumbnail > .ripple {
   position: absolute;
+  top: 0;
+  left: 0;
   border-radius: 50%;
-  background-color: var(--md-sys-color-on-secondary-container, #1d192b);
-  opacity: 0;
   pointer-events: none;
-  transform: scale(0);
+  display: none;
   z-index: 0;
-  /* 对照 m3: blur(4px) 使涟漪边缘柔和 */
+  transform-origin: center center;
   filter: blur(4px);
-}
-
-/* active: scale 从 0 展开到 1, opacity 0→0.12 */
-.thumbnail > .ripple.ripple--active {
-  animation: ripple-expand 0.4s cubic-bezier(0.2, 0, 0, 1) forwards;
-}
-
-/* fade-out: scale 保持 1, opacity 0.12→0 */
-.thumbnail > .ripple.ripple--fade-out {
-  animation: ripple-fade 0.3s cubic-bezier(0.2, 0, 0, 1) forwards;
-}
-
-@keyframes ripple-expand {
-  0% {
-    transform: scale(0);
-    opacity: 0.12;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 0.12;
-  }
-}
-
-@keyframes ripple-fade {
-  0% {
-    opacity: 0.12;
-  }
-  100% {
-    opacity: 0;
-  }
 }
 
 /* ================================================================
