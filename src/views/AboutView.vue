@@ -1,70 +1,73 @@
 <template>
   <div class="about-view">
-    <!-- 个人信息卡片 -->
-    <section class="profile">
-      <div class="profile__avatar">
-        <span class="material-symbols-rounded">person</span>
-      </div>
-      <div class="profile__info">
-        <h1 class="profile__name">Kernel</h1>
-        <p class="profile__role">全栈开发者 / 技术博主</p>
-        <p class="profile__bio">
-          热爱前端技术与用户体验设计，专注于 Vue 生态和 Material Design。
-          相信好的技术应该服务于人，而非增加复杂度。
-        </p>
-      </div>
-    </section>
-
-    <!-- 技能标签 -->
-    <section class="section">
-      <h2 class="section__title">技术栈</h2>
-      <div class="skill-grid">
-        <div
-          v-for="skill in skills"
-          :key="skill.name"
-          class="skill-chip"
-        >
-          <span class="material-symbols-rounded skill-chip__icon">{{ skill.icon }}</span>
-          <span class="skill-chip__label">{{ skill.name }}</span>
+    <!-- 内容区域（有 max-width 约束） -->
+    <div class="about-view__content">
+      <!-- 个人信息卡片 -->
+      <section class="profile">
+        <div class="profile__avatar">
+          <span class="material-symbols-rounded">person</span>
         </div>
-      </div>
-    </section>
+        <div class="profile__info">
+          <h1 class="profile__name">Kernel</h1>
+          <p class="profile__role">全栈开发者 / 技术博主</p>
+          <p class="profile__bio">
+            热爱前端技术与用户体验设计，专注于 Vue 生态和 Material Design。
+            相信好的技术应该服务于人，而非增加复杂度。
+          </p>
+        </div>
+      </section>
 
-    <!-- 经历时间线 -->
-    <section class="section">
-      <h2 class="section__title">经历</h2>
-      <div class="timeline">
-        <div
-          v-for="(item, index) in experiences"
-          :key="index"
-          class="timeline__item"
-        >
-          <div class="timeline__dot"></div>
-          <div class="timeline__content">
-            <span class="timeline__period">{{ item.period }}</span>
-            <h3 class="timeline__title">{{ item.title }}</h3>
-            <p class="timeline__desc">{{ item.description }}</p>
+      <!-- 技能标签 -->
+      <section class="section">
+        <h2 class="section__title">技术栈</h2>
+        <div class="skill-grid">
+          <div
+            v-for="skill in skills"
+            :key="skill.name"
+            class="skill-chip"
+          >
+            <span class="material-symbols-rounded skill-chip__icon">{{ skill.icon }}</span>
+            <span class="skill-chip__label">{{ skill.name }}</span>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- 兴趣爱好 -->
-    <section class="section">
-      <h2 class="section__title">兴趣</h2>
-      <div class="interest-row">
-        <div
-          v-for="interest in interests"
-          :key="interest.name"
-          class="interest-card"
-        >
-          <span class="material-symbols-rounded interest-card__icon">{{ interest.icon }}</span>
-          <span class="interest-card__label">{{ interest.name }}</span>
+      <!-- 经历时间线 -->
+      <section class="section">
+        <h2 class="section__title">经历</h2>
+        <div class="timeline">
+          <div
+            v-for="(item, index) in experiences"
+            :key="index"
+            class="timeline__item"
+          >
+            <div class="timeline__dot"></div>
+            <div class="timeline__content">
+              <span class="timeline__period">{{ item.period }}</span>
+              <h3 class="timeline__title">{{ item.title }}</h3>
+              <p class="timeline__desc">{{ item.description }}</p>
+            </div>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- ======== Footer ======== -->
+      <!-- 兴趣爱好 -->
+      <section class="section">
+        <h2 class="section__title">兴趣</h2>
+        <div class="interest-row">
+          <div
+            v-for="interest in interests"
+            :key="interest.name"
+            class="interest-card"
+          >
+            <span class="material-symbols-rounded interest-card__icon">{{ interest.icon }}</span>
+            <span class="interest-card__label">{{ interest.name }}</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ======== Footer（全宽，不受 max-width 约束） ======== -->
     <MioFooter />
   </div>
 </template>
@@ -116,6 +119,10 @@ const interests = ref([
 
 <style scoped>
 .about-view {
+  width: 100%;
+}
+
+.about-view__content {
   max-width: 720px;
   width: 100%;
   margin: 0 auto;

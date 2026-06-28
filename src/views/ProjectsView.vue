@@ -1,60 +1,63 @@
 <template>
   <div class="projects-view">
-    <!-- 页面标题 -->
-    <div class="projects-header">
-      <h1 class="projects-header__title">项目</h1>
-      <p class="projects-header__desc">个人项目与开源贡献</p>
-    </div>
+    <!-- 内容区域（有 max-width 约束） -->
+    <div class="projects-view__content">
+      <!-- 页面标题 -->
+      <div class="projects-header">
+        <h1 class="projects-header__title">项目</h1>
+        <p class="projects-header__desc">个人项目与开源贡献</p>
+      </div>
 
-    <!-- 分类筛选 -->
-    <div class="filter-bar">
-      <md-chip-set>
-        <md-filter-chip
-          v-for="cat in categories"
-          :key="cat.id"
-          :selected="activeCategory === cat.id"
-          @click="activeCategory = cat.id"
-          :label="cat.label"
-        ></md-filter-chip>
-      </md-chip-set>
-    </div>
+      <!-- 分类筛选 -->
+      <div class="filter-bar">
+        <md-chip-set>
+          <md-filter-chip
+            v-for="cat in categories"
+            :key="cat.id"
+            :selected="activeCategory === cat.id"
+            @click="activeCategory = cat.id"
+            :label="cat.label"
+          ></md-filter-chip>
+        </md-chip-set>
+      </div>
 
-    <!-- 项目卡片网格 -->
-    <div class="project-grid">
-      <div
-        v-for="project in filteredProjects"
-        :key="project.id"
-        class="project-card"
-        @click="openProject(project)"
-      >
-        <div class="project-card__header">
-          <span class="material-symbols-rounded project-card__icon">{{ project.icon }}</span>
-          <a
-            v-if="project.github"
-            :href="project.github"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="project-card__link"
-            @click.stop
-            title="查看源码"
-          >
-            <svg viewBox="0 0 16 16" fill="currentColor" width="18" height="18">
-              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
-            </svg>
-          </a>
-        </div>
-        <h3 class="project-card__title">{{ project.title }}</h3>
-        <p class="project-card__desc">{{ project.excerpt }}</p>
-        <div class="project-card__tags">
-          <span v-for="tag in project.tags" :key="tag" class="project-card__tag">{{ tag }}</span>
-        </div>
-        <div class="project-card__meta">
-          <span v-if="project.stars" class="project-card__stat">
-            <span class="material-symbols-rounded">star</span> {{ project.stars }}
-          </span>
-          <span class="project-card__status" :class="'project-card__status--' + project.status">
-            {{ statusLabel(project.status) }}
-          </span>
+      <!-- 项目卡片网格 -->
+      <div class="project-grid">
+        <div
+          v-for="project in filteredProjects"
+          :key="project.id"
+          class="project-card"
+          @click="openProject(project)"
+        >
+          <div class="project-card__header">
+            <span class="material-symbols-rounded project-card__icon">{{ project.icon }}</span>
+            <a
+              v-if="project.github"
+              :href="project.github"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="project-card__link"
+              @click.stop
+              title="查看源码"
+            >
+              <svg viewBox="0 0 16 16" fill="currentColor" width="18" height="18">
+                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+              </svg>
+            </a>
+          </div>
+          <h3 class="project-card__title">{{ project.title }}</h3>
+          <p class="project-card__desc">{{ project.excerpt }}</p>
+          <div class="project-card__tags">
+            <span v-for="tag in project.tags" :key="tag" class="project-card__tag">{{ tag }}</span>
+          </div>
+          <div class="project-card__meta">
+            <span v-if="project.stars" class="project-card__stat">
+              <span class="material-symbols-rounded">star</span> {{ project.stars }}
+            </span>
+            <span class="project-card__status" :class="'project-card__status--' + project.status">
+              {{ statusLabel(project.status) }}
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -91,7 +94,7 @@
       </div>
     </Teleport>
 
-    <!-- ======== Footer ======== -->
+    <!-- ======== Footer（全宽，不受 max-width 约束） ======== -->
     <MioFooter />
   </div>
 </template>
@@ -212,6 +215,10 @@ function statusLabel(status) {
 
 <style scoped>
 .projects-view {
+  width: 100%;
+}
+
+.projects-view__content {
   max-width: 960px;
   width: 100%;
   margin: 0 auto;

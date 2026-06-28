@@ -1,42 +1,45 @@
 <template>
   <div class="blog-view">
-    <!-- 页面标题 -->
-    <div class="blog-header">
-      <h1 class="blog-header__title">博客</h1>
-      <p class="blog-header__desc">技术心得与生活随笔</p>
-    </div>
+    <!-- 内容区域（有 max-width 约束） -->
+    <div class="blog-view__content">
+      <!-- 页面标题 -->
+      <div class="blog-header">
+        <h1 class="blog-header__title">博客</h1>
+        <p class="blog-header__desc">技术心得与生活随笔</p>
+      </div>
 
-    <!-- 分类筛选 -->
-    <div class="filter-bar">
-      <md-chip-set>
-        <md-filter-chip
-          v-for="cat in categories"
-          :key="cat.id"
-          :selected="activeCategory === cat.id"
-          @click="activeCategory = cat.id"
-          :label="cat.label"
-        ></md-filter-chip>
-      </md-chip-set>
-    </div>
+      <!-- 分类筛选 -->
+      <div class="filter-bar">
+        <md-chip-set>
+          <md-filter-chip
+            v-for="cat in categories"
+            :key="cat.id"
+            :selected="activeCategory === cat.id"
+            @click="activeCategory = cat.id"
+            :label="cat.label"
+          ></md-filter-chip>
+        </md-chip-set>
+      </div>
 
-    <!-- 文章列表 -->
-    <div class="post-list">
-      <article
-        v-for="post in filteredPosts"
-        :key="post.id"
-        class="post-card"
-        @click="openPost(post)"
-      >
-        <div class="post-card__badge">{{ post.category }}</div>
-        <h2 class="post-card__title">{{ post.title }}</h2>
-        <p class="post-card__excerpt">{{ post.excerpt }}</p>
-        <div class="post-card__footer">
-          <div class="post-card__tags">
-            <span v-for="tag in post.tags" :key="tag" class="post-card__tag">{{ tag }}</span>
+      <!-- 文章列表 -->
+      <div class="post-list">
+        <article
+          v-for="post in filteredPosts"
+          :key="post.id"
+          class="post-card"
+          @click="openPost(post)"
+        >
+          <div class="post-card__badge">{{ post.category }}</div>
+          <h2 class="post-card__title">{{ post.title }}</h2>
+          <p class="post-card__excerpt">{{ post.excerpt }}</p>
+          <div class="post-card__footer">
+            <div class="post-card__tags">
+              <span v-for="tag in post.tags" :key="tag" class="post-card__tag">{{ tag }}</span>
+            </div>
+            <span class="post-card__date">{{ post.date }}</span>
           </div>
-          <span class="post-card__date">{{ post.date }}</span>
-        </div>
-      </article>
+        </article>
+      </div>
     </div>
 
     <!-- 文章详情弹窗 -->
@@ -59,7 +62,7 @@
       </div>
     </Teleport>
 
-    <!-- ======== Footer ======== -->
+    <!-- ======== Footer（全宽，不受 max-width 约束） ======== -->
     <MioFooter />
   </div>
 </template>
@@ -194,6 +197,10 @@ function openPost(post) {
 
 <style scoped>
 .blog-view {
+  width: 100%;
+}
+
+.blog-view__content {
   max-width: 720px;
   width: 100%;
   margin: 0 auto;

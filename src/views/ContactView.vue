@@ -1,64 +1,67 @@
 <template>
   <div class="contact-view">
-    <!-- 页面标题 -->
-    <div class="contact-header">
-      <h1 class="contact-header__title">联系我</h1>
-      <p class="contact-header__desc">有想法？欢迎随时交流</p>
-    </div>
+    <!-- 内容区域（有 max-width 约束） -->
+    <div class="contact-view__content">
+      <!-- 页面标题 -->
+      <div class="contact-header">
+        <h1 class="contact-header__title">联系我</h1>
+        <p class="contact-header__desc">有想法？欢迎随时交流</p>
+      </div>
 
-    <div class="contact-content">
-      <!-- 联系表单 -->
-      <section class="contact-form">
-        <md-outlined-text-field
-          v-model="form.name"
-          label="姓名"
-          class="contact-form__field"
-        ></md-outlined-text-field>
-        <md-outlined-text-field
-          v-model="form.email"
-          label="邮箱"
-          type="email"
-          class="contact-form__field"
-        ></md-outlined-text-field>
-        <md-outlined-text-field
-          v-model="form.subject"
-          label="主题"
-          class="contact-form__field"
-        ></md-outlined-text-field>
-        <md-outlined-text-field
-          v-model="form.message"
-          label="消息内容"
-          type="textarea"
-          rows="5"
-          class="contact-form__field"
-        ></md-outlined-text-field>
-        <md-filled-button @click="handleSubmit" class="contact-form__submit">
-          <span class="material-symbols-rounded" slot="icon">send</span>
-          发送消息
-        </md-filled-button>
-      </section>
+      <div class="contact-content">
+        <!-- 联系表单 -->
+        <section class="contact-form">
+          <md-outlined-text-field
+            v-model="form.name"
+            label="姓名"
+            class="contact-form__field"
+          ></md-outlined-text-field>
+          <md-outlined-text-field
+            v-model="form.email"
+            label="邮箱"
+            type="email"
+            class="contact-form__field"
+          ></md-outlined-text-field>
+          <md-outlined-text-field
+            v-model="form.subject"
+            label="主题"
+            class="contact-form__field"
+          ></md-outlined-text-field>
+          <md-outlined-text-field
+            v-model="form.message"
+            label="消息内容"
+            type="textarea"
+            rows="5"
+            class="contact-form__field"
+          ></md-outlined-text-field>
+          <md-filled-button @click="handleSubmit" class="contact-form__submit">
+            <span class="material-symbols-rounded" slot="icon">send</span>
+            发送消息
+          </md-filled-button>
+        </section>
 
-      <!-- 社交链接 -->
-      <section class="social-section">
-        <h2 class="social-section__title">其他方式</h2>
-        <div class="social-grid">
-          <a
-            v-for="link in socialLinks"
-            :key="link.name"
-            :href="link.url"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="social-card"
-          >
-            <span class="material-symbols-rounded social-card__icon">{{ link.icon }}</span>
-            <div class="social-card__info">
-              <span class="social-card__name">{{ link.name }}</span>
-              <span class="social-card__desc">{{ link.desc }}</span>
-            </div>
-            <span class="material-symbols-rounded social-card__arrow">arrow_forward</span>
-          </a>
-        </div>
-      </section>
+        <!-- 社交链接 -->
+        <section class="social-section">
+          <h2 class="social-section__title">其他方式</h2>
+          <div class="social-grid">
+            <a
+              v-for="link in socialLinks"
+              :key="link.name"
+              :href="link.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="social-card"
+            >
+              <span class="material-symbols-rounded social-card__icon">{{ link.icon }}</span>
+              <div class="social-card__info">
+                <span class="social-card__name">{{ link.name }}</span>
+                <span class="social-card__desc">{{ link.desc }}</span>
+              </div>
+              <span class="material-symbols-rounded social-card__arrow">arrow_forward</span>
+            </a>
+          </div>
+        </section>
+      </div>
     </div>
 
     <!-- 提交成功提示 -->
@@ -69,7 +72,7 @@
       </div>
     </Teleport>
 
-    <!-- ======== Footer ======== -->
+    <!-- ======== Footer（全宽，不受 max-width 约束） ======== -->
     <MioFooter />
   </div>
 </template>
@@ -129,6 +132,10 @@ const socialLinks = ref([
 
 <style scoped>
 .contact-view {
+  width: 100%;
+}
+
+.contact-view__content {
   max-width: 720px;
   width: 100%;
   margin: 0 auto;
