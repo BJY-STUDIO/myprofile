@@ -142,15 +142,15 @@
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { usePage } from '@/stores/blogStore'
 import store from '@/stores/blogStore'
-import { getArticleIndex, retryArticleIndexFetch } from '@/services/articleService'
+import { getArticleIndex, retryArticleIndexFetch, getHomeSections, retryHomeSectionsFetch } from '@/services/articleService'
 import MioFooter from '@/components/common/MioFooter.vue'
 
 const pageApi = usePage('home')
 
 const activeSection = ref(-1) // -1 = 无激活态（hide 状态）
 
-// ===== 文章卡片数据：API 优先 → blogStore 回退 =====
-const apiArticles = ref(null)  // null = 尚未加载; {} = 空结果
+// ===== Section 数据：HomeSection API 优先 → blogStore 回退 =====
+const apiSections = ref(null)  // null = 尚未加载; [] = 空结果
 let cancelRetry = null
 
 // 动态指示器位置：存储每个 item 的 top 和 height（对照 m3: item 高度随文字长度 36/56px 动态变化）
@@ -158,62 +158,16 @@ const indicatorTop = ref(0)   // 指示器 top（相对于 nav）
 const indicatorY = ref(0)     // translateY（当前激活 item 的相对偏移）
 const indicatorH = ref(36)    // 指示器高度（匹配 item 高度）
 
-// 将 articleService 的文章格式映射为 blogStore 卡片格式
-function mapArticleToCard(article, id) {
-  return {
-    id: id || `api-${article.slug}`,
-    title: article.title,
-    excerpt: article.description,
-    date: article.date,
-    icon: article.icon || 'article',
-    route: `/article/${article.slug}`,
-    image: '',
-  }
-}
-
-// 动态 sections：所有 section 均由 API 数据填充，按 tags 分类
+// 动态 sections：HomeSection API 优先 → blogStore 硬编码回退
 const sections = computed(() => {
-  const page = store.pages.home
-  if (!page?.sections) return []
-
-  // 如果 API 数据已加载，用 API 文章按 tags 分类填充各 section
-  if (apiArticles.value !== null && Object.keys(apiArticles.value).length > 0) {
-    const allArticles = Object.values(apiArticles.value)
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
-
-    // Featured section: 所有文章，第一篇为 feature
-    const allCards = allArticles.map((a, i) => mapArticleToCard(a, `api-${a.slug}`))
-    const feature = allCards[0] || null
-    const items = allCards.slice(1)
-
-    // Projects section: tags 包含 "project" 的文章
-    const projectArticles = allArticles.filter(a =>
-      a.tags?.some(t => t.toLowerCase() === 'project')
-    )
-    const projectCards = projectArticles.map(a => mapArticleToCard(a, `api-${a.slug}`))
-
-    // 2026 section: changelog tag 的文章
-    const changelogArticles = allArticles.filter(a =>
-      a.tags?.some(t => t.toLowerCase() === 'changelog')
-    )
-    const changelogCards = changelogArticles.map(a => mapArticleToCard(a, `api-${a.slug}`))
-
-    return page.sections.map((section, i) => {
-      if (i === 0 && section.id === 's-featured') {
-        return { ...section, feature, items }
-      }
-      if (i === 1 && section.id === 's-projects') {
-        return { ...section, feature: projectCards[0] || null, items: projectCards.slice(1) }
-      }
-      if (i === 2 && section.id === 's-2026') {
-        return { ...section, feature: changelogCards[0] || null, items: changelogCards.slice(1) }
-      }
-      return section
-    })
+  // 如果 HomeSection API 数据已加载，直接使用
+  if (apiSections.value !== null && apiSections.value.length > 0) {
+    return apiSections.value
   }
 
   // API 未加载或无数据：使用 blogStore 默认
-  return page.sections
+  const page = store.pages.home
+  return page?.sections || []
 })
 
 // TOC 列表：只包含非 noJumplink 的 section（对照需求: section-header 中 noJumplink 的 h2 不进 TOC）
@@ -442,15 +396,15 @@ function isCjk(text) {
 }
 
 onMounted(() => {
-  // 加载文章数据（API 优先，失败回退 blogStore）
-  getArticleIndex().then(index => {
-    if (index.source === 'api' && Object.keys(index.articles).length > 0) {
-      apiArticles.value = index.articles
+  // 加载 HomeSection 配置（包含关联的文章卡片数据）
+  getHomeSections().then(sections => {
+    if (sections && sections.length > 0) {
+      apiSections.value = sections
     } else {
       // API 不可用，启动后台重试（覆盖 Render 冷启动场景）
-      cancelRetry = retryArticleIndexFetch(index => {
-        if (index.source === 'api' && Object.keys(index.articles).length > 0) {
-          apiArticles.value = index.articles
+      cancelRetry = retryHomeSectionsFetch(sections => {
+        if (sections && sections.length > 0) {
+          apiSections.value = sections
         }
       })
     }

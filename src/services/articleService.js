@@ -412,9 +412,10 @@ function mapStrapiArticle(strapiArticle, includeContent = false) {
     slug: strapiArticle.slug || '',
     title: strapiArticle.title || '',
     description: strapiArticle.description || '',
-    date: formatDate(strapiArticle.publishedAt || strapiArticle.createdAt),
+    date: formatDate(strapiArticle.date || strapiArticle.publishedAt || strapiArticle.createdAt),
     icon: 'article',
     tags: strapiArticle.tags || [],
+    sortOrder: strapiArticle.sortOrder ?? 0,
     authors: [],
   }
 
@@ -754,4 +755,143 @@ export function getArticleSource() {
  */
 export function resetApiDetection() {
   _apiAvailable = null
+}
+
+// ===== Home Section API =====
+
+let _homeSectionsCache = null
+
+/**
+ * 从 Strapi 获取 Home Section 配置（包含关联的文章数据）
+ * 响应格式（Strapi v5 扁平结构）：
+ *   [{ id, documentId, title, headingLevel, noJumplink, sortOrder, featureArticle, articles }]
+ *
+ * 前端内部格式：
+ *   HomeSection {
+ *     id: string
+ *     label: string
+ *     headingLevel: 'section-header' | 'sub-heading'
+ *     noJumplink: boolean
+ *     sortOrder: number
+ *     feature: Card | null
+ *     items: Card[]
+ *   }
+ */
+async function fetchHomeSections(timeoutMs = API_FETCH_TIMEOUT) {
+  if (_homeSectionsCache) return _homeSectionsCache
+
+  try {
+    const res = await fetchWithTimeout(
+      `${API_BASE_URL}/home-sections?populate[featureArticle][populate]=*&populate[articles][populate]=*&sort=sortOrder:asc`,
+      timeoutMs
+    )
+    if (!res.ok) throw new Error(`API ${res.status}`)
+    const json = await res.json()
+    const items = json.data || []
+
+    _homeSectionsCache = items.map(section => {
+      // 映射 featureArticle → feature card
+      let feature = null
+      if (section.featureArticle) {
+        const mapped = mapStrapiArticle(section.featureArticle, false)
+        if (mapped) feature = mapArticleToCardFormat(mapped)
+      }
+
+      // 映射 articles → regular cards（按 sortOrder 排序，sortOrder 相同按 date 降序）
+      const items = (section.articles || [])
+        .map(a => {
+          const mapped = mapStrapiArticle(a, false)
+          return mapped ? mapArticleToCardFormat(mapped) : null
+        })
+        .filter(Boolean)
+        .sort((a, b) => {
+          if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder
+          return new Date(b.date) - new Date(a.date)
+        })
+
+      return {
+        id: `s-${section.documentId}`,
+        label: section.title,
+        headingLevel: section.headingLevel,
+        noJumplink: section.noJumplink || false,
+        sortOrder: section.sortOrder ?? 0,
+        feature,
+        items,
+      }
+    })
+
+    _apiAvailable = true
+    return _homeSectionsCache
+  } catch (err) {
+    console.error('[ArticleService] fetchHomeSections failed:', err)
+    return null
+  }
+}
+
+/**
+ * 内部辅助：将 mapStrapiArticle 的结果映射为 HomeView 卡片格式
+ */
+function mapArticleToCardFormat(article) {
+  return {
+    id: `api-${article.slug}`,
+    title: article.title,
+    excerpt: article.description,
+    date: article.date,
+    icon: article.icon || 'article',
+    route: `/article/${article.slug}`,
+    image: '',
+    sortOrder: article.sortOrder ?? 0,
+  }
+}
+
+/**
+ * 获取 Home Section 配置
+ * auto 模式：先尝试 API，失败则回退 blogStore 硬编码
+ * @returns {Promise<Array<HomeSection> | null>}
+ */
+export async function getHomeSections() {
+  if (ARTICLE_SOURCE === 'local') return null
+
+  const sections = await fetchHomeSections(API_FETCH_TIMEOUT)
+  if (sections && sections.length > 0) return sections
+
+  // API 失败 → auto 模式回退 null（调用方用 blogStore 默认值）
+  return null
+}
+
+/**
+ * 后台重试获取 Home Section 配置
+ * @param {function} onUpdate — 重试成功时回调
+ * @returns {function} 取消函数
+ */
+export function retryHomeSectionsFetch(onUpdate) {
+  if (ARTICLE_SOURCE === 'local') return () => {}
+  if (_apiAvailable === true) return () => {}
+
+  let cancelled = false
+  let attempt = 0
+
+  async function runRetry() {
+    _homeSectionsCache = null  // 清除缓存，强制重新获取
+    while (attempt < MAX_RETRY_ATTEMPTS) {
+      attempt++
+      const delay = Math.min(RETRY_BASE_DELAY * Math.pow(2, attempt - 1), RETRY_MAX_DELAY)
+      await new Promise(resolve => setTimeout(resolve, delay))
+      if (cancelled) return
+
+      try {
+        const sections = await fetchHomeSections(API_RETRY_TIMEOUT)
+        if (cancelled) return
+        if (sections && sections.length > 0) {
+          onUpdate(sections)
+          return
+        }
+      } catch {
+        // 本轮失败，继续
+      }
+    }
+  }
+
+  runRetry()
+  return () => { cancelled = true }
 }
