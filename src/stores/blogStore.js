@@ -35,37 +35,13 @@ function createDefaultData() {
     ],
 
     // 页面数据（按 pageId 索引）
+    // home 页面数据已由 HomeSection API 驱动，不再硬编码
     pages: {
       home: {
         title: "Kernel's Blog",
         description: '探索技术，记录生活。一个遵循 Material Design 3 规范的个人博客。',
         heroImage: '',
-        sections: [
-          {
-            id: 's-featured',
-            label: 'Featured',
-            headingLevel: 'section-header',
-            noJumplink: false,
-            feature: null,
-            items: [],
-          },
-          {
-            id: 's-projects',
-            label: 'Projects',
-            headingLevel: 'sub-heading',
-            noJumplink: false,
-            feature: null,
-            items: [],
-          },
-          {
-            id: 's-2026',
-            label: '2026',
-            headingLevel: 'sub-heading',
-            noJumplink: false,
-            feature: null,
-            items: [],
-          },
-        ],
+        sections: [],
       },
     },
   }

@@ -50,6 +50,37 @@
 
       <!-- posts-container（对照 m3: article.posts-container, 996px宽） -->
       <article class="posts-container">
+        <!-- 加载中：骨架屏（3 个默认 section 结构，匹配真实布局） -->
+        <template v-if="showSkeleton">
+          <div v-for="si in 3" :key="'sk-section-' + si" class="section">
+            <div class="section-header">
+              <h2 :class="si > 1 ? 'sub-heading' : ''">&nbsp;</h2>
+            </div>
+            <div class="card-set">
+              <!-- feature 骨架屏（对照 feature-card.thumbnail: grid 1fr 1fr） -->
+              <div v-if="si === 1" class="skeleton-feature-card">
+                <div class="sk-content">
+                  <span class="skeleton" style="height:16px;width:80px;"></span>
+                  <span class="skeleton" style="height:24px;width:60%;"></span>
+                  <span class="skeleton" style="height:16px;width:90%;"></span>
+                </div>
+                <div class="sk-thumb skeleton"></div>
+              </div>
+              <!-- regular 骨架屏（对照 regular-card.thumbnail: flex column-reverse） -->
+              <div v-for="n in (si === 1 ? 3 : 2)" :key="'sk-' + n" class="skeleton-card">
+                <div class="sk-content">
+                  <span class="skeleton" style="height:16px;width:80px;"></span>
+                  <span class="skeleton" style="height:24px;width:70%;"></span>
+                  <span class="skeleton" style="height:16px;width:85%;"></span>
+                </div>
+                <div class="sk-thumb skeleton"></div>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- 已加载：真实内容 -->
+        <template v-else>
         <!-- 每个 section（对照 m3: div.section, margin 72px/96px top/bottom） -->
         <div
           v-for="(section, si) in sections"
@@ -65,30 +96,6 @@
 
           <!-- card-set（对照 m3: mio-card-set, grid, gap 8px） -->
           <div class="card-set">
-            <!-- 加载中：骨架屏（精确匹配真实卡片布局） -->
-            <template v-if="apiArticles === null">
-              <!-- feature 骨架屏（对照 feature-card.thumbnail: grid 1fr 1fr） -->
-              <div class="skeleton-feature-card">
-                <div class="sk-content">
-                  <span class="skeleton" style="height:16px;width:80px;"></span>
-                  <span class="skeleton" style="height:24px;width:60%;"></span>
-                  <span class="skeleton" style="height:16px;width:90%;"></span>
-                </div>
-                <div class="sk-thumb skeleton"></div>
-              </div>
-              <!-- regular 骨架屏（对照 regular-card.thumbnail: flex column-reverse） -->
-              <div v-for="n in (si === 0 ? 3 : 2)" :key="'sk-' + n" class="skeleton-card">
-                <div class="sk-content">
-                  <span class="skeleton" style="height:16px;width:80px;"></span>
-                  <span class="skeleton" style="height:24px;width:70%;"></span>
-                  <span class="skeleton" style="height:16px;width:85%;"></span>
-                </div>
-                <div class="sk-thumb skeleton"></div>
-              </div>
-            </template>
-
-            <!-- 已加载：真实卡片 -->
-            <template v-else>
             <!-- feature-block 长卡（对照 m3: mio-card.feature-block > a.thumbnail, grid 1fr 1fr） -->
             <a
               v-if="section.feature"
@@ -127,9 +134,9 @@
                 <span class="material-symbols-rounded thumb-icon">{{ post.icon || 'article' }}</span>
               </div>
             </a>
-            </template>
           </div>
         </div>
+        </template>
       </article>
     </div>
 
@@ -140,17 +147,13 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
-import { usePage } from '@/stores/blogStore'
-import store from '@/stores/blogStore'
-import { getArticleIndex, retryArticleIndexFetch, getHomeSections, retryHomeSectionsFetch } from '@/services/articleService'
+import { getHomeSections, retryHomeSectionsFetch } from '@/services/articleService'
 import MioFooter from '@/components/common/MioFooter.vue'
-
-const pageApi = usePage('home')
 
 const activeSection = ref(-1) // -1 = 无激活态（hide 状态）
 
-// ===== Section 数据：HomeSection API 优先 → blogStore 回退 =====
-const apiSections = ref(null)  // null = 尚未加载; [] = 空结果
+// ===== Section 数据：纯 API 驱动，骨架屏覆盖加载态 =====
+const apiSections = ref(null)  // null = 尚未加载（显示骨架屏）; [] = 空结果
 let cancelRetry = null
 
 // 动态指示器位置：存储每个 item 的 top 和 height（对照 m3: item 高度随文字长度 36/56px 动态变化）
@@ -158,26 +161,22 @@ const indicatorTop = ref(0)   // 指示器 top（相对于 nav）
 const indicatorY = ref(0)     // translateY（当前激活 item 的相对偏移）
 const indicatorH = ref(36)    // 指示器高度（匹配 item 高度）
 
-// 动态 sections：HomeSection API 优先 → blogStore 硬编码回退
+// 动态 sections：API 加载完成后才渲染真实数据，否则骨架屏
 const sections = computed(() => {
-  // 如果 HomeSection API 数据已加载，直接使用
-  if (apiSections.value !== null && apiSections.value.length > 0) {
-    return apiSections.value
-  }
-
-  // API 未加载或无数据：使用 blogStore 默认
-  const page = store.pages.home
-  return page?.sections || []
+  return apiSections.value || []
 })
+
+// 骨架屏显示：API 尚未返回数据时显示
+const showSkeleton = computed(() => apiSections.value === null)
 
 // TOC 列表：只包含非 noJumplink 的 section（对照需求: section-header 中 noJumplink 的 h2 不进 TOC）
 const tocSections = computed(() => {
   return sections.value.filter(s => !s.noJumplink)
 })
 
-// 页面标题和描述从 blogStore 读取
-const pageTitle = computed(() => store.pages.home?.title || "Kernel's Blog")
-const pageDescription = computed(() => store.pages.home?.description || '')
+// 页面标题和描述
+const pageTitle = computed(() => "Kernel's Blog")
+const pageDescription = computed(() => '探索技术，记录生活。一个遵循 Material Design 3 规范的个人博客。')
 
 // 计算 indicator inline style
 const indicatorStyle = computed(() => {
