@@ -23,11 +23,12 @@
           <div class="toc__overline">On this page</div>
           <h2 class="toc__title">{{ pageTitle }}</h2>
           <div
+            v-if="!showSkeleton"
             class="toc__indicator"
             :class="{ 'toc__indicator--hide': activeSection < 0 }"
             :style="indicatorStyle"
           ></div>
-          <ul class="toc__list">
+          <ul v-if="!showSkeleton" class="toc__list">
             <li
               v-for="(tocItem, i) in tocSections"
               :key="i"
@@ -146,7 +147,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { getHomeSections, retryHomeSectionsFetch } from '@/services/articleService'
 import MioFooter from '@/components/common/MioFooter.vue'
 
@@ -209,6 +210,12 @@ let observer = null
 let scrollRoot = null
 
 function setupScrollObserver() {
+  // 先清理旧的 observer
+  if (observer) {
+    observer.disconnect()
+    observer = null
+  }
+
   scrollRoot = document.querySelector('.app-main')
   if (!scrollRoot) return
 
@@ -252,6 +259,23 @@ function setupScrollObserver() {
       updateIndicatorPosition(active)
     }
   })
+}
+
+// 计算 indicator top 基准 + 设置 observer + 绑定 scroll 监听
+function initTocInteraction() {
+  // 计算 indicator top 基准位置：取第一个 list-item 相对于 nav 的 top
+  const nav = document.querySelector('.toc nav')
+  const firstItem = document.querySelector('.toc__item')
+  if (nav && firstItem) {
+    const navRect = nav.getBoundingClientRect()
+    const itemRect = firstItem.getBoundingClientRect()
+    indicatorTop.value = Math.round(itemRect.top - navRect.top)
+  }
+
+  setupScrollObserver()
+
+  scrollRoot = document.querySelector('.app-main')
+  if (scrollRoot) scrollRoot.addEventListener('scroll', onScroll, { passive: true })
 }
 
 // 监听回到顶部时隐藏指示器
@@ -408,21 +432,15 @@ onMounted(() => {
       })
     }
   })
+})
 
-  nextTick(() => {
-    // 计算 indicator top 基准位置：取第一个 list-item 相对于 nav 的 top
-    const nav = document.querySelector('.toc nav')
-    const firstItem = document.querySelector('.toc__item')
-    if (nav && firstItem) {
-      const navRect = nav.getBoundingClientRect()
-      const itemRect = firstItem.getBoundingClientRect()
-      indicatorTop.value = Math.round(itemRect.top - navRect.top)
-    }
-
-    setupScrollObserver()
-    scrollRoot = document.querySelector('.app-main')
-    if (scrollRoot) scrollRoot.addEventListener('scroll', onScroll, { passive: true })
-  })
+// 监听 apiSections 变化：API 数据到达后，等 DOM 更新再初始化 TOC 交互
+watch(apiSections, (newVal) => {
+  if (newVal && newVal.length > 0) {
+    nextTick(() => {
+      initTocInteraction()
+    })
+  }
 })
 
 onBeforeUnmount(() => {
