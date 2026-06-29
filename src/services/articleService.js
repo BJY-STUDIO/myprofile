@@ -952,7 +952,7 @@ async function fetchNavItems(timeoutMs = API_FETCH_TIMEOUT) {
 
   try {
     const res = await fetchWithTimeout(
-      `${API_BASE_URL}/nav-items?populate[children][populate]=*&populate[parent]=&sort=sortOrder:asc`,
+      `${API_BASE_URL}/nav-items?populate[children][populate]=*&populate[parent][fields][]=documentId&sort=sortOrder:asc`,
       timeoutMs
     )
     if (!res.ok) throw new Error(`API ${res.status}`)
