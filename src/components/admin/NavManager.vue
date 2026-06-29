@@ -1,5 +1,14 @@
 <template>
   <div class="nav-manager">
+    <!-- ======== 缓冲进度条 ======== -->
+    <md-linear-progress
+      v-if="loader.loadingActive.value"
+      :class="{ 'loading-progress--fading': loader.loadingFading.value }"
+      class="loading-progress"
+      :value="loader.progressValue.value"
+      :buffer="loader.progressBuffer.value"
+    ></md-linear-progress>
+
     <div class="section-title">
       <h2>导航菜单管理</h2>
       <md-filled-tonal-button @click="onAddNav">
@@ -8,78 +17,151 @@
       </md-filled-tonal-button>
     </div>
 
-    <!-- 操作提示 -->
-    <div v-if="operationMessage" class="operation-notice" :class="{ 'operation-notice--error': operationError }">
-      <span class="material-symbols-rounded operation-notice__icon">{{ operationError ? 'error' : 'check_circle' }}</span>
-      <span class="operation-notice__text">{{ operationMessage }}</span>
-    </div>
-
-    <!-- 一级菜单列表 -->
-    <div class="nav-list">
-      <div
-        v-for="(item, i) in navItems"
-        :key="item.id"
-        class="nav-card"
-      >
+    <!-- ======== 骨架屏 ======== -->
+    <div v-if="!loader.dataLoaded.value" class="nav-list">
+      <!-- 骨架卡片 1：带子菜单 -->
+      <div class="nav-card nav-card--skeleton">
         <div class="nav-card__header">
-          <span class="material-symbols-rounded nav-card__icon">{{ item.icon }}</span>
+          <span class="skeleton" style="width:24px;height:24px;border-radius:12px;flex-shrink:0;"></span>
           <div class="nav-card__info">
-            <span class="nav-card__label">{{ item.label }}</span>
-            <span class="nav-card__route">{{ item.route }}</span>
+            <span class="skeleton" style="height:16px;width:45%;"></span>
+            <span class="skeleton" style="height:12px;width:30%;margin-top:4px;"></span>
           </div>
-          <!-- 排序按钮 -->
-          <div class="nav-card__sort">
-            <md-icon-button :disabled="i === 0" @click="onMoveNav(i, i - 1)">
-              <span class="material-symbols-rounded">keyboard_arrow_up</span>
-            </md-icon-button>
-            <md-icon-button :disabled="i === navItems.length - 1" @click="onMoveNav(i, i + 1)">
-              <span class="material-symbols-rounded">keyboard_arrow_down</span>
-            </md-icon-button>
+          <div class="nav-card__sort nav-card__sort--skeleton">
+            <span class="skeleton" style="width:32px;height:32px;border-radius:16px;"></span>
+            <span class="skeleton" style="width:32px;height:32px;border-radius:16px;"></span>
           </div>
-          <!-- 操作按钮 -->
-          <div class="nav-card__actions">
-            <md-icon-button @click="editNav = i; pickedIcon = navItems[i]?.icon || 'article'; editPersistent = navItems[i]?.persistent || false; showNavDialog = true">
-              <span class="material-symbols-rounded">edit</span>
-            </md-icon-button>
-            <md-icon-button @click="removeNav(i)">
-              <span class="material-symbols-rounded">delete</span>
-            </md-icon-button>
+          <div class="nav-card__actions nav-card__actions--skeleton">
+            <span class="skeleton" style="width:32px;height:32px;border-radius:16px;"></span>
+            <span class="skeleton" style="width:32px;height:32px;border-radius:16px;"></span>
           </div>
         </div>
+        <!-- 子菜单骨架 -->
+        <div class="sub-list sub-list--skeleton">
+          <div class="sub-item sub-item--skeleton">
+            <span class="skeleton" style="height:14px;width:60px;"></span>
+            <span class="skeleton" style="height:12px;width:50px;"></span>
+            <div class="sub-item__sort sub-item__sort--skeleton">
+              <span class="skeleton" style="width:28px;height:28px;border-radius:14px;"></span>
+              <span class="skeleton" style="width:28px;height:28px;border-radius:14px;"></span>
+            </div>
+            <div class="sub-item__actions sub-item__actions--skeleton">
+              <span class="skeleton" style="width:28px;height:28px;border-radius:14px;"></span>
+              <span class="skeleton" style="width:28px;height:28px;border-radius:14px;"></span>
+            </div>
+          </div>
+          <div class="sub-item sub-item--skeleton">
+            <span class="skeleton" style="height:14px;width:70px;"></span>
+            <span class="skeleton" style="height:12px;width:55px;"></span>
+            <div class="sub-item__sort sub-item__sort--skeleton">
+              <span class="skeleton" style="width:28px;height:28px;border-radius:14px;"></span>
+              <span class="skeleton" style="width:28px;height:28px;border-radius:14px;"></span>
+            </div>
+            <div class="sub-item__actions sub-item__actions--skeleton">
+              <span class="skeleton" style="width:28px;height:28px;border-radius:14px;"></span>
+              <span class="skeleton" style="width:28px;height:28px;border-radius:14px;"></span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        <!-- 二级菜单 -->
-        <div v-if="item.children?.length" class="sub-list">
-          <div
-            v-for="(sub, j) in item.children"
-            :key="sub.id"
-            class="sub-item"
-          >
-            <span class="sub-item__label">{{ sub.label }}</span>
-            <span class="sub-item__route">{{ sub.route }}</span>
-            <!-- 子菜单排序 -->
-            <div class="sub-item__sort">
-              <md-icon-button :disabled="j === 0" @click="onMoveSub(i, j, j - 1)">
-                <span class="material-symbols-rounded">expand_less</span>
+      <!-- 骨架卡片 2-4 -->
+      <div v-for="n in 3" :key="'sk-' + n" class="nav-card nav-card--skeleton">
+        <div class="nav-card__header">
+          <span class="skeleton" style="width:24px;height:24px;border-radius:12px;flex-shrink:0;"></span>
+          <div class="nav-card__info">
+            <span class="skeleton" style="height:16px;width:40%;"></span>
+            <span class="skeleton" style="height:12px;width:28%;margin-top:4px;"></span>
+          </div>
+          <div class="nav-card__sort nav-card__sort--skeleton">
+            <span class="skeleton" style="width:32px;height:32px;border-radius:16px;"></span>
+            <span class="skeleton" style="width:32px;height:32px;border-radius:16px;"></span>
+          </div>
+          <div class="nav-card__actions nav-card__actions--skeleton">
+            <span class="skeleton" style="width:32px;height:32px;border-radius:16px;"></span>
+            <span class="skeleton" style="width:32px;height:32px;border-radius:16px;"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== 真实内容（fadeIn） ======== -->
+    <div v-else :class="{ 'content-fadein': loader.fadeInActive.value }">
+      <!-- 操作提示 -->
+      <div v-if="operationMessage" class="operation-notice" :class="{ 'operation-notice--error': operationError }">
+        <span class="material-symbols-rounded operation-notice__icon">{{ operationError ? 'error' : 'check_circle' }}</span>
+        <span class="operation-notice__text">{{ operationMessage }}</span>
+      </div>
+
+      <!-- 一级菜单列表 -->
+      <div v-if="navItems.length" class="nav-list">
+        <div
+          v-for="(item, i) in navItems"
+          :key="item.id"
+          class="nav-card"
+        >
+          <div class="nav-card__header">
+            <span class="material-symbols-rounded nav-card__icon">{{ item.icon }}</span>
+            <div class="nav-card__info">
+              <span class="nav-card__label">{{ item.label }}</span>
+              <span class="nav-card__route">{{ item.route }}</span>
+            </div>
+            <!-- 排序按钮 -->
+            <div class="nav-card__sort">
+              <md-icon-button :disabled="i === 0" @click="onMoveNav(i, i - 1)">
+                <span class="material-symbols-rounded">keyboard_arrow_up</span>
               </md-icon-button>
-              <md-icon-button :disabled="j === item.children.length - 1" @click="onMoveSub(i, j, j + 1)">
-                <span class="material-symbols-rounded">expand_more</span>
+              <md-icon-button :disabled="i === navItems.length - 1" @click="onMoveNav(i, i + 1)">
+                <span class="material-symbols-rounded">keyboard_arrow_down</span>
               </md-icon-button>
             </div>
-            <div class="sub-item__actions">
-              <md-icon-button @click="editSub = { p: i, s: j }; showSubDialog = true">
+            <!-- 操作按钮 -->
+            <div class="nav-card__actions">
+              <md-icon-button @click="editNav = i; pickedIcon = navItems[i]?.icon || 'article'; editPersistent = navItems[i]?.persistent || false; showNavDialog = true">
                 <span class="material-symbols-rounded">edit</span>
               </md-icon-button>
-              <md-icon-button @click="removeSub(i, j)">
+              <md-icon-button @click="removeNav(i)">
                 <span class="material-symbols-rounded">delete</span>
               </md-icon-button>
             </div>
           </div>
+
+          <!-- 二级菜单 -->
+          <div v-if="item.children?.length" class="sub-list">
+            <div
+              v-for="(sub, j) in item.children"
+              :key="sub.id"
+              class="sub-item"
+            >
+              <span class="sub-item__label">{{ sub.label }}</span>
+              <span class="sub-item__route">{{ sub.route }}</span>
+              <!-- 子菜单排序 -->
+              <div class="sub-item__sort">
+                <md-icon-button :disabled="j === 0" @click="onMoveSub(i, j, j - 1)">
+                  <span class="material-symbols-rounded">expand_less</span>
+                </md-icon-button>
+                <md-icon-button :disabled="j === item.children.length - 1" @click="onMoveSub(i, j, j + 1)">
+                  <span class="material-symbols-rounded">expand_more</span>
+                </md-icon-button>
+              </div>
+              <div class="sub-item__actions">
+                <md-icon-button @click="editSub = { p: i, s: j }; showSubDialog = true">
+                  <span class="material-symbols-rounded">edit</span>
+                </md-icon-button>
+                <md-icon-button @click="removeSub(i, j)">
+                  <span class="material-symbols-rounded">delete</span>
+                </md-icon-button>
+              </div>
+            </div>
+          </div>
+          <md-text-button class="add-sub-btn" @click="parentForSub = i; showSubDialog = true">
+            <span class="material-symbols-rounded" slot="icon">add</span>
+            添加子菜单
+          </md-text-button>
         </div>
-        <md-text-button class="add-sub-btn" @click="parentForSub = i; showSubDialog = true">
-          <span class="material-symbols-rounded" slot="icon">add</span>
-          添加子菜单
-        </md-text-button>
       </div>
+
+      <div v-else class="empty-hint">暂无导航菜单</div>
     </div>
 
     <!-- 一级菜单编辑对话框 -->
@@ -136,23 +218,29 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, onMounted } from 'vue'
 import { useNavItems, refreshNavItems } from '@/stores/blogStore'
 import {
   createNavItem,
   updateNavItemApi,
   deleteNavItemApi,
 } from '@/services/articleService'
+import { useAdminLoader } from '@/composables/useAdminLoader'
 import IconPicker from './IconPicker.vue'
 import '@material/web/button/filled-button'
 import '@material/web/button/filled-tonal-button'
 import '@material/web/button/text-button'
+import '@material/web/button/outlined-button'
 import '@material/web/iconbutton/icon-button'
 import '@material/web/dialog/dialog'
 import '@material/web/textfield/outlined-text-field'
 import '@material/web/switch/switch'
+import '@material/web/progress/linear-progress'
 
 const props = defineProps({ token: { type: String, required: true } })
+
+// ===== 共享加载控制器 =====
+const loader = useAdminLoader()
 
 const {
   navItems: getNavItems,
@@ -172,6 +260,27 @@ const navItems = computed(() => getNavItems())
 const saving = ref(false)
 const operationMessage = ref('')
 const operationError = ref(false)
+
+// ===== 数据加载（带冷启动重试） =====
+// NavManager 使用 blogStore 的公共 API，而非 content-manager API
+// refreshNavItems() 返回 true 表示 API 数据成功刷新，false 表示 API 不可达
+function loadNavData() {
+  loader.loadCustom(
+    () => refreshNavItems(),
+    () => { /* navItems 已通过 store computed 自动更新 */ },
+    (result) => result !== true  // refreshNavItems 返回 false → 视为空，触发重试
+  )
+}
+
+/** 静默刷新（CRUD 后） */
+async function reloadNavData() {
+  await loader.silentReloadCustom(
+    () => refreshNavItems(),
+    () => { /* store 已自动更新 */ }
+  )
+}
+
+onMounted(loadNavData)
 
 // ===== 操作提示 =====
 let noticeTimer = null
@@ -250,20 +359,20 @@ async function onSaveNav() {
       if (docId) {
         await updateNavItemApi(token, docId, { title: label, icon, route, navId, persistent })
         optimisticUpdate(editNav.value, { label, icon, route, id: navId, persistent })
-        await refreshNavItems()
+        await reloadNavData()
         showNotice('菜单已更新')
       } else {
         const sortOrder = editNav.value
         const result = await createNavItem(token, { title: label, icon, route, navId, sortOrder, persistent })
         optimisticUpdate(editNav.value, { label, icon, route, id: navId, persistent, _documentId: result.documentId })
-        await refreshNavItems()
+        await reloadNavData()
         showNotice('菜单已同步到 Strapi')
       }
     } else {
       const sortOrder = navItems.value.length
       const result = await createNavItem(token, { title: label, icon, route, navId, sortOrder, persistent })
       optimisticAdd({ id: navId, label, icon, route, persistent, _documentId: result.documentId })
-      await refreshNavItems()
+      await reloadNavData()
       showNotice('菜单已创建')
     }
     showNavDialog.value = false
@@ -297,7 +406,7 @@ async function doRemoveNav(i) {
       await deleteNavItemApi(token, docId)
     }
     optimisticRemove(i)
-    await refreshNavItems()
+    await reloadNavData()
     showNotice('菜单已删除')
   } catch (e) {
     showNotice('删除失败：' + (e.message || '未知错误'), true)
@@ -311,7 +420,6 @@ async function onMoveNav(from, to) {
 
   optimisticMoveNav(from, to)
 
-  // 更新 Strapi 中所有受影响项的 sortOrder
   try {
     const items = navItems.value
     for (let idx = 0; idx < items.length; idx++) {
@@ -322,7 +430,7 @@ async function onMoveNav(from, to) {
     }
   } catch (e) {
     showNotice('排序同步失败：' + (e.message || '未知错误'), true)
-    await refreshNavItems()
+    await reloadNavData()
   }
 }
 
@@ -342,7 +450,7 @@ async function onMoveSub(parentIdx, from, to) {
     }
   } catch (e) {
     showNotice('排序同步失败：' + (e.message || '未知错误'), true)
-    await refreshNavItems()
+    await reloadNavData()
   }
 }
 
@@ -371,7 +479,7 @@ async function onSaveSub() {
       if (docId) {
         await updateNavItemApi(token, docId, { title: label, route, navId: subNavId })
         optimisticUpdateSub(pIdx, editSub.value.s, { label, route, id: subNavId })
-        await refreshNavItems()
+        await reloadNavData()
         showNotice('子菜单已更新')
       } else {
         const parentDocId = parentItem._documentId
@@ -379,7 +487,7 @@ async function onSaveSub() {
           const sortOrder = editSub.value.s
           const result = await createNavItem(token, { title: label, icon: 'article', route, navId: subNavId, sortOrder, parent: { connect: [parentDocId] } })
           optimisticUpdateSub(pIdx, editSub.value.s, { label, route, id: subNavId, _documentId: result.documentId })
-          await refreshNavItems()
+          await reloadNavData()
           showNotice('子菜单已同步到 Strapi')
         } else {
           showNotice('父菜单未关联 Strapi，请先编辑父菜单', true)
@@ -391,7 +499,7 @@ async function onSaveSub() {
       const sortOrder = parentItem.children?.length || 0
       const result = await createNavItem(token, { title: label, icon: 'article', route, navId: subNavId, sortOrder, parent: { connect: [parentDocId] } })
       optimisticAddSub(pIdx, { id: subNavId, label, route, _documentId: result.documentId })
-      await refreshNavItems()
+      await reloadNavData()
       showNotice('子菜单已创建')
     }
     showSubDialog.value = false
@@ -419,7 +527,7 @@ async function doRemoveSub(p, s) {
     const docId = subItem?._documentId
     if (docId) await deleteNavItemApi(token, docId)
     optimisticRemoveSub(p, s)
-    await refreshNavItems()
+    await reloadNavData()
     showNotice('子菜单已删除')
   } catch (e) {
     showNotice('删除失败：' + (e.message || '未知错误'), true)
@@ -430,6 +538,22 @@ async function doRemoveSub(p, s) {
 <style scoped>
 .nav-manager {
   padding: 24px;
+}
+
+/* ======== 缓冲进度条 ======== */
+.loading-progress {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  width: calc(100% + 48px);
+  margin: -24px -24px 24px -24px;
+  --md-linear-progress-active-indicator-color: var(--md-sys-color-primary, #6750a4);
+  --md-linear-progress-track-color: var(--md-sys-color-surface-container-highest, #e6e0e9);
+  transition: opacity 400ms ease-out;
+}
+
+.loading-progress--fading {
+  opacity: 0;
 }
 
 .section-title {
@@ -450,11 +574,6 @@ async function doRemoveSub(p, s) {
   margin: 0;
 }
 
-.section-title__actions {
-  display: flex;
-  gap: 8px;
-}
-
 .nav-list {
   display: flex;
   flex-direction: column;
@@ -466,6 +585,10 @@ async function doRemoveSub(p, s) {
   border-radius: 16px;
   padding: 16px;
   background: var(--md-sys-color-surface-container-low, #f8f1f6);
+}
+
+.nav-card--skeleton {
+  border-color: transparent;
 }
 
 .nav-card__header {
@@ -508,7 +631,18 @@ async function doRemoveSub(p, s) {
   gap: 0;
 }
 
+.nav-card__sort--skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .nav-card__actions {
+  display: flex;
+  gap: 4px;
+}
+
+.nav-card__actions--skeleton {
   display: flex;
   gap: 4px;
 }
@@ -519,11 +653,19 @@ async function doRemoveSub(p, s) {
   border-left: 2px solid var(--md-sys-color-outline-variant, #cac4d0);
 }
 
+.sub-list--skeleton {
+  border-left: 2px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
 .sub-item {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 6px 0;
+}
+
+.sub-item--skeleton {
+  gap: 8px;
 }
 
 .sub-item__label {
@@ -548,7 +690,17 @@ async function doRemoveSub(p, s) {
   gap: 0;
 }
 
+.sub-item__sort--skeleton {
+  display: flex;
+  gap: 2px;
+}
+
 .sub-item__actions {
+  display: flex;
+  gap: 2px;
+}
+
+.sub-item__actions--skeleton {
   display: flex;
   gap: 2px;
 }
@@ -556,6 +708,17 @@ async function doRemoveSub(p, s) {
 .add-sub-btn {
   margin-left: 36px;
   margin-top: 4px;
+}
+
+.empty-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-family: var(--md-sys-typescale-body-m-font-family);
+  font-size: var(--md-sys-typescale-body-m-font-size);
 }
 
 .dialog-form {
@@ -648,6 +811,22 @@ async function doRemoveSub(p, s) {
 
 .operation-notice--error .operation-notice__text {
   color: var(--md-sys-color-on-error-container, #410e0b);
+}
+
+/* ======== fadeIn 动画（对照 M3: opacity 0→1 + translateY 10px→0, 200ms delay + 200ms linear） ======== */
+.content-fadein {
+  animation: admin-fadein 200ms linear 200ms both;
+}
+
+@keyframes admin-fadein {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes fadeIn {

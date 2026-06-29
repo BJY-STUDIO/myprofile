@@ -1,5 +1,14 @@
 <template>
   <div class="article-manager">
+    <!-- ======== 缓冲进度条 ======== -->
+    <md-linear-progress
+      v-if="loader.loadingActive.value"
+      :class="{ 'loading-progress--fading': loader.loadingFading.value }"
+      class="loading-progress"
+      :value="loader.progressValue.value"
+      :buffer="loader.progressBuffer.value"
+    ></md-linear-progress>
+
     <div class="section-title">
       <h2>文章管理</h2>
       <md-filled-tonal-button @click="onCreate">
@@ -8,38 +17,55 @@
       </md-filled-tonal-button>
     </div>
 
-    <!-- 加载状态 -->
-    <div v-if="loading" class="loading-hint">
-      <md-circular-progress indeterminate></md-circular-progress>
-      <span>加载中...</span>
-    </div>
-
-    <!-- 文章列表 -->
-    <div v-else-if="articles.length" class="article-list">
-      <div v-for="(art, i) in articles" :key="art.documentId" class="article-card">
+    <!-- ======== 骨架屏 ======== -->
+    <div v-if="!loader.dataLoaded.value" class="article-list">
+      <div v-for="n in 4" :key="'sk-' + n" class="article-card article-card--skeleton">
         <div class="article-card__main">
           <div class="article-card__info">
-            <span class="article-card__title">{{ art.title || '(无标题)' }}</span>
-            <span class="article-card__meta">
-              <span v-if="art.slug" class="article-card__slug">{{ art.slug }}</span>
-              <span v-if="art.date" class="article-card__date">{{ art.date }}</span>
-              <span v-if="art.sortOrder != null" class="article-card__sort">排序: {{ art.sortOrder }}</span>
-            </span>
-            <span v-if="art.description" class="article-card__desc">{{ art.description }}</span>
+            <span class="skeleton" style="height:18px;width:55%;"></span>
+            <div style="display:flex;gap:12px;margin-top:8px;">
+              <span class="skeleton" style="height:12px;width:80px;"></span>
+              <span class="skeleton" style="height:12px;width:60px;"></span>
+              <span class="skeleton" style="height:12px;width:50px;"></span>
+            </div>
+            <span class="skeleton" style="height:12px;width:80%;margin-top:6px;"></span>
           </div>
         </div>
-        <div class="article-card__actions">
-          <md-icon-button @click="onEdit(i)">
-            <span class="material-symbols-rounded">edit</span>
-          </md-icon-button>
-          <md-icon-button @click="onRemove(i)">
-            <span class="material-symbols-rounded">delete</span>
-          </md-icon-button>
+        <div class="article-card__actions article-card__actions--skeleton">
+          <span class="skeleton" style="width:40px;height:40px;border-radius:20px;"></span>
+          <span class="skeleton" style="width:40px;height:40px;border-radius:20px;"></span>
         </div>
       </div>
     </div>
 
-    <div v-else class="empty-hint">暂无文章</div>
+    <!-- ======== 真实内容（fadeIn） ======== -->
+    <div v-else :class="{ 'content-fadein': loader.fadeInActive.value }">
+      <div v-if="articles.length" class="article-list">
+        <div v-for="(art, i) in articles" :key="art.documentId" class="article-card">
+          <div class="article-card__main">
+            <div class="article-card__info">
+              <span class="article-card__title">{{ art.title || '(无标题)' }}</span>
+              <span class="article-card__meta">
+                <span v-if="art.slug" class="article-card__slug">{{ art.slug }}</span>
+                <span v-if="art.date" class="article-card__date">{{ art.date }}</span>
+                <span v-if="art.sortOrder != null" class="article-card__sort">排序: {{ art.sortOrder }}</span>
+              </span>
+              <span v-if="art.description" class="article-card__desc">{{ art.description }}</span>
+            </div>
+          </div>
+          <div class="article-card__actions">
+            <md-icon-button @click="onEdit(i)">
+              <span class="material-symbols-rounded">edit</span>
+            </md-icon-button>
+            <md-icon-button @click="onRemove(i)">
+              <span class="material-symbols-rounded">delete</span>
+            </md-icon-button>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="empty-hint">暂无文章</div>
+    </div>
 
     <!-- 编辑对话框 -->
     <md-dialog :open="showDialog" @close="showDialog = false" class="edit-dialog">
@@ -73,21 +99,24 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { strapiAdminLogin, cmList, cmCreate, cmUpdate, cmDelete } from '@/services/articleService'
+import { cmCreate, cmUpdate, cmDelete } from '@/services/articleService'
+import { useAdminLoader } from '@/composables/useAdminLoader'
 import '@material/web/button/filled-button'
 import '@material/web/button/filled-tonal-button'
 import '@material/web/button/text-button'
 import '@material/web/iconbutton/icon-button'
 import '@material/web/dialog/dialog'
 import '@material/web/textfield/outlined-text-field'
-import '@material/web/progress/circular-progress'
+import '@material/web/progress/linear-progress'
 
 const UID = 'api::article.article'
 
 const props = defineProps({ token: { type: String, required: true } })
 
+// ===== 共享加载控制器 =====
+const loader = useAdminLoader()
+
 const articles = ref([])
-const loading = ref(true)
 const saving = ref(false)
 const showDialog = ref(false)
 const showDeleteConfirm = ref(false)
@@ -96,19 +125,21 @@ const deleteTarget = ref(null)
 
 const form = ref({ title: '', slug: '', description: '', content: '', date: '', sortOrder: 0, tagsRaw: '[]' })
 
-async function loadArticles() {
-  loading.value = true
-  try {
-    const { results } = await cmList(props.token, UID, {
-      pageSize: 100,
-      sort: ['sortOrder:asc', 'createdAt:desc'],
-    })
+// ===== 数据加载（带冷启动重试） =====
+const LIST_PARAMS = { pageSize: 100, sort: ['sortOrder:asc', 'createdAt:desc'] }
+
+function loadArticles() {
+  loader.loadWithRetry(
+    props.token, UID, LIST_PARAMS,
+    (results) => { articles.value = results }
+  )
+}
+
+/** 静默刷新（CRUD 后） */
+async function reloadArticles() {
+  await loader.silentReload(props.token, UID, LIST_PARAMS, (results) => {
     articles.value = results
-  } catch (e) {
-    console.error('loadArticles failed:', e)
-  } finally {
-    loading.value = false
-  }
+  })
 }
 
 onMounted(loadArticles)
@@ -147,8 +178,6 @@ async function onSave() {
   try { tags = JSON.parse(tagsRaw) } catch { tags = [] }
 
   const data = { title, slug, description, content, date, sortOrder, tags }
-
-  // slug 为空时由 Strapi 从 title 自动生成
   if (slug) data.slug = slug
 
   saving.value = true
@@ -160,7 +189,7 @@ async function onSave() {
       await cmCreate(props.token, UID, data)
     }
     showDialog.value = false
-    await loadArticles()
+    await reloadArticles()
   } catch (e) {
     alert('保存失败：' + (e.message || '未知错误'))
   } finally {
@@ -180,7 +209,7 @@ async function confirmDelete() {
     await cmDelete(props.token, UID, deleteTarget.value.documentId)
     showDeleteConfirm.value = false
     deleteTarget.value = null
-    await loadArticles()
+    await reloadArticles()
   } catch (e) {
     alert('删除失败：' + (e.message || '未知错误'))
   } finally {
@@ -192,6 +221,23 @@ async function confirmDelete() {
 <style scoped>
 .article-manager {
   padding: 24px;
+}
+
+/* ======== 缓冲进度条 ======== */
+.loading-progress {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  width: 100%;
+  margin: -24px -24px 24px -24px;
+  width: calc(100% + 48px);
+  --md-linear-progress-active-indicator-color: var(--md-sys-color-primary, #6750a4);
+  --md-linear-progress-track-color: var(--md-sys-color-surface-container-highest, #e6e0e9);
+  transition: opacity 400ms ease-out;
+}
+
+.loading-progress--fading {
+  opacity: 0;
 }
 
 .section-title {
@@ -228,7 +274,28 @@ async function confirmDelete() {
   background: var(--md-sys-color-surface-container-low, #f8f1f6);
 }
 
+.article-card--skeleton {
+  border-color: transparent;
+  background: var(--md-sys-color-surface-container-low, #f8f1f6);
+}
+
+.article-card--skeleton .article-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.article-card__actions--skeleton {
+  display: flex;
+  gap: 4px;
+}
+
 .article-card__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.article-card__info {
   flex: 1;
   min-width: 0;
 }
@@ -277,7 +344,6 @@ async function confirmDelete() {
   flex-shrink: 0;
 }
 
-.loading-hint,
 .empty-hint {
   display: flex;
   align-items: center;
@@ -285,7 +351,8 @@ async function confirmDelete() {
   gap: 12px;
   padding: 48px;
   color: var(--md-sys-color-on-surface-variant, #49454f);
-  font-size: 14px;
+  font-family: var(--md-sys-typescale-body-m-font-family);
+  font-size: var(--md-sys-typescale-body-m-font-size);
 }
 
 .dialog-form {
@@ -294,5 +361,21 @@ async function confirmDelete() {
   gap: 16px;
   min-width: 400px;
   max-width: 560px;
+}
+
+/* ======== fadeIn 动画（对照 M3: opacity 0→1 + translateY 10px→0, 200ms delay + 200ms linear） ======== */
+.content-fadein {
+  animation: admin-fadein 200ms linear 200ms both;
+}
+
+@keyframes admin-fadein {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

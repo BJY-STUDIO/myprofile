@@ -1,5 +1,14 @@
 <template>
   <div class="card-style-manager">
+    <!-- ======== 缓冲进度条 ======== -->
+    <md-linear-progress
+      v-if="loader.loadingActive.value"
+      :class="{ 'loading-progress--fading': loader.loadingFading.value }"
+      class="loading-progress"
+      :value="loader.progressValue.value"
+      :buffer="loader.progressBuffer.value"
+    ></md-linear-progress>
+
     <div class="section-title">
       <h2>卡片样式管理</h2>
       <md-filled-tonal-button @click="onCreateSection">
@@ -14,53 +23,75 @@
       <span class="operation-notice__text">{{ operationMessage }}</span>
     </div>
 
-    <!-- 加载状态 -->
-    <div v-if="loading" class="loading-hint">
-      <md-circular-progress indeterminate></md-circular-progress>
-      <span>加载中...</span>
-    </div>
-
-    <!-- 分区列表 -->
-    <div v-else-if="sections.length" class="section-list">
-      <div v-for="(sec, i) in sections" :key="sec.documentId" class="section-card">
+    <!-- ======== 骨架屏 ======== -->
+    <div v-if="!loader.dataLoaded.value" class="section-list">
+      <div v-for="n in 3" :key="'sk-' + n" class="section-card section-card--skeleton">
         <div class="section-card__header">
           <div class="section-card__info">
             <div class="section-card__title-row">
-              <span class="section-card__title">{{ sec.title || '(无标题)' }}</span>
-              <span class="section-card__badge" :class="`section-card__badge--${sec.headingLevel}`">
-                {{ sec.headingLevel === 'section-header' ? '主标题' : '副标题' }}
-              </span>
-              <span v-if="sec.noJumplink" class="section-card__badge section-card__badge--nojumplink">
-                无跳转
-              </span>
+              <span class="skeleton" style="height:18px;width:35%;"></span>
+              <span class="skeleton" style="height:20px;width:48px;border-radius:8px;"></span>
             </div>
             <div class="section-card__meta">
-              <span v-if="getFeatureTitle(sec)" class="section-card__feature">
-                特色：{{ getFeatureTitle(sec) }}
-              </span>
-              <span class="section-card__count">{{ getArticleCount(sec) }} 篇文章</span>
-              <span class="section-card__sort-order">排序：{{ sec.sortOrder ?? 0 }}</span>
+              <span class="skeleton" style="height:12px;width:70px;"></span>
+              <span class="skeleton" style="height:12px;width:56px;"></span>
+              <span class="skeleton" style="height:12px;width:50px;"></span>
             </div>
           </div>
-          <div class="section-card__actions">
-            <md-icon-button :disabled="i === 0" @click="onMoveSection(i, i - 1)">
-              <span class="material-symbols-rounded">keyboard_arrow_up</span>
-            </md-icon-button>
-            <md-icon-button :disabled="i === sections.length - 1" @click="onMoveSection(i, i + 1)">
-              <span class="material-symbols-rounded">keyboard_arrow_down</span>
-            </md-icon-button>
-            <md-icon-button @click="onEditSection(i)">
-              <span class="material-symbols-rounded">edit</span>
-            </md-icon-button>
-            <md-icon-button @click="onRemoveSection(i)">
-              <span class="material-symbols-rounded">delete</span>
-            </md-icon-button>
+          <div class="section-card__actions section-card__actions--skeleton">
+            <span class="skeleton" style="width:40px;height:40px;border-radius:20px;"></span>
+            <span class="skeleton" style="width:40px;height:40px;border-radius:20px;"></span>
+            <span class="skeleton" style="width:40px;height:40px;border-radius:20px;"></span>
+            <span class="skeleton" style="width:40px;height:40px;border-radius:20px;"></span>
           </div>
         </div>
       </div>
     </div>
 
-    <div v-else class="empty-hint">暂无分区</div>
+    <!-- ======== 真实内容（fadeIn） ======== -->
+    <div v-else :class="{ 'content-fadein': loader.fadeInActive.value }">
+      <!-- 分区列表 -->
+      <div v-if="sections.length" class="section-list">
+        <div v-for="(sec, i) in sections" :key="sec.documentId" class="section-card">
+          <div class="section-card__header">
+            <div class="section-card__info">
+              <div class="section-card__title-row">
+                <span class="section-card__title">{{ sec.title || '(无标题)' }}</span>
+                <span class="section-card__badge" :class="`section-card__badge--${sec.headingLevel}`">
+                  {{ sec.headingLevel === 'section-header' ? '主标题' : '副标题' }}
+                </span>
+                <span v-if="sec.noJumplink" class="section-card__badge section-card__badge--nojumplink">
+                  无跳转
+                </span>
+              </div>
+              <div class="section-card__meta">
+                <span v-if="getFeatureTitle(sec)" class="section-card__feature">
+                  特色：{{ getFeatureTitle(sec) }}
+                </span>
+                <span class="section-card__count">{{ getArticleCount(sec) }} 篇文章</span>
+                <span class="section-card__sort-order">排序：{{ sec.sortOrder ?? 0 }}</span>
+              </div>
+            </div>
+            <div class="section-card__actions">
+              <md-icon-button :disabled="i === 0" @click="onMoveSection(i, i - 1)">
+                <span class="material-symbols-rounded">keyboard_arrow_up</span>
+              </md-icon-button>
+              <md-icon-button :disabled="i === sections.length - 1" @click="onMoveSection(i, i + 1)">
+                <span class="material-symbols-rounded">keyboard_arrow_down</span>
+              </md-icon-button>
+              <md-icon-button @click="onEditSection(i)">
+                <span class="material-symbols-rounded">edit</span>
+              </md-icon-button>
+              <md-icon-button @click="onRemoveSection(i)">
+                <span class="material-symbols-rounded">delete</span>
+              </md-icon-button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="empty-hint">暂无分区</div>
+    </div>
 
     <!-- 编辑对话框 -->
     <md-dialog :open="showDialog" @close="showDialog = false" class="edit-dialog">
@@ -121,6 +152,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { cmList, cmCreate, cmUpdate, cmDelete } from '@/services/articleService'
+import { useAdminLoader } from '@/composables/useAdminLoader'
 import '@material/web/button/filled-button'
 import '@material/web/button/filled-tonal-button'
 import '@material/web/button/text-button'
@@ -131,16 +163,18 @@ import '@material/web/select/outlined-select'
 import '@material/web/select/select-option'
 import '@material/web/checkbox/checkbox'
 import '@material/web/switch/switch'
-import '@material/web/progress/circular-progress'
+import '@material/web/progress/linear-progress'
 
 const HS_UID = 'api::home-section.home-section'
 const ART_UID = 'api::article.article'
 
 const props = defineProps({ token: { type: String, required: true } })
 
+// ===== 共享加载控制器 =====
+const loader = useAdminLoader()
+
 const sections = ref([])
 const allArticles = ref([])
-const loading = ref(true)
 const saving = ref(false)
 const showDialog = ref(false)
 const showDeleteConfirm = ref(false)
@@ -169,7 +203,6 @@ function showNotice(msg, isError = false) {
 
 // ===== 辅助方法 =====
 
-/** 获取特色文章标题 */
 function getFeatureTitle(sec) {
   const fa = sec.featureArticle
   if (!fa) return ''
@@ -180,7 +213,6 @@ function getFeatureTitle(sec) {
   return fa.title || ''
 }
 
-/** 获取分区文章数量 */
 function getArticleCount(sec) {
   const arts = sec.articles
   if (!arts) return 0
@@ -188,37 +220,46 @@ function getArticleCount(sec) {
   return 0
 }
 
-// ===== 数据加载 =====
+// ===== 数据加载（带冷启动重试） =====
 
-async function loadSections() {
-  try {
-    const { results } = await cmList(props.token, HS_UID, {
-      pageSize: 100,
-      sort: ['sortOrder:asc'],
-    })
-    sections.value = results
-  } catch (e) {
-    console.error('loadSections failed:', e)
-    showNotice('加载分区失败：' + (e.message || '未知错误'), true)
-  }
+const HS_PARAMS = { pageSize: 100, sort: ['sortOrder:asc'] }
+const ART_PARAMS = { pageSize: 100, sort: ['sortOrder:asc', 'createdAt:desc'] }
+
+function loadAll() {
+  // Sections 带进度条和重试
+  loader.loadWithRetry(
+    props.token, HS_UID, HS_PARAMS,
+    (results) => { sections.value = results }
+  )
+  // Articles 静默加载（不驱动进度条，但也是初次加载需要的）
+  loadAllArticles()
 }
 
 async function loadAllArticles() {
   try {
-    const { results } = await cmList(props.token, ART_UID, {
-      pageSize: 100,
-      sort: ['sortOrder:asc', 'createdAt:desc'],
-    })
+    const { results } = await cmList(props.token, ART_UID, ART_PARAMS)
     allArticles.value = results
   } catch (e) {
-    console.error('loadAllArticles failed:', e)
+    console.warn('loadAllArticles failed:', e)
+    // 如果 articles 加载失败，重试
+    let attempt = 0
+    while (attempt < 5) {
+      attempt++
+      const delay = Math.min(3000 * Math.pow(2, attempt - 1), 30000)
+      await new Promise(resolve => setTimeout(resolve, delay))
+      try {
+        const { results } = await cmList(props.token, ART_UID, ART_PARAMS)
+        allArticles.value = results
+        return
+      } catch { /* 继续 */ }
+    }
   }
 }
 
-async function loadAll() {
-  loading.value = true
-  await Promise.all([loadSections(), loadAllArticles()])
-  loading.value = false
+async function reloadSections() {
+  await loader.silentReload(props.token, HS_UID, HS_PARAMS, (results) => {
+    sections.value = results
+  })
 }
 
 onMounted(loadAll)
@@ -242,7 +283,6 @@ function onEditSection(i) {
   const sec = sections.value[i]
   editingIndex.value = i
 
-  // 从当前分区数据提取已关联的文章
   let featureDocId = ''
   if (sec.featureArticle) {
     featureDocId = typeof sec.featureArticle === 'string'
@@ -284,11 +324,9 @@ async function onSaveSection() {
 
   const data = { title, headingLevel, noJumplink, sortOrder }
 
-  // 处理特色文章关联 (oneToOne)
   if (featureArticleDocId) {
     data.featureArticle = { connect: [featureArticleDocId] }
   } else {
-    // 如果编辑时原来有特色文章，现在清空，需要断开
     if (editingIndex.value >= 0) {
       const sec = sections.value[editingIndex.value]
       const oldFeature = sec.featureArticle
@@ -301,7 +339,6 @@ async function onSaveSection() {
     }
   }
 
-  // 处理文章列表关联 (oneToMany)
   if (editingIndex.value >= 0) {
     const sec = sections.value[editingIndex.value]
     const oldDocIds = new Set()
@@ -321,7 +358,6 @@ async function onSaveSection() {
       if (disconnect.length > 0) data.articles.disconnect = disconnect.map(id => ({ documentId: id }))
     }
   } else {
-    // 新建分区：仅 connect
     if (selectedArticles.length > 0) {
       data.articles = { connect: selectedArticles }
     }
@@ -338,7 +374,7 @@ async function onSaveSection() {
       showNotice('分区已创建')
     }
     showDialog.value = false
-    await loadSections()
+    await reloadSections()
   } catch (e) {
     showNotice('保存失败：' + (e.message || '未知错误'), true)
   } finally {
@@ -359,7 +395,7 @@ async function confirmDeleteSection() {
     showDeleteConfirm.value = false
     deleteTarget.value = null
     showNotice('分区已删除')
-    await loadSections()
+    await reloadSections()
   } catch (e) {
     showNotice('删除失败：' + (e.message || '未知错误'), true)
   } finally {
@@ -370,11 +406,9 @@ async function confirmDeleteSection() {
 // ===== 分区排序 =====
 
 async function onMoveSection(from, to) {
-  // 乐观更新：先在 UI 中移动
   const moved = sections.value.splice(from, 1)[0]
   sections.value.splice(to, 0, moved)
 
-  // 更新所有受影响项的 sortOrder
   try {
     for (let idx = 0; idx < sections.value.length; idx++) {
       const sec = sections.value[idx]
@@ -385,7 +419,7 @@ async function onMoveSection(from, to) {
     showNotice('排序已更新')
   } catch (e) {
     showNotice('排序同步失败：' + (e.message || '未知错误'), true)
-    await loadSections()
+    await reloadSections()
   }
 }
 
@@ -405,6 +439,22 @@ function onToggleArticle(docId, checked) {
 <style scoped>
 .card-style-manager {
   padding: 24px;
+}
+
+/* ======== 缓冲进度条 ======== */
+.loading-progress {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  width: calc(100% + 48px);
+  margin: -24px -24px 24px -24px;
+  --md-linear-progress-active-indicator-color: var(--md-sys-color-primary, #6750a4);
+  --md-linear-progress-track-color: var(--md-sys-color-surface-container-highest, #e6e0e9);
+  transition: opacity 400ms ease-out;
+}
+
+.loading-progress--fading {
+  opacity: 0;
 }
 
 .section-title {
@@ -439,6 +489,10 @@ function onToggleArticle(docId, checked) {
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   border-radius: 16px;
   background: var(--md-sys-color-surface-container-low, #f8f1f6);
+}
+
+.section-card--skeleton {
+  border-color: transparent;
 }
 
 .section-card__header {
@@ -518,7 +572,11 @@ function onToggleArticle(docId, checked) {
   flex-shrink: 0;
 }
 
-.loading-hint,
+.section-card__actions--skeleton {
+  display: flex;
+  gap: 2px;
+}
+
 .empty-hint {
   display: flex;
   align-items: center;
@@ -526,7 +584,8 @@ function onToggleArticle(docId, checked) {
   gap: 12px;
   padding: 48px;
   color: var(--md-sys-color-on-surface-variant, #49454f);
-  font-size: 14px;
+  font-family: var(--md-sys-typescale-body-m-font-family);
+  font-size: var(--md-sys-typescale-body-m-font-size);
 }
 
 .dialog-form {
@@ -537,7 +596,6 @@ function onToggleArticle(docId, checked) {
   max-width: 560px;
 }
 
-/* select 字段标签 */
 .select-field__label {
   font-size: var(--md-sys-typescale-label-small-font-size, 11px);
   font-weight: var(--md-sys-typescale-label-small-font-weight, 500);
@@ -545,7 +603,6 @@ function onToggleArticle(docId, checked) {
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
-/* switch 字段 */
 .switch-field {
   display: flex;
   align-items: center;
@@ -561,7 +618,6 @@ function onToggleArticle(docId, checked) {
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
-/* 文章选择列表 */
 .articles-select {
   display: flex;
   flex-direction: column;
@@ -633,6 +689,16 @@ function onToggleArticle(docId, checked) {
 
 .operation-notice--error .operation-notice__text {
   color: var(--md-sys-color-on-error-container, #410e0b);
+}
+
+/* ======== fadeIn 动画 ======== */
+.content-fadein {
+  animation: admin-fadein 200ms linear 200ms both;
+}
+
+@keyframes admin-fadein {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeIn {
