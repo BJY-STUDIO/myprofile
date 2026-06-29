@@ -1,146 +1,204 @@
 /**
- * 博客数据存储 — reactive + localStorage 持久化
- * 管理导航菜单、页面内容（sections/cards）
+ * 博客数据存储 — API 驱动 + localStorage 缓存 + 硬编码回退
  *
- * 文章路由格式: /article/{slug}，slug 对应 src/articles/{slug}.js
+ * 导航菜单数据流：
+ *   1. 应用启动：localStorage 缓存 → 硬编码默认值（同步，即时显示）
+ *   2. 后台 API 请求：Strapi NavItem API → 更新 store → 缓存到 localStorage
+ *   3. API 不可达时：使用缓存或默认值，指数退避重试
+ *
+ * 写操作（NavManager）：
+ *   通过 Strapi Admin API 执行，成功后刷新缓存
  */
 import { reactive, watch, toRaw } from 'vue'
+import { getNavItems, retryNavItemsFetch, clearNavItemsCache } from '@/services/articleService'
 
 const STORAGE_KEY = 'm3-blog-store'
+const NAV_CACHE_KEY = 'm3-nav-cache'
 
-// ===== 默认数据 =====
-function createDefaultData() {
-  return {
-    // 一级导航菜单
-    navItems: [
-      { id: 'home', label: '首页', icon: 'home', route: '/', children: [] },
-      { id: 'about', label: '关于', icon: 'person_outline', route: '/about', children: [] },
-      { id: 'blog', label: '博客', icon: 'description', route: '/blog', children: [] },
-      {
-        id: 'projects', label: '项目', icon: 'code', route: '/projects',
-        children: [
-          { id: 'projects-overview', label: '全部项目', route: '/projects' },
-          { id: 'projects-web', label: 'Web 应用', route: '/projects/web' },
-          { id: 'projects-tools', label: '工具', route: '/projects/tools' },
-        ],
-      },
-      { id: 'contact', label: '联系', icon: 'mail_outline', route: '/contact', children: [] },
-    ],
-
-    // 页面数据（按 pageId 索引）
-    // home 页面数据已由 HomeSection API 驱动，不再硬编码
-    pages: {
-      home: {
-        title: "Kernel's Blog",
-        description: '探索技术，记录生活。一个遵循 Material Design 3 规范的个人博客。',
-        heroImage: '',
-        sections: [],
-      },
+// ===== 默认导航数据 =====
+function createDefaultNavItems() {
+  return [
+    { id: 'home', label: '首页', icon: 'home', route: '/', children: [] },
+    { id: 'about', label: '关于', icon: 'person_outline', route: '/about', children: [] },
+    { id: 'blog', label: '博客', icon: 'description', route: '/blog', children: [] },
+    {
+      id: 'projects', label: '项目', icon: 'code', route: '/projects',
+      children: [
+        { id: 'projects-overview', label: '全部项目', route: '/projects' },
+        { id: 'projects-web', label: 'Web 应用', route: '/projects/web' },
+        { id: 'projects-tools', label: '工具', route: '/projects/tools' },
+      ],
     },
+    { id: 'contact', label: '联系', icon: 'mail_outline', route: '/contact', children: [] },
+  ]
+}
+
+// ===== localStorage 缓存 =====
+function loadNavCache() {
+  try {
+    const raw = localStorage.getItem(NAV_CACHE_KEY)
+    if (raw) {
+      const data = JSON.parse(raw)
+      if (Array.isArray(data) && data.length > 0) return data
+    }
+  } catch {
+    console.warn('[blogStore] nav cache load failed')
+  }
+  return null
+}
+
+function saveNavCache(items) {
+  try {
+    // 脱敏：移除 _documentId 等内部字段再缓存
+    const clean = JSON.parse(JSON.stringify(items))
+    localStorage.setItem(NAV_CACHE_KEY, JSON.stringify(clean))
+  } catch {
+    console.warn('[blogStore] nav cache save failed')
   }
 }
 
-// ===== 从 localStorage 加载或使用默认值 =====
-function loadData() {
+function loadPagesFromStorage() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const data = JSON.parse(raw)
-      // 迁移：清除已移除的 /blog/:category 子菜单缓存
-      const blogItem = data?.navItems?.find(i => i.id === 'blog')
-      if (blogItem && blogItem.children?.length) {
-        blogItem.children = []
-      }
-      return data
+      return data?.pages || {}
     }
-  } catch (e) {
-    console.warn('blogStore: localStorage load failed, using defaults')
-  }
-  return createDefaultData()
+  } catch {}
+  return {}
 }
 
-// ===== 创建响应式 store =====
-const store = reactive(loadData())
+function savePagesToStorage(pages) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ pages: toRaw(pages) }))
+  } catch {
+    console.warn('[blogStore] pages save failed')
+  }
+}
 
-// ===== 持久化：深层 watch =====
+// ===== 初始化 =====
+// 优先级：localStorage 缓存 > 硬编码默认值
+const initialNavItems = loadNavCache() || createDefaultNavItems()
+
+const store = reactive({
+  navItems: initialNavItems,
+  navSource: loadNavCache() ? 'cache' : 'default',  // 'cache' | 'api' | 'default'
+  pages: loadPagesFromStorage(),
+})
+
+// ===== 持久化 watch =====
+
+// 导航菜单变更 → 缓存到 localStorage
 watch(
-  () => JSON.parse(JSON.stringify(store)),
+  () => JSON.parse(JSON.stringify(store.navItems)),
   (val) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(val))
-    } catch (e) {
-      console.warn('blogStore: localStorage save failed')
-    }
+    saveNavCache(val)
   },
-  { deep: true, immediate: true }
+  { deep: true }
 )
 
-// ===== 导航菜单 CRUD =====
+// 页面数据变更 → 持久化到 localStorage
+watch(
+  () => JSON.parse(JSON.stringify(store.pages)),
+  (val) => {
+    savePagesToStorage(val)
+  },
+  { deep: true }
+)
+
+// ===== 后台 API 初始化 =====
+
+// 应用启动时从 Strapi API 获取最新导航数据
+getNavItems().then(apiNavItems => {
+  if (apiNavItems && apiNavItems.length > 0) {
+    store.navItems = apiNavItems
+    store.navSource = 'api'
+  }
+})
+
+// API 不可达时指数退避重试
+retryNavItemsFetch((apiNavItems) => {
+  if (apiNavItems && apiNavItems.length > 0) {
+    store.navItems = apiNavItems
+    store.navSource = 'api'
+  }
+})
+
+/**
+ * 从 Strapi API 重新加载导航数据（写操作后调用）
+ */
+export async function refreshNavItems() {
+  clearNavItemsCache()
+  const apiNavItems = await getNavItems()
+  if (apiNavItems && apiNavItems.length > 0) {
+    store.navItems = apiNavItems
+    store.navSource = 'api'
+    return true
+  }
+  return false
+}
+
+// ===== 导航菜单只读访问 =====
 export function useNavItems() {
-  function addNavItem(item) {
+  function navItems() {
+    return store.navItems
+  }
+
+  /**
+   * 本地乐观更新（写入 Strapi 成功前临时更新 UI）
+   * 写入 Strapi 后会通过 refreshNavItems() 刷新全量数据
+   */
+  function optimisticAdd(item) {
     store.navItems.push({
       id: item.id || `nav-${Date.now()}`,
       label: item.label || '新页面',
       icon: item.icon || 'article',
       route: item.route || `/${item.id || Date.now()}`,
       children: item.children || [],
+      ...(item._documentId ? { _documentId: item._documentId } : {}),
     })
   }
 
-  function updateNavItem(index, updates) {
+  function optimisticUpdate(index, updates) {
     if (index >= 0 && index < store.navItems.length) {
       Object.assign(store.navItems[index], updates)
     }
   }
 
-  function removeNavItem(index) {
+  function optimisticRemove(index) {
     store.navItems.splice(index, 1)
   }
 
-  function moveNavItem(from, to) {
-    const [item] = store.navItems.splice(from, 1)
-    store.navItems.splice(to, 0, item)
-  }
-
-  // 二级菜单
-  function addSubItem(parentIndex, item) {
+  function optimisticAddSub(parentIndex, item) {
     if (!store.navItems[parentIndex].children) store.navItems[parentIndex].children = []
     store.navItems[parentIndex].children.push({
       id: item.id || `sub-${Date.now()}`,
       label: item.label || '子页面',
       route: item.route || `/sub/${Date.now()}`,
+      ...(item._documentId ? { _documentId: item._documentId } : {}),
     })
   }
 
-  function updateSubItem(parentIndex, subIndex, updates) {
+  function optimisticUpdateSub(parentIndex, subIndex, updates) {
     const children = store.navItems[parentIndex]?.children
     if (children && subIndex >= 0 && subIndex < children.length) {
       Object.assign(children[subIndex], updates)
     }
   }
 
-  function removeSubItem(parentIndex, subIndex) {
+  function optimisticRemoveSub(parentIndex, subIndex) {
     store.navItems[parentIndex]?.children?.splice(subIndex, 1)
   }
 
-  function moveSubItem(parentIndex, from, to) {
-    const children = store.navItems[parentIndex]?.children
-    if (children) {
-      const [item] = children.splice(from, 1)
-      children.splice(to, 0, item)
-    }
-  }
-
   return {
-    navItems: () => store.navItems,
-    addNavItem,
-    updateNavItem,
-    removeNavItem,
-    moveNavItem,
-    addSubItem,
-    updateSubItem,
-    removeSubItem,
-    moveSubItem,
+    navItems,
+    // 乐观更新（NavManager 使用）
+    optimisticAdd,
+    optimisticUpdate,
+    optimisticRemove,
+    optimisticAddSub,
+    optimisticUpdateSub,
+    optimisticRemoveSub,
   }
 }
 
@@ -274,9 +332,9 @@ export function usePage(pageId) {
 
 // ===== 重置为默认数据 =====
 export function resetStore() {
-  const defaults = createDefaultData()
-  store.navItems = defaults.navItems
-  store.pages = defaults.pages
+  const defaults = createDefaultNavItems()
+  store.navItems = defaults
+  store.navSource = 'default'
 }
 
 // ===== 导出原始 store（仅供需要时使用） =====

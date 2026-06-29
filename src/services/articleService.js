@@ -895,3 +895,235 @@ export function retryHomeSectionsFetch(onUpdate) {
   runRetry()
   return () => { cancelled = true }
 }
+
+// ===== NavItem API =====
+
+/**
+ * 导航菜单数据从 Strapi NavItem 内容类型获取
+ *
+ * Strapi NavItem 格式（v5 扁平结构）：
+ *   { id, documentId, title, icon, route, sortOrder, navId, children: [...], parent: ... }
+ *
+ * 前端内部格式（与 blogStore navItems 一致）：
+ *   { id: string, label: string, icon: string, route: string, children: [{ id, label, route }] }
+ */
+
+let _navItemsCache = null
+
+/**
+ * 将 Strapi NavItem 映射为 blogStore 导航格式
+ */
+function mapStrapiNavItem(strapiItem) {
+  return {
+    id: strapiItem.navId || strapiItem.documentId,
+    label: strapiItem.title,
+    icon: strapiItem.icon || 'article',
+    route: strapiItem.route || '/',
+    _documentId: strapiItem.documentId,  // 保留 Strapi documentId 用于写操作
+    children: (strapiItem.children || [])
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+      .map(child => ({
+        id: child.navId || child.documentId,
+        label: child.title,
+        route: child.route || '/',
+        _documentId: child.documentId,
+      })),
+  }
+}
+
+/**
+ * 从 Strapi 获取导航菜单数据
+ * @param {number} timeoutMs
+ * @returns {Promise<Array|null>}
+ */
+async function fetchNavItems(timeoutMs = API_FETCH_TIMEOUT) {
+  if (_navItemsCache) return _navItemsCache
+
+  try {
+    const res = await fetchWithTimeout(
+      `${API_BASE_URL}/nav-items?populate[children][populate]=*&sort=sortOrder:asc`,
+      timeoutMs
+    )
+    if (!res.ok) throw new Error(`API ${res.status}`)
+    const json = await res.json()
+    const items = json.data || []
+
+    // 过滤出顶层项目（没有 parent 字段）并按 sortOrder 排序
+    _navItemsCache = items
+      .filter(item => !item.parent)
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+      .map(item => mapStrapiNavItem(item))
+
+    _apiAvailable = true
+    return _navItemsCache
+  } catch (err) {
+    console.error('[ArticleService] fetchNavItems failed:', err)
+    return null
+  }
+}
+
+/**
+ * 获取导航菜单数据
+ * auto 模式：先尝试 API，失败则返回 null（调用方使用缓存或默认值）
+ * @returns {Promise<Array|null>}
+ */
+export async function getNavItems() {
+  if (ARTICLE_SOURCE === 'local') return null
+
+  const items = await fetchNavItems(API_FETCH_TIMEOUT)
+  if (items && items.length > 0) return items
+
+  return null
+}
+
+/**
+ * 后台重试获取导航菜单数据
+ * @param {function} onUpdate — 重试成功时回调，参数为导航数组
+ * @returns {function} 取消函数
+ */
+export function retryNavItemsFetch(onUpdate) {
+  if (ARTICLE_SOURCE === 'local') return () => {}
+  if (_apiAvailable === true) return () => {}
+
+  let cancelled = false
+  let attempt = 0
+
+  async function runRetry() {
+    _navItemsCache = null  // 清除缓存，强制重新获取
+    while (attempt < MAX_RETRY_ATTEMPTS) {
+      attempt++
+      const delay = Math.min(RETRY_BASE_DELAY * Math.pow(2, attempt - 1), RETRY_MAX_DELAY)
+      await new Promise(resolve => setTimeout(resolve, delay))
+      if (cancelled) return
+
+      try {
+        const items = await fetchNavItems(API_RETRY_TIMEOUT)
+        if (cancelled) return
+        if (items && items.length > 0) {
+          onUpdate(items)
+          return
+        }
+      } catch {
+        // 本轮失败，继续
+      }
+    }
+  }
+
+  runRetry()
+  return () => { cancelled = true }
+}
+
+/**
+ * 清除导航菜单缓存（写入操作后调用以刷新数据）
+ */
+export function clearNavItemsCache() {
+  _navItemsCache = null
+}
+
+// ===== NavItem 写操作（通过 Strapi Admin API） =====
+
+const ADMIN_API_BASE = API_BASE_URL.replace(/\/api$/, '')
+
+/**
+ * Strapi 管理员登录
+ * @param {string} email
+ * @param {string} password
+ * @returns {Promise<string>} JWT token
+ */
+export async function strapiAdminLogin(email, password) {
+  const res = await fetch(`${ADMIN_API_BASE}/admin/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(text || `Login failed: ${res.status}`)
+  }
+  const json = await res.json()
+  // Strapi v5 返回格式: { data: { token } }
+  return json.data?.token || json.token
+}
+
+/**
+ * 通过 Strapi content-manager API 创建 NavItem
+ * Strapi v5 content-manager 响应格式: { data: { documentId, id, ... }, meta: {} }
+ * @param {string} token - Admin JWT
+ * @param {object} data - { title, icon, route, navId, sortOrder, parent? }
+ * @returns {Promise<object>} 解包后的 data 对象，包含 documentId
+ */
+export async function createNavItem(token, data) {
+  const res = await fetch(
+    `${ADMIN_API_BASE}/content-manager/collection-types/api::nav-item.nav-item`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    }
+  )
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(text || `Create failed: ${res.status}`)
+  }
+  const json = await res.json()
+  // content-manager 返回 { data: { documentId, ... }, meta: {} }
+  return json.data || json
+}
+
+/**
+ * 通过 Strapi content-manager API 更新 NavItem
+ * @param {string} token - Admin JWT
+ * @param {string} documentId - Strapi document ID
+ * @param {object} data - 更新字段
+ * @returns {Promise<object>} 解包后的 data 对象
+ */
+export async function updateNavItemApi(token, documentId, data) {
+  const res = await fetch(
+    `${ADMIN_API_BASE}/content-manager/collection-types/api::nav-item.nav-item/${documentId}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    }
+  )
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(text || `Update failed: ${res.status}`)
+  }
+  const json = await res.json()
+  return json.data || json
+}
+
+/**
+ * 通过 Strapi content-manager API 删除 NavItem
+ * @param {string} token - Admin JWT
+ * @param {string} documentId
+ * @returns {Promise<object>}
+ */
+export async function deleteNavItemApi(token, documentId) {
+  const res = await fetch(
+    `${ADMIN_API_BASE}/content-manager/collection-types/api::nav-item.nav-item/${documentId}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    }
+  )
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(text || `Delete failed: ${res.status}`)
+  }
+  // DELETE 可能返回空 body
+  try {
+    return await res.json()
+  } catch {
+    return {}
+  }
+}
