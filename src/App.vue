@@ -28,11 +28,10 @@ const adminNavItems = [
 // 当前使用的 nav items：admin 路由用 admin 项，否则用博客导航
 const navItems = computed(() => isAdminRoute.value ? adminNavItems : blogNavItems.value)
 
-// Admin 模式 FAB：退出登录
+// Admin 模式 FAB：返回主页（不退出登录）
 const fabConfig = computed(() => {
   if (isAdminRoute.value) {
-    // 仅在已登录时显示退出 FAB
-    return sessionStorage.getItem(ADMIN_TOKEN_KEY) ? { icon: 'logout', label: '退出登录' } : null
+    return { icon: 'home', label: '返回主页' }
   }
   return { icon: 'create', label: '新建' }
 })
@@ -256,11 +255,17 @@ function navigateTo(item) {
 
 function onFabClick() {
   if (isAdminRoute.value) {
-    // Admin FAB: 退出登录 → 清除 token + 回到首页
-    sessionStorage.removeItem(ADMIN_TOKEN_KEY)
+    // Admin FAB: 返回主页（不清除 token）
     router.push('/')
+    return
   }
   // 博客 FAB 点击事件，后续扩展
+}
+
+// Admin 退出登录：清除 token + 回到首页
+function onAdminLogout() {
+  sessionStorage.removeItem(ADMIN_TOKEN_KEY)
+  router.push('/')
 }
 
 // ======== 移动端 Navigation Drawer ========
@@ -348,7 +353,9 @@ const bodyMarginLeft = computed(() => {
       class="app-layout__rail"
       :items="navItems"
       :fab="fabConfig"
+      :admin-mode="isAdminRoute"
       @fab-click="onFabClick"
+      @admin-logout="onAdminLogout"
       @item-hover="onRailItemHover"
       @item-leave="onRailItemLeave"
     />

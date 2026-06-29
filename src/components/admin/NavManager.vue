@@ -122,6 +122,16 @@
         <md-filled-button @click="onSaveSub" :disabled="saving">保存</md-filled-button>
       </div>
     </md-dialog>
+
+    <!-- 删除确认对话框 -->
+    <md-dialog :open="showDeleteConfirm" @close="showDeleteConfirm = false">
+      <div slot="headline">确认删除</div>
+      <div slot="content">{{ deleteConfirmMessage }}</div>
+      <div slot="actions">
+        <md-text-button @click="showDeleteConfirm = false">取消</md-text-button>
+        <md-filled-button @click="onConfirmDelete" :disabled="saving">删除</md-filled-button>
+      </div>
+    </md-dialog>
   </div>
 </template>
 
@@ -192,6 +202,23 @@ function toggleIconPicker() {
   }
 }
 
+// ===== 删除确认对话框 =====
+const showDeleteConfirm = ref(false)
+const deleteConfirmMessage = ref('')
+const deleteAction = ref(null) // { type: 'nav', index } or { type: 'sub', p, s }
+
+function onConfirmDelete() {
+  showDeleteConfirm.value = false
+  if (!deleteAction.value) return
+
+  if (deleteAction.value.type === 'nav') {
+    doRemoveNav(deleteAction.value.index)
+  } else if (deleteAction.value.type === 'sub') {
+    doRemoveSub(deleteAction.value.p, deleteAction.value.s)
+  }
+  deleteAction.value = null
+}
+
 // ===== 一级菜单 CRUD =====
 const showNavDialog = ref(false)
 const editNav = ref(-1)
@@ -249,7 +276,13 @@ async function onSaveNav() {
 
 async function removeNav(i) {
   const item = navItems.value[i]
-  if (!confirm(`确认删除「${item?.label}」？`)) return
+  deleteConfirmMessage.value = `确认删除「${item?.label}」？其下的子菜单也会一并删除。`
+  deleteAction.value = { type: 'nav', index: i }
+  showDeleteConfirm.value = true
+}
+
+async function doRemoveNav(i) {
+  const item = navItems.value[i]
   const token = props.token
   if (!token) { showNotice('未登录 Strapi', true); return }
 
@@ -371,7 +404,13 @@ async function onSaveSub() {
 }
 
 async function removeSub(p, s) {
-  if (!confirm('确认删除子菜单？')) return
+  const subItem = navItems.value[p]?.children?.[s]
+  deleteConfirmMessage.value = `确认删除子菜单「${subItem?.label || ''}」？`
+  deleteAction.value = { type: 'sub', p, s }
+  showDeleteConfirm.value = true
+}
+
+async function doRemoveSub(p, s) {
   const token = props.token
   if (!token) { showNotice('未登录 Strapi', true); return }
 
@@ -401,9 +440,12 @@ async function removeSub(p, s) {
 }
 
 .section-title h2 {
-  font-size: 28px;
-  font-weight: 475;
-  line-height: 36px;
+  font-family: var(--md-sys-typescale-headline-m-font-family);
+  font-size: var(--md-sys-typescale-headline-m-font-size);
+  font-weight: var(--md-sys-typescale-headline-m-font-weight);
+  letter-spacing: var(--md-sys-typescale-headline-m-letter-spacing);
+  line-height: var(--md-sys-typescale-headline-m-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-headline-m-font-variation-GRAD), "opsz" var(--md-sys-typescale-headline-m-font-variation-opsz);
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0;
 }
@@ -444,14 +486,19 @@ async function removeSub(p, s) {
 
 .nav-card__label {
   display: block;
-  font-size: 16px;
-  font-weight: 500;
+  font-family: var(--md-sys-typescale-title-m-font-family);
+  font-size: var(--md-sys-typescale-title-m-font-size);
+  font-weight: var(--md-sys-typescale-title-m-font-weight);
+  letter-spacing: var(--md-sys-typescale-title-m-letter-spacing);
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
 .nav-card__route {
   display: block;
-  font-size: 13px;
+  font-family: var(--md-sys-typescale-body-m-font-family);
+  font-size: var(--md-sys-typescale-body-m-font-size);
+  font-weight: var(--md-sys-typescale-body-m-font-weight);
+  letter-spacing: var(--md-sys-typescale-body-m-letter-spacing);
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
@@ -480,13 +527,18 @@ async function removeSub(p, s) {
 }
 
 .sub-item__label {
-  font-size: 14px;
+  font-family: var(--md-sys-typescale-body-m-font-family);
+  font-size: var(--md-sys-typescale-body-m-font-size);
+  font-weight: var(--md-sys-typescale-body-m-font-weight);
   color: var(--md-sys-color-on-surface, #1c1b1f);
   min-width: 60px;
 }
 
 .sub-item__route {
-  font-size: 12px;
+  font-family: var(--md-sys-typescale-label-m-font-family);
+  font-size: var(--md-sys-typescale-label-m-font-size);
+  font-weight: var(--md-sys-typescale-label-m-font-weight);
+  letter-spacing: var(--md-sys-typescale-label-m-letter-spacing);
   color: var(--md-sys-color-on-surface-variant, #49454f);
   flex: 1;
 }
@@ -546,12 +598,17 @@ async function removeSub(p, s) {
 }
 
 .switch-field__label {
-  font-size: 14px;
+  font-family: var(--md-sys-typescale-body-m-font-family);
+  font-size: var(--md-sys-typescale-body-m-font-size);
+  font-weight: var(--md-sys-typescale-body-m-font-weight);
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
 .switch-field__hint {
-  font-size: 12px;
+  font-family: var(--md-sys-typescale-label-m-font-family);
+  font-size: var(--md-sys-typescale-label-m-font-size);
+  font-weight: var(--md-sys-typescale-label-m-font-weight);
+  letter-spacing: var(--md-sys-typescale-label-m-letter-spacing);
   color: var(--md-sys-color-on-surface-variant, #49454f);
   line-height: 1.4;
   margin-top: -8px;
@@ -583,7 +640,9 @@ async function removeSub(p, s) {
 }
 
 .operation-notice__text {
-  font-size: 14px;
+  font-family: var(--md-sys-typescale-body-m-font-family);
+  font-size: var(--md-sys-typescale-body-m-font-size);
+  font-weight: var(--md-sys-typescale-body-m-font-weight);
   color: var(--md-sys-color-on-tertiary-container, #31111d);
 }
 

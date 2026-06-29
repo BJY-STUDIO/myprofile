@@ -51,10 +51,7 @@
         <md-outlined-text-field label="自定义日期" id="art-date" :value="form.date" type="date" helper="可选，覆盖发布日期显示"></md-outlined-text-field>
         <md-outlined-text-field label="排序序号" id="art-sortOrder" :value="String(form.sortOrder ?? 0)" type="number"></md-outlined-text-field>
         <md-outlined-text-field label="标签（JSON 数组）" id="art-tags" :value="form.tagsRaw" helper='如 ["技术","Vue"]'></md-outlined-text-field>
-        <label class="textarea-label">
-          正文内容（Markdown）
-          <textarea id="art-content" class="content-textarea" :value="form.content" rows="12" placeholder="支持 Markdown 格式"></textarea>
-        </label>
+        <md-outlined-text-field label="正文内容（Markdown）" id="art-content" type="textarea" :value="form.content" rows="12" supporting-text="支持 Markdown 格式"></md-outlined-text-field>
       </form>
       <div slot="actions">
         <md-text-button @click="showDialog = false">取消</md-text-button>
@@ -205,9 +202,12 @@ async function confirmDelete() {
 }
 
 .section-title h2 {
-  font-size: 28px;
-  font-weight: 475;
-  line-height: 36px;
+  font-family: var(--md-sys-typescale-headline-m-font-family);
+  font-size: var(--md-sys-typescale-headline-m-font-size);
+  font-weight: var(--md-sys-typescale-headline-m-font-weight);
+  letter-spacing: var(--md-sys-typescale-headline-m-letter-spacing);
+  line-height: var(--md-sys-typescale-headline-m-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-headline-m-font-variation-GRAD), "opsz" var(--md-sys-typescale-headline-m-font-variation-opsz);
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0;
 }
@@ -235,8 +235,10 @@ async function confirmDelete() {
 
 .article-card__title {
   display: block;
-  font-size: 16px;
-  font-weight: 500;
+  font-family: var(--md-sys-typescale-title-m-font-family);
+  font-size: var(--md-sys-typescale-title-m-font-size);
+  font-weight: var(--md-sys-typescale-title-m-font-weight);
+  letter-spacing: var(--md-sys-typescale-title-m-letter-spacing);
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
@@ -249,13 +251,19 @@ async function confirmDelete() {
 .article-card__slug,
 .article-card__date,
 .article-card__sort {
-  font-size: 12px;
+  font-family: var(--md-sys-typescale-label-m-font-family);
+  font-size: var(--md-sys-typescale-label-m-font-size);
+  font-weight: var(--md-sys-typescale-label-m-font-weight);
+  letter-spacing: var(--md-sys-typescale-label-m-letter-spacing);
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
 .article-card__desc {
   display: block;
-  font-size: 13px;
+  font-family: var(--md-sys-typescale-body-m-font-family);
+  font-size: var(--md-sys-typescale-body-m-font-size);
+  font-weight: var(--md-sys-typescale-body-m-font-weight);
+  letter-spacing: var(--md-sys-typescale-body-m-letter-spacing);
   color: var(--md-sys-color-on-surface-variant, #49454f);
   margin-top: 4px;
   overflow: hidden;
@@ -286,33 +294,5 @@ async function confirmDelete() {
   gap: 16px;
   min-width: 400px;
   max-width: 560px;
-}
-
-.textarea-label {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-}
-
-.content-textarea {
-  width: 100%;
-  min-height: 240px;
-  padding: 12px;
-  border: 1px solid var(--md-sys-color-outline, #79747e);
-  border-radius: 8px;
-  font-family: 'Courier New', monospace;
-  font-size: 13px;
-  line-height: 1.5;
-  resize: vertical;
-  background: var(--md-sys-color-surface, #fffbfe);
-  color: var(--md-sys-color-on-surface, #1c1b1f);
-}
-
-.content-textarea:focus {
-  outline: 2px solid var(--md-sys-color-primary, #6750a4);
-  outline-offset: -1px;
 }
 </style>

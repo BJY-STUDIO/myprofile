@@ -41,9 +41,13 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  adminMode: {
+    type: Boolean,
+    default: false,
+  },
 })
 
-const emit = defineEmits(['fab-click', 'item-hover', 'item-leave'])
+const emit = defineEmits(['fab-click', 'item-hover', 'item-leave', 'admin-logout'])
 
 const route = useRoute()
 const router = useRouter()
@@ -135,10 +139,24 @@ function onItemLeave() {
       </a>
     </div>
 
-    <!-- 下半部分（固定底部）：GitHub + 调色板 -->
+    <!-- 下半部分（固定底部）-->
     <div class="nav-rail__bottom">
       <md-divider></md-divider>
-      <div class="nav-rail__bottom-actions">
+      <!-- Admin 模式：退出登录按钮 -->
+      <div v-if="adminMode" class="nav-rail__bottom-actions">
+        <a
+          class="nav-rail__admin-logout"
+          href="#"
+          role="button"
+          aria-label="退出管理"
+          title="退出管理"
+          @click.prevent="emit('admin-logout')"
+        >
+          <span class="material-symbols-rounded">logout</span>
+        </a>
+      </div>
+      <!-- 正常模式：GitHub + 调色板 -->
+      <div v-else class="nav-rail__bottom-actions">
         <a
           class="nav-rail__github-btn"
           href="https://github.com/BJY-STUDIO/myprofile"
@@ -450,6 +468,57 @@ function onItemLeave() {
   gap: 4px;
 }
 
+/* ======== Admin 退出按钮 ======== */
+.nav-rail__admin-logout {
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.nav-rail__admin-logout::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background-color: var(--md-sys-color-on-surface-variant, #49454f);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.nav-rail__admin-logout:hover::before {
+  opacity: 0.08;
+}
+
+.nav-rail__admin-logout:hover {
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.nav-rail__admin-logout .material-symbols-rounded {
+  font-size: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.nav-rail__admin-logout-label {
+  font-family: var(--md-sys-typescale-label-medium-font, 'Google Sans Text', 'Roboto', sans-serif);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+  line-height: 16px;
+  text-align: center;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin-top: -4px;
+}
+
 /* ======== 底部操作按钮 ======== */
 /* GitHub <a> 链接：icon-button 风格，hover 有 state layer */
 .nav-rail__github-btn {
@@ -556,6 +625,23 @@ function onItemLeave() {
 }
 
 :global([data-theme="dark"]) .nav-rail__action-btn {
+  color: var(--md-sys-color-on-surface-variant, #cac4d0);
+}
+
+/* ======== 暗色主题 - Admin 退出按钮 ======== */
+:global([data-theme="dark"]) .nav-rail__admin-logout {
+  color: var(--md-sys-color-on-surface-variant, #cac4d0);
+}
+
+:global([data-theme="dark"]) .nav-rail__admin-logout::before {
+  background-color: var(--md-sys-color-on-surface-variant, #cac4d0);
+}
+
+:global([data-theme="dark"]) .nav-rail__admin-logout:hover {
+  color: var(--md-sys-color-on-surface, #e6e1e5);
+}
+
+:global([data-theme="dark"]) .nav-rail__admin-logout-label {
   color: var(--md-sys-color-on-surface-variant, #cac4d0);
 }
 </style>

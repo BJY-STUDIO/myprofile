@@ -68,13 +68,10 @@
       <form slot="content" class="dialog-form" id="section-form" @submit.prevent>
         <md-outlined-text-field label="分区名称" id="sec-title" :value="form.title"></md-outlined-text-field>
 
-        <div class="select-field">
-          <label class="select-field__label">标题级别</label>
-          <select id="sec-headingLevel" class="native-select" :value="form.headingLevel">
-            <option value="section-header">主标题 (section-header)</option>
-            <option value="sub-heading">副标题 (sub-heading)</option>
-          </select>
-        </div>
+        <md-outlined-select id="sec-headingLevel" label="标题级别" :value="form.headingLevel" menu-positioning="fixed">
+          <md-select-option value="section-header" headline="主标题 (section-header)"></md-select-option>
+          <md-select-option value="sub-heading" headline="副标题 (sub-heading)"></md-select-option>
+        </md-outlined-select>
 
         <label class="switch-field">
           <md-switch :selected="form.noJumplink" @change="form.noJumplink = $event.target.selected"></md-switch>
@@ -84,28 +81,20 @@
         <md-outlined-text-field label="排序序号" id="sec-sortOrder" :value="String(form.sortOrder ?? 0)" type="number"></md-outlined-text-field>
 
         <!-- 特色文章选择 -->
-        <div class="select-field">
-          <label class="select-field__label">特色文章（Feature Article）</label>
-          <select id="sec-featureArticle" class="native-select" :value="form.featureArticleDocId">
-            <option value="">— 无 —</option>
-            <option v-for="art in allArticles" :key="art.documentId" :value="art.documentId">
-              {{ art.title || '(无标题)' }}{{ art.slug ? ` /${art.slug}` : '' }}
-            </option>
-          </select>
-        </div>
+        <md-outlined-select id="sec-featureArticle" label="特色文章（Feature Article）" :value="form.featureArticleDocId" menu-positioning="fixed">
+          <md-select-option value="" headline="— 无 —"></md-select-option>
+          <md-select-option v-for="art in allArticles" :key="art.documentId" :value="art.documentId" :headline="art.title || '(无标题)'"></md-select-option>
+        </md-outlined-select>
 
         <!-- 文章列表选择 -->
         <div class="articles-select">
           <label class="select-field__label">分区文章</label>
           <div class="articles-select__list">
             <label v-for="art in allArticles" :key="art.documentId" class="article-check">
-              <input
-                type="checkbox"
-                class="article-check__input"
+              <md-checkbox
                 :checked="form.selectedArticles.includes(art.documentId)"
                 @change="onToggleArticle(art.documentId, $event.target.checked)"
-              />
-              <span class="article-check__box"></span>
+              ></md-checkbox>
               <span class="article-check__label">{{ art.title || '(无标题)' }}</span>
             </label>
           </div>
@@ -138,6 +127,9 @@ import '@material/web/button/text-button'
 import '@material/web/iconbutton/icon-button'
 import '@material/web/dialog/dialog'
 import '@material/web/textfield/outlined-text-field'
+import '@material/web/select/outlined-select'
+import '@material/web/select/select-option'
+import '@material/web/checkbox/checkbox'
 import '@material/web/switch/switch'
 import '@material/web/progress/circular-progress'
 
@@ -281,8 +273,9 @@ async function onSaveSection() {
   const title = document.getElementById('sec-title')?.value?.trim() || ''
   const headingLevel = document.getElementById('sec-headingLevel')?.value || 'sub-heading'
   const sortOrder = parseInt(document.getElementById('sec-sortOrder')?.value) || 0
+  const featureArticleDocId = document.getElementById('sec-featureArticle')?.value || ''
 
-  const { noJumplink, featureArticleDocId, selectedArticles } = form.value
+  const { noJumplink, selectedArticles } = form.value
 
   if (!title) {
     showNotice('分区名称不能为空', true)
@@ -422,9 +415,12 @@ function onToggleArticle(docId, checked) {
 }
 
 .section-title h2 {
-  font-size: 28px;
-  font-weight: 475;
-  line-height: 36px;
+  font-family: var(--md-sys-typescale-headline-m-font-family);
+  font-size: var(--md-sys-typescale-headline-m-font-size);
+  font-weight: var(--md-sys-typescale-headline-m-font-weight);
+  letter-spacing: var(--md-sys-typescale-headline-m-letter-spacing);
+  line-height: var(--md-sys-typescale-headline-m-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-headline-m-font-variation-GRAD), "opsz" var(--md-sys-typescale-headline-m-font-variation-opsz);
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0;
 }
@@ -466,14 +462,19 @@ function onToggleArticle(docId, checked) {
 }
 
 .section-card__title {
-  font-size: 16px;
-  font-weight: 500;
+  font-family: var(--md-sys-typescale-title-m-font-family);
+  font-size: var(--md-sys-typescale-title-m-font-size);
+  font-weight: var(--md-sys-typescale-title-m-font-weight);
+  letter-spacing: var(--md-sys-typescale-title-m-letter-spacing);
+  line-height: var(--md-sys-typescale-title-m-line-height);
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
 .section-card__badge {
-  font-size: 11px;
-  font-weight: 500;
+  font-family: var(--md-sys-typescale-label-s-font-family);
+  font-size: var(--md-sys-typescale-label-s-font-size);
+  font-weight: var(--md-sys-typescale-label-s-font-weight);
+  letter-spacing: var(--md-sys-typescale-label-s-letter-spacing);
   padding: 2px 8px;
   border-radius: 8px;
   white-space: nowrap;
@@ -504,7 +505,10 @@ function onToggleArticle(docId, checked) {
 .section-card__feature,
 .section-card__count,
 .section-card__sort-order {
-  font-size: 12px;
+  font-family: var(--md-sys-typescale-label-m-font-family);
+  font-size: var(--md-sys-typescale-label-m-font-size);
+  font-weight: var(--md-sys-typescale-label-m-font-weight);
+  letter-spacing: var(--md-sys-typescale-label-m-letter-spacing);
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
@@ -533,34 +537,12 @@ function onToggleArticle(docId, checked) {
   max-width: 560px;
 }
 
-/* 原生 select 替代 md-outlined-select */
-.select-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
+/* select 字段标签 */
 .select-field__label {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--md-sys-typescale-label-small-font-size, 11px);
+  font-weight: var(--md-sys-typescale-label-small-font-weight, 500);
+  letter-spacing: var(--md-sys-typescale-label-small-letter-spacing, 0.5px);
   color: var(--md-sys-color-on-surface-variant, #49454f);
-}
-
-.native-select {
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid var(--md-sys-color-outline, #79747e);
-  border-radius: 8px;
-  font-size: 16px;
-  background: var(--md-sys-color-surface, #fffbfe);
-  color: var(--md-sys-color-on-surface, #1c1b1f);
-  appearance: none;
-  cursor: pointer;
-}
-
-.native-select:focus {
-  outline: 2px solid var(--md-sys-color-primary, #6750a4);
-  outline-offset: -1px;
 }
 
 /* switch 字段 */
@@ -572,7 +554,10 @@ function onToggleArticle(docId, checked) {
 }
 
 .switch-field__label {
-  font-size: 14px;
+  font-family: var(--md-sys-typescale-body-m-font-family);
+  font-size: var(--md-sys-typescale-body-m-font-size);
+  font-weight: var(--md-sys-typescale-body-m-font-weight);
+  letter-spacing: var(--md-sys-typescale-body-m-letter-spacing);
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
@@ -594,8 +579,8 @@ function onToggleArticle(docId, checked) {
 .article-check {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
+  gap: 8px;
+  padding: 4px 12px;
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.15s;
@@ -605,42 +590,12 @@ function onToggleArticle(docId, checked) {
   background: var(--md-sys-color-surface-container, #ece7e9);
 }
 
-.article-check__input {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.article-check__box {
-  width: 18px;
-  height: 18px;
-  border: 2px solid var(--md-sys-color-on-surface-variant, #49454f);
-  border-radius: 2px;
+.article-check md-checkbox {
   flex-shrink: 0;
-  position: relative;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.article-check__input:checked + .article-check__box {
-  background: var(--md-sys-color-primary, #6750a4);
-  border-color: var(--md-sys-color-primary, #6750a4);
-}
-
-.article-check__input:checked + .article-check__box::after {
-  content: '';
-  position: absolute;
-  left: 5px;
-  top: 1px;
-  width: 4px;
-  height: 9px;
-  border: solid var(--md-sys-color-on-primary, #fff);
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
 }
 
 .article-check__label {
-  font-size: 14px;
+  font-size: var(--md-sys-typescale-body-medium-font-size, 14px);
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
@@ -670,7 +625,9 @@ function onToggleArticle(docId, checked) {
 }
 
 .operation-notice__text {
-  font-size: 14px;
+  font-family: var(--md-sys-typescale-body-m-font-family);
+  font-size: var(--md-sys-typescale-body-m-font-size);
+  font-weight: var(--md-sys-typescale-body-m-font-weight);
   color: var(--md-sys-color-on-tertiary-container, #31111d);
 }
 
