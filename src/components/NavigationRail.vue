@@ -112,6 +112,7 @@ function onItemLeave() {
         class="nav-rail__destination"
         :class="{
           'nav-rail__destination--active': activeId === item.id,
+          'nav-rail__destination--animate-indicator': transitionsReady,
           'nav-rail__destination--has-children': item.children?.length,
         }"
         role="link"
