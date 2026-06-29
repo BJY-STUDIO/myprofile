@@ -5,3 +5,8 @@ dist/
 *.local
 .env
 .env.*
+
+# Development screenshots (never commit to repo)
+strapi-*.png
+page-*.png
+page-*.jpeg
