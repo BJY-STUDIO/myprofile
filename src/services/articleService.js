@@ -1138,3 +1138,122 @@ export async function deleteNavItemApi(token, documentId) {
     return {}
   }
 }
+
+// ===== 通用 Content-Manager CRUD（Article / HomeSection / NavItem 共用） =====
+
+/**
+ * 通用 content-manager 列表查询
+ * @param {string} token - Admin JWT
+ * @param {string} uid - 内容类型 uid，如 'api::article.article'
+ * @param {object} [params] - 查询参数 { page, pageSize, sort, populate, filters }
+ * @returns {Promise<{results: Array, pagination: object}>}
+ */
+export async function cmList(token, uid, params = {}) {
+  const query = new URLSearchParams()
+  if (params.page) query.set('page', params.page)
+  if (params.pageSize) query.set('pageSize', params.pageSize)
+  if (params.sort) {
+    if (Array.isArray(params.sort)) {
+      params.sort.forEach(s => query.append('sort', s))
+    } else {
+      query.set('sort', params.sort)
+    }
+  }
+  const qs = query.toString()
+  const url = `${ADMIN_API_BASE}/content-manager/collection-types/${uid}${qs ? '?' + qs : ''}`
+
+  const res = await fetch(url, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error(`cmList ${uid} failed: ${res.status}`)
+  const json = await res.json()
+  return { results: json.results || [], pagination: json.pagination || {} }
+}
+
+/**
+ * 通用 content-manager 单条查询
+ * @param {string} token
+ * @param {string} uid
+ * @param {string} documentId
+ * @returns {Promise<object>}
+ */
+export async function cmGet(token, uid, documentId) {
+  const res = await fetch(
+    `${ADMIN_API_BASE}/content-manager/collection-types/${uid}/${documentId}`,
+    { headers: { 'Authorization': `Bearer ${token}` } }
+  )
+  if (!res.ok) throw new Error(`cmGet ${uid} failed: ${res.status}`)
+  const json = await res.json()
+  return json.data || json
+}
+
+/**
+ * 通用 content-manager 创建
+ * @param {string} token
+ * @param {string} uid
+ * @param {object} data
+ * @returns {Promise<object>}
+ */
+export async function cmCreate(token, uid, data) {
+  const res = await fetch(
+    `${ADMIN_API_BASE}/content-manager/collection-types/${uid}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(data),
+    }
+  )
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(text || `cmCreate ${uid} failed: ${res.status}`)
+  }
+  const json = await res.json()
+  return json.data || json
+}
+
+/**
+ * 通用 content-manager 更新
+ * @param {string} token
+ * @param {string} uid
+ * @param {string} documentId
+ * @param {object} data
+ * @returns {Promise<object>}
+ */
+export async function cmUpdate(token, uid, documentId, data) {
+  const res = await fetch(
+    `${ADMIN_API_BASE}/content-manager/collection-types/${uid}/${documentId}`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(data),
+    }
+  )
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(text || `cmUpdate ${uid} failed: ${res.status}`)
+  }
+  const json = await res.json()
+  return json.data || json
+}
+
+/**
+ * 通用 content-manager 删除
+ * @param {string} token
+ * @param {string} uid
+ * @param {string} documentId
+ * @returns {Promise<object>}
+ */
+export async function cmDelete(token, uid, documentId) {
+  const res = await fetch(
+    `${ADMIN_API_BASE}/content-manager/collection-types/${uid}/${documentId}`,
+    {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` },
+    }
+  )
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(text || `cmDelete ${uid} failed: ${res.status}`)
+  }
+  try { return await res.json() } catch { return {} }
+}

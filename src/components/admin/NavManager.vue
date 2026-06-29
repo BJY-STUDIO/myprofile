@@ -2,26 +2,10 @@
   <div class="nav-manager">
     <div class="section-title">
       <h2>导航菜单管理</h2>
-      <div class="section-title__actions">
-        <md-filled-tonal-button v-if="isLoggedIn" @click="onAddNav">
-          <span class="material-symbols-rounded" slot="icon">add</span>
-          添加菜单
-        </md-filled-tonal-button>
-        <md-outlined-button v-if="!isLoggedIn" @click="showLoginDialog = true">
-          <span class="material-symbols-rounded" slot="icon">login</span>
-          登录 Strapi
-        </md-outlined-button>
-        <md-text-button v-else @click="onLogout">
-          <span class="material-symbols-rounded" slot="icon">logout</span>
-          退出登录
-        </md-text-button>
-      </div>
-    </div>
-
-    <!-- 连接状态提示 -->
-    <div v-if="!isLoggedIn" class="admin-notice">
-      <span class="material-symbols-rounded admin-notice__icon">info</span>
-      <span class="admin-notice__text">需要登录 Strapi 才能编辑导航菜单。当前为只读模式。</span>
+      <md-filled-tonal-button @click="onAddNav">
+        <span class="material-symbols-rounded" slot="icon">add</span>
+        添加菜单
+      </md-filled-tonal-button>
     </div>
 
     <!-- 操作提示 -->
@@ -44,7 +28,7 @@
             <span class="nav-card__route">{{ item.route }}</span>
           </div>
           <!-- 排序按钮 -->
-          <div v-if="isLoggedIn" class="nav-card__sort">
+          <div class="nav-card__sort">
             <md-icon-button :disabled="i === 0" @click="onMoveNav(i, i - 1)">
               <span class="material-symbols-rounded">keyboard_arrow_up</span>
             </md-icon-button>
@@ -53,7 +37,7 @@
             </md-icon-button>
           </div>
           <!-- 操作按钮 -->
-          <div v-if="isLoggedIn" class="nav-card__actions">
+          <div class="nav-card__actions">
             <md-icon-button @click="editNav = i; pickedIcon = navItems[i]?.icon || 'article'; editPersistent = navItems[i]?.persistent || false; showNavDialog = true">
               <span class="material-symbols-rounded">edit</span>
             </md-icon-button>
@@ -73,7 +57,7 @@
             <span class="sub-item__label">{{ sub.label }}</span>
             <span class="sub-item__route">{{ sub.route }}</span>
             <!-- 子菜单排序 -->
-            <div v-if="isLoggedIn" class="sub-item__sort">
+            <div class="sub-item__sort">
               <md-icon-button :disabled="j === 0" @click="onMoveSub(i, j, j - 1)">
                 <span class="material-symbols-rounded">expand_less</span>
               </md-icon-button>
@@ -81,7 +65,7 @@
                 <span class="material-symbols-rounded">expand_more</span>
               </md-icon-button>
             </div>
-            <div v-if="isLoggedIn" class="sub-item__actions">
+            <div class="sub-item__actions">
               <md-icon-button @click="editSub = { p: i, s: j }; showSubDialog = true">
                 <span class="material-symbols-rounded">edit</span>
               </md-icon-button>
@@ -91,40 +75,12 @@
             </div>
           </div>
         </div>
-        <md-text-button v-if="isLoggedIn" class="add-sub-btn" @click="parentForSub = i; showSubDialog = true">
+        <md-text-button class="add-sub-btn" @click="parentForSub = i; showSubDialog = true">
           <span class="material-symbols-rounded" slot="icon">add</span>
           添加子菜单
         </md-text-button>
       </div>
     </div>
-
-    <!-- Strapi 登录对话框 -->
-    <md-dialog :open="showLoginDialog" @close="showLoginDialog = false">
-      <div slot="headline">登录 Strapi</div>
-      <form slot="content" class="dialog-form" id="login-form" @submit.prevent>
-        <md-outlined-text-field
-          label="邮箱"
-          type="email"
-          id="login-email"
-          :value="loginEmail"
-          @input="loginEmail = $event.target.value"
-        ></md-outlined-text-field>
-        <md-outlined-text-field
-          label="密码"
-          type="password"
-          id="login-password"
-          :value="loginPassword"
-          @input="loginPassword = $event.target.value"
-        ></md-outlined-text-field>
-        <div v-if="loginError" class="login-error">{{ loginError }}</div>
-      </form>
-      <div slot="actions">
-        <md-text-button @click="showLoginDialog = false">取消</md-text-button>
-        <md-filled-button form="login-form" @click="onLogin" :disabled="loginLoading">
-          {{ loginLoading ? '登录中...' : '登录' }}
-        </md-filled-button>
-      </div>
-    </md-dialog>
 
     <!-- 一级菜单编辑对话框 -->
     <md-dialog :open="showNavDialog" @close="showNavDialog = false">
@@ -170,10 +126,9 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, onMounted } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { useNavItems, refreshNavItems } from '@/stores/blogStore'
 import {
-  strapiAdminLogin,
   createNavItem,
   updateNavItemApi,
   deleteNavItemApi,
@@ -181,12 +136,13 @@ import {
 import IconPicker from './IconPicker.vue'
 import '@material/web/button/filled-button'
 import '@material/web/button/filled-tonal-button'
-import '@material/web/button/outlined-button'
 import '@material/web/button/text-button'
 import '@material/web/iconbutton/icon-button'
 import '@material/web/dialog/dialog'
 import '@material/web/textfield/outlined-text-field'
 import '@material/web/switch/switch'
+
+const props = defineProps({ token: { type: String, required: true } })
 
 const {
   navItems: getNavItems,
@@ -202,63 +158,10 @@ const {
 
 const navItems = computed(() => getNavItems())
 
-// ===== Strapi 登录状态 =====
-const ADMIN_TOKEN_KEY = 'strapi-admin-token'
-const isLoggedIn = ref(false)
-const showLoginDialog = ref(false)
-const loginEmail = ref('')
-const loginPassword = ref('')
-const loginError = ref('')
-const loginLoading = ref(false)
-
 // 操作状态
 const saving = ref(false)
 const operationMessage = ref('')
 const operationError = ref(false)
-
-function getToken() {
-  return sessionStorage.getItem(ADMIN_TOKEN_KEY)
-}
-
-function setToken(token) {
-  sessionStorage.setItem(ADMIN_TOKEN_KEY, token)
-  isLoggedIn.value = true
-}
-
-function clearToken() {
-  sessionStorage.removeItem(ADMIN_TOKEN_KEY)
-  isLoggedIn.value = false
-}
-
-onMounted(() => {
-  if (getToken()) isLoggedIn.value = true
-})
-
-async function onLogin() {
-  loginLoading.value = true
-  loginError.value = ''
-  try {
-    const token = await strapiAdminLogin(loginEmail.value, loginPassword.value)
-    if (token) {
-      setToken(token)
-      showLoginDialog.value = false
-      loginEmail.value = ''
-      loginPassword.value = ''
-      showNotice('登录成功')
-    } else {
-      loginError.value = '登录失败：未获取到令牌'
-    }
-  } catch (e) {
-    loginError.value = '登录失败：' + (e.message || '未知错误')
-  } finally {
-    loginLoading.value = false
-  }
-}
-
-function onLogout() {
-  clearToken()
-  showNotice('已退出登录')
-}
 
 // ===== 操作提示 =====
 let noticeTimer = null
@@ -309,8 +212,8 @@ async function onSaveNav() {
   const icon = pickedIcon.value || (editNav.value >= 0 ? navItems.value[editNav.value]?.icon : 'article')
   const persistent = editPersistent.value
 
-  const token = getToken()
-  if (!token) { showNotice('请先登录 Strapi', true); return }
+  const token = props.token
+  if (!token) { showNotice('未登录 Strapi', true); return }
 
   saving.value = true
   try {
@@ -347,8 +250,8 @@ async function onSaveNav() {
 async function removeNav(i) {
   const item = navItems.value[i]
   if (!confirm(`确认删除「${item?.label}」？`)) return
-  const token = getToken()
-  if (!token) { showNotice('请先登录 Strapi', true); return }
+  const token = props.token
+  if (!token) { showNotice('未登录 Strapi', true); return }
 
   try {
     const docId = item._documentId
@@ -370,8 +273,8 @@ async function removeNav(i) {
 
 // ===== 菜单排序 =====
 async function onMoveNav(from, to) {
-  const token = getToken()
-  if (!token) { showNotice('请先登录 Strapi', true); return }
+  const token = props.token
+  if (!token) { showNotice('未登录 Strapi', true); return }
 
   optimisticMoveNav(from, to)
 
@@ -391,8 +294,8 @@ async function onMoveNav(from, to) {
 }
 
 async function onMoveSub(parentIdx, from, to) {
-  const token = getToken()
-  if (!token) { showNotice('请先登录 Strapi', true); return }
+  const token = props.token
+  if (!token) { showNotice('未登录 Strapi', true); return }
 
   optimisticMoveSub(parentIdx, from, to)
 
@@ -421,8 +324,8 @@ async function onSaveSub() {
   const subNavId = document.getElementById('sub-id')?.value?.trim() || `sub-${Date.now()}`
   const pIdx = editSub.value ? editSub.value.p : parentForSub.value
 
-  const token = getToken()
-  if (!token) { showNotice('请先登录 Strapi', true); return }
+  const token = props.token
+  if (!token) { showNotice('未登录 Strapi', true); return }
 
   const parentItem = navItems.value[pIdx]
   if (!parentItem) return
@@ -469,8 +372,8 @@ async function onSaveSub() {
 
 async function removeSub(p, s) {
   if (!confirm('确认删除子菜单？')) return
-  const token = getToken()
-  if (!token) { showNotice('请先登录 Strapi', true); return }
+  const token = props.token
+  if (!token) { showNotice('未登录 Strapi', true); return }
 
   try {
     const subItem = navItems.value[p]?.children?.[s]
@@ -655,26 +558,6 @@ async function removeSub(p, s) {
 }
 
 /* 状态提示 */
-.admin-notice {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  border-radius: 12px;
-  background: var(--md-sys-color-secondary-container, #e8def8);
-  margin-bottom: 16px;
-}
-
-.admin-notice__icon {
-  font-size: 20px;
-  color: var(--md-sys-color-on-secondary-container, #1d192b);
-}
-
-.admin-notice__text {
-  font-size: 14px;
-  color: var(--md-sys-color-on-secondary-container, #1d192b);
-}
-
 .operation-notice {
   display: flex;
   align-items: center;
@@ -706,11 +589,6 @@ async function removeSub(p, s) {
 
 .operation-notice--error .operation-notice__text {
   color: var(--md-sys-color-on-error-container, #410e0b);
-}
-
-.login-error {
-  font-size: 13px;
-  color: var(--md-sys-color-error, #b3261e);
 }
 
 @keyframes fadeIn {
