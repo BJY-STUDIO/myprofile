@@ -15,14 +15,7 @@ function createDefaultData() {
     navItems: [
       { id: 'home', label: '首页', icon: 'home', route: '/', children: [] },
       { id: 'about', label: '关于', icon: 'person_outline', route: '/about', children: [] },
-      {
-        id: 'blog', label: '博客', icon: 'description', route: '/blog',
-        children: [
-          { id: 'blog-overview', label: '全部文章', route: '/blog' },
-          { id: 'blog-tech', label: '技术', route: '/blog/tech' },
-          { id: 'blog-life', label: '生活', route: '/blog/life' },
-        ],
-      },
+      { id: 'blog', label: '博客', icon: 'description', route: '/blog', children: [] },
       {
         id: 'projects', label: '项目', icon: 'code', route: '/projects',
         children: [

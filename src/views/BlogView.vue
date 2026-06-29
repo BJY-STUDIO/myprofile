@@ -1,313 +1,659 @@
 <template>
-  <div class="blog-view">
-    <!-- 内容区域（有 max-width 约束） -->
-    <div class="blog-view__content">
-      <!-- 页面标题 -->
-      <div class="blog-header">
-        <h1 class="blog-header__title">博客</h1>
-        <p class="blog-header__desc">技术心得与生活随笔</p>
-      </div>
-
-      <!-- 分类筛选 -->
-      <div class="filter-bar">
-        <md-chip-set>
-          <md-filter-chip
-            v-for="cat in categories"
-            :key="cat.id"
-            :selected="activeCategory === cat.id"
-            @click="activeCategory = cat.id"
-            :label="cat.label"
-          ></md-filter-chip>
-        </md-chip-set>
-      </div>
-
-      <!-- 文章列表 -->
-      <div class="post-list">
-        <article
-          v-for="post in filteredPosts"
-          :key="post.id"
-          class="post-card"
-          @click="openPost(post)"
-        >
-          <div class="post-card__badge">{{ post.category }}</div>
-          <h2 class="post-card__title">{{ post.title }}</h2>
-          <p class="post-card__excerpt">{{ post.excerpt }}</p>
-          <div class="post-card__footer">
-            <div class="post-card__tags">
-              <span v-for="tag in post.tags" :key="tag" class="post-card__tag">{{ tag }}</span>
-            </div>
-            <span class="post-card__date">{{ post.date }}</span>
+  <div class="editorial">
+    <!-- ======== mio-header（对照 m3: header.split-asset, grid 1fr 1fr, gap 8px） ======== -->
+    <header class="mio-header">
+      <div class="primary-container">
+        <div class="wrapper">
+          <div class="title">
+            <h1>{{ pageTitle }}</h1>
+            <div class="description">{{ pageDescription }}</div>
           </div>
-        </article>
-      </div>
-    </div>
-
-    <!-- 文章详情弹窗 -->
-    <Teleport to="body">
-      <div v-if="selectedPost" class="post-overlay" @click.self="selectedPost = null">
-        <div class="post-detail">
-          <md-icon-button class="post-detail__close" @click="selectedPost = null">
-            <span class="material-symbols-rounded">close</span>
-          </md-icon-button>
-          <div class="post-detail__badge">{{ selectedPost.category }}</div>
-          <h1 class="post-detail__title">{{ selectedPost.title }}</h1>
-          <div class="post-detail__meta">
-            <span>{{ selectedPost.date }}</span>
-            <span>·</span>
-            <span>{{ selectedPost.readTime }} 分钟阅读</span>
-          </div>
-          <md-divider></md-divider>
-          <div class="post-detail__body" v-html="selectedPost.content"></div>
         </div>
       </div>
-    </Teleport>
+      <div class="split-asset-image">
+        <div class="split-asset-image__foreground"></div>
+      </div>
+    </header>
 
-    <!-- ======== Footer（全宽，不受 max-width 约束） ======== -->
+    <!-- ======== content-container（对照 m3: flex row-reverse, TOC右 + posts左） ======== -->
+    <div class="content-container">
+      <!-- TOC 占位：骨架屏时预留同尺寸空间防 layout shift；加载后显示真实 TOC -->
+      <aside v-if="showSkeleton" class="toc toc--placeholder"></aside>
+      <aside v-else class="toc toc--fade-in">
+        <nav aria-label="page content">
+          <div class="toc__overline">On this page</div>
+          <h2 class="toc__title">{{ pageTitle }}</h2>
+          <div
+            class="toc__indicator"
+            :class="{ 'toc__indicator--hide': activeSection < 0 }"
+            :style="indicatorStyle"
+          ></div>
+          <ul class="toc__list">
+            <li
+              v-for="(tocItem, i) in tocSections"
+              :key="i"
+              role="link"
+              tabindex="0"
+              class="toc__item"
+              :aria-current="activeSection === sections.indexOf(tocItem) ? 'true' : 'false'"
+              @click="scrollToSection(sections.indexOf(tocItem))"
+              @keydown.enter="scrollToSection(sections.indexOf(tocItem))"
+            >
+              <a
+                class="toc__link"
+                :class="{ 'toc__link--selected': activeSection === sections.indexOf(tocItem) }"
+                @click.prevent
+              >{{ tocItem.label }}</a>
+            </li>
+          </ul>
+        </nav>
+      </aside>
+
+      <!-- posts-container（对照 m3: article.posts-container, 996px宽） -->
+      <article class="posts-container">
+        <!-- 加载中：骨架屏 -->
+        <div v-if="showSkeleton" class="posts-inner posts-inner--skeleton">
+          <div v-for="si in 3" :key="'sk-section-' + si" class="section">
+            <div class="section-header">
+              <h2 :class="si > 1 ? 'sub-heading' : ''"><span class="skeleton skeleton-heading" :style="si === 1 ? 'width:35%' : 'width:25%'"></span></h2>
+            </div>
+            <div class="card-set">
+              <div v-for="n in (si === 1 ? 3 : 2)" :key="'sk-' + n" class="skeleton-card">
+                <div class="sk-content">
+                  <span class="skeleton" style="height:16px;width:80px;"></span>
+                  <span class="skeleton" style="height:24px;width:70%;"></span>
+                  <span class="skeleton" style="height:16px;width:85%;"></span>
+                </div>
+                <div class="sk-thumb skeleton"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 已加载：真实内容 -->
+        <div v-else class="posts-inner posts-inner--loaded">
+        <!-- 每个 section -->
+        <div
+          v-for="(section, si) in sections"
+          :key="si"
+          :id="'section-' + si"
+          :data-section-index="si"
+          class="section"
+        >
+          <!-- section-header -->
+          <div class="section-header">
+            <h2 :class="section.headingLevel === 'section-header' ? '' : 'sub-heading'">{{ section.label }}</h2>
+          </div>
+
+          <!-- card-set -->
+          <div class="card-set">
+            <!-- feature-block 长卡 -->
+            <a
+              v-if="section.feature"
+              :href="section.feature.route"
+              class="feature-card thumbnail"
+              @mousedown="onCardDown"
+            >
+              <div class="content-container">
+                <span v-if="section.feature.date" class="date">{{ section.feature.date }}</span>
+                <span class="mio-title-row">
+                  <span class="title" :class="{ 'title--cjk': isCjk(section.feature.title) }">{{ section.feature.title }}</span>
+                </span>
+                <span class="description">{{ section.feature.excerpt }}</span>
+              </div>
+              <div class="thumb-container" :style="{ background: thumbBg }">
+                <span class="material-symbols-rounded thumb-icon">{{ section.feature.icon || 'article' }}</span>
+              </div>
+            </a>
+
+            <!-- 中卡片 -->
+            <a
+              v-for="post in section.items"
+              :key="post.id"
+              :href="post.route"
+              class="regular-card thumbnail"
+              @mousedown="onCardDown"
+            >
+              <div class="content-container">
+                <span v-if="post.date" class="date">{{ post.date }}</span>
+                <span class="mio-title-row">
+                  <span class="title" :class="{ 'title--cjk': isCjk(post.title) }">{{ post.title }}</span>
+                </span>
+                <span v-if="post.excerpt" class="description">{{ post.excerpt }}</span>
+              </div>
+              <div class="thumb-container" :style="{ background: thumbBg }">
+                <span class="material-symbols-rounded thumb-icon">{{ post.icon || 'article' }}</span>
+              </div>
+            </a>
+          </div>
+        </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- ======== Footer ======== -->
     <MioFooter />
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
-import '@material/web/chips/chip-set'
-import '@material/web/chips/filter-chip'
-import '@material/web/iconbutton/icon-button'
-import '@material/web/divider/divider'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { getArticleIndex, retryArticleIndexFetch } from '@/services/articleService'
 import MioFooter from '@/components/common/MioFooter.vue'
 
-const route = useRoute()
+const activeSection = ref(-1)
 
-const activeCategory = ref('all')
+// ===== Article 数据：API 驱动 =====
+const apiArticles = ref(null) // null = 尚未加载; {} = 结果（可能为空）
+let cancelRetry = null
 
-// 根据路由设置默认分类
-if (route.params.category) {
-  activeCategory.value = route.params.category
-}
+// 动态指示器
+const indicatorTop = ref(0)
+const indicatorY = ref(0)
+const indicatorH = ref(36)
 
-const categories = [
-  { id: 'all', label: '全部', icon: '' },
-  { id: 'tech', label: '技术', icon: 'code' },
-  { id: 'life', label: '生活', icon: 'favorite' },
-]
+// 将 API 文章按年份分组为 sections
+const sections = computed(() => {
+  if (!apiArticles.value) return []
+  const articles = Object.values(apiArticles.value)
+  if (articles.length === 0) return []
 
-const posts = ref([
-  {
-    id: 1,
-    title: 'Vue 3 Composition API 实战指南',
-    excerpt: '深入理解 setup 语法、响应式原理与组合式函数的设计模式，帮助你在项目中更好地组织代码。',
-    category: '技术',
-    categoryKey: 'tech',
-    tags: ['Vue 3', 'Composition API'],
-    date: '2026-06-18',
-    readTime: 8,
-    content: `
-      <h2>为什么选择 Composition API？</h2>
-      <p>Options API 在小型项目中非常直观，但随着组件逻辑增多，同一功能的代码被分散到不同选项中，难以维护。Composition API 允许按功能组织代码，让相关逻辑聚合在一起。</p>
-      <h2>响应式基础</h2>
-      <p><code>ref()</code> 用于基本类型的响应式数据，<code>reactive()</code> 用于对象。在模板中 ref 会自动解包，但在 JS 中需要 <code>.value</code>。</p>
-      <h2>组合式函数 (Composables)</h2>
-      <p>将可复用的逻辑提取为独立函数，以 <code>use</code> 前缀命名。这是 Composition API 最强大的模式——让逻辑复用变得自然且类型安全。</p>
-    `,
-  },
-  {
-    id: 2,
-    title: 'Material Design 3 主题系统解析',
-    excerpt: '从 HCT 色彩空间到动态配色，了解 Google 最新设计语言的色彩体系如何工作。',
-    category: '技术',
-    categoryKey: 'tech',
-    tags: ['M3', 'Design System'],
-    date: '2026-06-12',
-    readTime: 12,
-    content: `
-      <h2>HCT 色彩空间</h2>
-      <p>M3 引入了新的 HCT (Hue-Chroma-Tone) 色彩空间，相比 HSL 更符合人眼感知。它解决了 HSL 中不同色相但相同"亮度"看起来实际亮度不一致的问题。</p>
-      <h2>动态配色</h2>
-      <p>从一张图片提取主色，通过 HCT 算法生成完整的 40+ 色彩令牌。用户设置的壁纸颜色会影响整个系统 UI 的配色方案。</p>
-      <h2>色彩令牌体系</h2>
-      <p>M3 定义了 Primary、Secondary、Tertiary、Error、Neutral、Neutral Variant 六组色调，每组包含 Container/On-Container 等变体，共 40+ 个令牌。</p>
-    `,
-  },
-  {
-    id: 3,
-    title: '我的 2026 上半年阅读清单',
-    excerpt: '分享上半年读过的几本好书，涵盖技术、设计和思维方式。',
-    category: '生活',
-    categoryKey: 'life',
-    tags: ['阅读', '成长'],
-    date: '2026-06-05',
-    readTime: 5,
-    content: `
-      <h2>技术类</h2>
-      <p>《重构：改善既有代码的设计》——每次重读都有新收获，特别是关于"小步修改"的理念。</p>
-      <p>《设计模式之美》——用通俗的语言解释 23 种设计模式，比 GoF 原著易读得多。</p>
-      <h2>设计类</h2>
-      <p>《写给大家看的设计书》——四大原则（对齐、对比、重复、亲密性）是所有设计的基石。</p>
-      <h2>思维类</h2>
-      <p>《思考，快与慢》——系统 1 和系统 2 的框架帮助我理解为什么直觉常常不可靠。</p>
-    `,
-  },
-  {
-    id: 4,
-    title: '用 Vite 插件扩展构建流程',
-    excerpt: 'Vite 的插件机制基于 Rollup，但增加了开发服务器钩子，让你可以深度定制开发体验。',
-    category: '技术',
-    categoryKey: 'tech',
-    tags: ['Vite', 'Build Tools'],
-    date: '2026-05-28',
-    readTime: 10,
-    content: `
-      <h2>Vite 插件 vs Rollup 插件</h2>
-      <p>Vite 插件兼容 Rollup 插件接口，但额外提供 <code>configureServer</code>、<code>transformIndexHtml</code> 等开发专用钩子。</p>
-      <h2>实战：自定义 Material Web 组件注册</h2>
-      <p>通过 <code>transform</code> 钩子自动注入 <code>@material/web</code> 组件注册代码，省去手动 import 的繁琐。</p>
-    `,
-  },
-  {
-    id: 5,
-    title: '五一自驾游：川西小环线',
-    excerpt: '四姑娘山、丹巴藏寨、塔公草原，三天两夜的川西自驾之旅。',
-    category: '生活',
-    categoryKey: 'life',
-    tags: ['旅行', '摄影'],
-    date: '2026-05-10',
-    readTime: 6,
-    content: `
-      <h2>行程概览</h2>
-      <p>Day 1: 成都 → 四姑娘山双桥沟 → 小金县</p>
-      <p>Day 2: 小金 → 丹巴藏寨 → 塔公草原 → 新都桥</p>
-      <p>Day 3: 新都桥 → 折多山 → 康定 → 成都</p>
-      <h2>一些体验</h2>
-      <p>高原天气多变，一天之内经历了晴天、小雨和冰雹。沿途的风景令人震撼，手机根本拍不出肉眼看到的万分之一。</p>
-    `,
-  },
-])
+  // 按年份分组（从 date 字段提取年份）
+  const yearMap = {}
+  for (const article of articles) {
+    // date 格式: 'Jun 18, 2026' → 提取年份
+    const yearMatch = article.date?.match(/,\s*(\d{4})/)
+    const year = yearMatch ? yearMatch[1] : 'Uncategorized'
+    if (!yearMap[year]) yearMap[year] = []
+    yearMap[year].push(article)
+  }
 
-const filteredPosts = computed(() => {
-  if (activeCategory.value === 'all') return posts.value
-  return posts.value.filter(p => p.categoryKey === activeCategory.value)
+  // 年份降序排列（2026 → 2025 → ...）
+  const years = Object.keys(yearMap).sort((a, b) => {
+    if (a === 'Uncategorized') return 1
+    if (b === 'Uncategorized') return -1
+    return parseInt(b) - parseInt(a)
+  })
+
+  return years.map(year => {
+    const items = yearMap[year]
+      .sort((a, b) => {
+        if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder
+        return new Date(b.date) - new Date(a.date)
+      })
+      .map(article => ({
+        id: `api-${article.slug}`,
+        title: article.title,
+        excerpt: article.description,
+        date: article.date,
+        icon: article.icon || 'article',
+        route: `/article/${article.slug}`,
+        image: '',
+        sortOrder: article.sortOrder ?? 0,
+      }))
+
+    // 第一个年份 section 的第一篇文章作为 feature card
+    const isFirstYear = year === years[0]
+    const feature = isFirstYear && items.length > 0 ? items[0] : null
+    const regularItems = isFirstYear ? items.slice(1) : items
+
+    return {
+      id: `s-year-${year}`,
+      label: year,
+      headingLevel: 'section-header',
+      noJumplink: false,
+      sortOrder: 0,
+      feature,
+      items: regularItems,
+    }
+  })
 })
 
-const selectedPost = ref(null)
+const showSkeleton = computed(() => apiArticles.value === null)
 
-function openPost(post) {
-  selectedPost.value = post
+const tocSections = computed(() => {
+  return sections.value.filter(s => !s.noJumplink)
+})
+
+const pageTitle = computed(() => 'Blog')
+const pageDescription = computed(() => '所有文章，按年份分组。')
+
+const indicatorStyle = computed(() => {
+  return {
+    transform: `translateY(${indicatorY.value}px)`,
+    height: `${indicatorH.value}px`,
+  }
+})
+
+// 更新指示器位置
+function updateIndicatorPosition(sectionIndex) {
+  if (sectionIndex < 0) return
+  const nav = document.querySelector('.toc nav')
+  const tocItems = document.querySelectorAll('.toc__item')
+  if (!nav || !tocItems.length) return
+  const tocIdx = tocSections.value.findIndex(s => sections.value.indexOf(s) === sectionIndex)
+  if (tocIdx < 0 || !tocItems[tocIdx]) return
+  const navRect = nav.getBoundingClientRect()
+  const itemRect = tocItems[tocIdx].getBoundingClientRect()
+  indicatorY.value = Math.round(itemRect.top - navRect.top - indicatorTop.value)
+  indicatorH.value = Math.round(itemRect.height)
 }
+
+// 滚动检测
+let observer = null
+let scrollRoot = null
+
+function setupScrollObserver() {
+  if (observer) {
+    observer.disconnect()
+    observer = null
+  }
+  scrollRoot = document.querySelector('.app-main')
+  if (!scrollRoot) return
+
+  observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          const idx = parseInt(entry.target.getAttribute('data-section-index'))
+          if (!isNaN(idx) && activeSection.value !== idx) {
+            activeSection.value = idx
+            updateIndicatorPosition(idx)
+          }
+        }
+      }
+    },
+    {
+      root: scrollRoot,
+      rootMargin: '0px 0px -50% 0px',
+      threshold: 0,
+    }
+  )
+
+  const sectionEls = scrollRoot.querySelectorAll('[data-section-index]')
+  sectionEls.forEach((el) => observer.observe(el))
+
+  requestAnimationFrame(() => {
+    const rootRect = scrollRoot.getBoundingClientRect()
+    const midPoint = rootRect.top + rootRect.height * 0.5
+    let active = -1
+    let maxTop = -Infinity
+    sectionEls.forEach((el) => {
+      const rect = el.getBoundingClientRect()
+      if (rect.top < midPoint && rect.bottom > rootRect.top && rect.top > maxTop) {
+        maxTop = rect.top
+        active = parseInt(el.getAttribute('data-section-index'))
+      }
+    })
+    if (active >= 0) {
+      activeSection.value = active
+      updateIndicatorPosition(active)
+    }
+  })
+}
+
+function initTocInteraction() {
+  const nav = document.querySelector('.toc nav')
+  const firstItem = document.querySelector('.toc__item')
+  if (nav && firstItem) {
+    const navRect = nav.getBoundingClientRect()
+    const itemRect = firstItem.getBoundingClientRect()
+    indicatorTop.value = Math.round(itemRect.top - navRect.top)
+  }
+  setupScrollObserver()
+  scrollRoot = document.querySelector('.app-main')
+  if (scrollRoot) scrollRoot.addEventListener('scroll', onScroll, { passive: true })
+}
+
+function onScroll() {
+  if (!scrollRoot) return
+  const scrollTop = scrollRoot.scrollTop
+  if (scrollTop < 100 && activeSection.value >= 0) {
+    const rootRect = scrollRoot.getBoundingClientRect()
+    const midPoint = rootRect.top + rootRect.height * 0.5
+    const sectionEls = scrollRoot.querySelectorAll('[data-section-index]')
+    let anyVisible = false
+    for (const el of sectionEls) {
+      const rect = el.getBoundingClientRect()
+      if (rect.top < midPoint && rect.bottom > rootRect.top) {
+        anyVisible = true
+        break
+      }
+    }
+    if (!anyVisible) activeSection.value = -1
+  }
+}
+
+function scrollToSection(i) {
+  activeSection.value = i
+  updateIndicatorPosition(i)
+  const el = document.getElementById('section-' + i)
+  if (el) {
+    const sr = document.querySelector('.app-main')
+    if (sr) {
+      const rootRect = sr.getBoundingClientRect()
+      const elRect = el.getBoundingClientRect()
+      sr.scrollTo({
+        top: sr.scrollTop + elRect.top - rootRect.top - 24,
+        behavior: 'smooth',
+      })
+    }
+  }
+}
+
+// Ripple
+const RIPPLE_PRESS_GROW_MS = 450
+const RIPPLE_OPACITY = 0.12
+const RIPPLE_COLOR = '#001d35'
+const RIPPLE_INITIAL_ORIGIN_SCALE = 0.2
+const RIPPLE_PADDING = 10
+const RIPPLE_SOFT_EDGE_CONTAINER_RATIO = 0.35
+const RIPPLE_SOFT_EDGE_MINIMUM_SIZE = 75
+
+function onCardDown(e) {
+  const card = e.currentTarget
+  let ripple = card.querySelector(':scope > .ripple')
+  if (!ripple) {
+    ripple = document.createElement('div')
+    ripple.className = 'ripple'
+    for (const attr of card.attributes) {
+      if (attr.name.startsWith('data-v-')) ripple.setAttribute(attr.name, '')
+    }
+    card.appendChild(ripple)
+  }
+  const prevAnim = ripple.getAnimations()
+  prevAnim.forEach(a => a.cancel())
+
+  const rect = card.getBoundingClientRect()
+  const containerW = rect.width
+  const containerH = rect.height
+  const maxDim = Math.max(containerW, containerH)
+  const softEdgeSize = Math.max(RIPPLE_SOFT_EDGE_CONTAINER_RATIO * maxDim, RIPPLE_SOFT_EDGE_MINIMUM_SIZE)
+  const initialSize = Math.floor(maxDim * RIPPLE_INITIAL_ORIGIN_SCALE)
+  const hypotenuse = Math.sqrt(containerW ** 2 + containerH ** 2)
+  const maxRadius = hypotenuse + RIPPLE_PADDING
+  const rippleScale = (maxRadius + softEdgeSize) / initialSize
+
+  const clickX = e.clientX ?? (rect.left + containerW / 2)
+  const clickY = e.clientY ?? (rect.top + containerH / 2)
+  const startX = clickX - rect.left - initialSize / 2
+  const startY = clickY - rect.top - initialSize / 2
+  const startTransform = `translate(${startX}px, ${startY}px) scale(1)`
+  const endX = (containerW - initialSize) / 2
+  const endY = (containerH - initialSize) / 2
+  const endTransform = `translate(${endX}px, ${endY}px) scale(${rippleScale})`
+
+  const anim = ripple.animate([
+    {
+      display: 'block',
+      opacity: RIPPLE_OPACITY,
+      width: `${initialSize}px`,
+      height: `${initialSize}px`,
+      background: RIPPLE_COLOR,
+      transform: startTransform
+    },
+    { opacity: 0, transform: endTransform }
+  ], {
+    duration: RIPPLE_PRESS_GROW_MS,
+    easing: 'cubic-bezier(0.2, 0, 0, 1)',
+    fill: 'forwards'
+  })
+  anim.onfinish = () => { ripple.style.display = 'none' }
+}
+
+const thumbBg = 'var(--md-sys-color-secondary-container, #e8def8)'
+
+function isCjk(text) {
+  if (!text) return false
+  return /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/.test(text)
+}
+
+onMounted(() => {
+  getArticleIndex().then(index => {
+    if (index && index.articles && Object.keys(index.articles).length > 0) {
+      apiArticles.value = index.articles
+    } else {
+      // API 不可用，启动后台重试
+      cancelRetry = retryArticleIndexFetch(index => {
+        if (index && index.articles && Object.keys(index.articles).length > 0) {
+          apiArticles.value = index.articles
+        }
+      })
+    }
+  })
+})
+
+watch(apiArticles, (newVal) => {
+  if (newVal && Object.keys(newVal).length > 0) {
+    nextTick(() => {
+      initTocInteraction()
+    })
+  }
+})
+
+onBeforeUnmount(() => {
+  if (cancelRetry) cancelRetry()
+  if (observer) observer.disconnect()
+  if (scrollRoot) scrollRoot.removeEventListener('scroll', onScroll)
+})
 </script>
 
 <style scoped>
-.blog-view {
+/* ================================================================
+   editorial（对照 m3: main.editorial, flex column）
+   ================================================================ */
+.editorial {
+  display: flex;
+  flex-direction: column;
   width: 100%;
-}
-
-.blog-view__content {
-  max-width: 720px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 24px 32px;
+  padding: 8px;
   box-sizing: border-box;
 }
 
-/* ======== Header ======== */
-.blog-header {
-  padding: 16px 0 24px;
+/* ================================================================
+   mio-header（对照 m3: header.split-asset）
+   ================================================================ */
+.mio-header {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 0;
 }
 
-.blog-header__title {
-  font-family: var(--md-sys-typescale-headline-l-font-family);
-  font-size: var(--md-sys-typescale-headline-l-font-size);
-  font-weight: var(--md-sys-typescale-headline-l-font-weight);
-  letter-spacing: var(--md-sys-typescale-headline-l-letter-spacing);
-  line-height: var(--md-sys-typescale-headline-l-line-height);
-  font-variation-settings: "GRAD" var(--md-sys-typescale-headline-l-font-variation-GRAD), "opsz" var(--md-sys-typescale-headline-l-font-variation-opsz);
-  color: var(--md-sys-color-on-surface, #1c1b1f);
+.primary-container {
+  display: flex;
+  margin: 0;
+  padding: 56px;
+  border-radius: 24px;
+  background: var(--md-sys-color-surface-container-low, #f8f1f6);
+  background-repeat: no-repeat;
+  background-position: 0 50%;
+  background-size: cover;
+  min-height: 544px;
 }
 
-.blog-header__desc {
-  font-family: var(--md-sys-typescale-body-m-font-family);
-  font-size: var(--md-sys-typescale-body-m-font-size);
-  font-weight: var(--md-sys-typescale-body-m-font-weight);
-  letter-spacing: var(--md-sys-typescale-body-m-letter-spacing);
-  line-height: var(--md-sys-typescale-body-m-line-height);
-  font-variation-settings: "GRAD" var(--md-sys-typescale-body-m-font-variation-GRAD), "opsz" var(--md-sys-typescale-body-m-font-variation-opsz);
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  margin-top: 4px;
+.primary-container,
+.split-asset-image {
+  min-height: 544px;
 }
 
-/* ======== Filter Bar ======== */
-.filter-bar {
-  margin-bottom: 24px;
+@media screen and (max-width: 1294px) {
+  .primary-container,
+  .split-asset-image {
+    min-height: unset;
+  }
+  .primary-container {
+    grid-column: span 2;
+  }
+  .split-asset-image {
+    padding-bottom: 50%;
+    grid-column: span 2;
+  }
 }
 
-/* ======== Post List ======== */
-.post-list {
+.primary-container .wrapper {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  justify-content: center;
+  max-width: 840px;
+  margin: 0;
 }
 
-.post-card {
-  padding: 20px;
-  border-radius: 12px;
-  background-color: var(--md-sys-color-surface-container, #f3edf7);
-  cursor: pointer;
+.primary-container .wrapper .title h1 {
+  font-family: var(--md-sys-typescale-home-hero-font-family);
+  font-size: var(--md-sys-typescale-home-hero-font-size);
+  font-weight: var(--md-sys-typescale-home-hero-font-weight);
+  letter-spacing: var(--md-sys-typescale-home-hero-letter-spacing);
+  line-height: var(--md-sys-typescale-home-hero-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-home-hero-font-variation-GRAD), "opsz" var(--md-sys-typescale-home-hero-font-variation-opsz);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0 0 16px;
+}
+
+.primary-container .wrapper .title .description {
+  font-family: var(--md-sys-typescale-home-desc-font-family);
+  font-size: var(--md-sys-typescale-home-desc-font-size);
+  font-weight: var(--md-sys-typescale-home-desc-font-weight);
+  letter-spacing: var(--md-sys-typescale-home-desc-letter-spacing);
+  line-height: var(--md-sys-typescale-home-desc-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-home-desc-font-variation-GRAD), "opsz" var(--md-sys-typescale-home-desc-font-variation-opsz);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.split-asset-image {
+  display: flex;
   position: relative;
+  justify-content: center;
+  border: 1px solid var(--md-sys-color-surface-variant, #e8e0e8);
+  border-radius: 24px;
+  background-repeat: no-repeat;
+  background-size: cover;
   overflow: hidden;
-  transition: box-shadow 0.2s;
 }
 
-.post-card:hover {
-  box-shadow: var(--md-sys-elevation-2, 0 1px 3px 1px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.3));
-}
-
-.post-card::after {
-  content: '';
+.split-asset-image__foreground {
+  display: flex;
   position: absolute;
-  inset: 0;
-  border-radius: 12px;
-  background-color: var(--md-sys-color-on-surface, #1c1b1f);
-  opacity: 0;
-  transition: opacity 0.2s;
-  pointer-events: none;
+  align-self: stretch;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    135deg,
+    var(--md-sys-color-primary-container, #eaddff) 0%,
+    var(--md-sys-color-secondary-container, #e8def8) 50%,
+    var(--md-sys-color-tertiary-container, #ffd8e4) 100%
+  );
+  background-repeat: no-repeat;
+  background-position: 50% 50%;
+  background-size: contain;
 }
 
-.post-card:hover::after {
-  opacity: 0.08;
+@media screen and (max-width: 600px) {
+  .mio-header {
+    grid-template-columns: 1fr;
+  }
+  .primary-container {
+    padding: 32px;
+  }
+  .primary-container .wrapper .title .description {
+    font-weight: 425;
+  }
+  .split-asset-image__foreground {
+    position: absolute;
+    inset: 0;
+  }
 }
 
-.post-card:active::after {
-  opacity: 0.12;
+/* ================================================================
+   content-container
+   ================================================================ */
+.content-container {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: center;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
 }
 
-.post-card__badge {
-  display: inline-flex;
-  padding: 2px 10px;
-  border-radius: 8px;
+/* ================================================================
+   TOC
+   ================================================================ */
+.toc {
+  flex: 0 0 156px;
+  width: 156px;
+  margin: 112px 24px 0;
+}
+
+.toc nav {
+  position: sticky;
+  top: 136px;
+}
+
+.toc__overline {
   font-family: var(--md-sys-typescale-label-s-font-family);
   font-size: var(--md-sys-typescale-label-s-font-size);
   font-weight: var(--md-sys-typescale-label-s-font-weight);
   letter-spacing: var(--md-sys-typescale-label-s-letter-spacing);
   line-height: var(--md-sys-typescale-label-s-line-height);
   font-variation-settings: "GRAD" var(--md-sys-typescale-label-s-font-variation-GRAD), "opsz" var(--md-sys-typescale-label-s-font-variation-opsz);
-  background-color: var(--md-sys-color-primary, #6750a4);
-  color: var(--md-sys-color-on-primary, #ffffff);
-  margin-bottom: 8px;
+  color: var(--md-sys-color-on-surface-variant, #4d4256);
+  margin: 0 16px 8px;
 }
 
-.post-card__title {
-  font-family: var(--md-sys-typescale-title-l-font-family);
-  font-size: var(--md-sys-typescale-title-l-font-size);
-  font-weight: var(--md-sys-typescale-title-l-font-weight);
-  letter-spacing: var(--md-sys-typescale-title-l-letter-spacing);
-  line-height: var(--md-sys-typescale-title-l-line-height);
-  font-variation-settings: "GRAD" var(--md-sys-typescale-title-l-font-variation-GRAD), "opsz" var(--md-sys-typescale-title-l-font-variation-opsz);
+.toc__title {
+  font-family: var(--md-sys-typescale-headline-s-font-family);
+  font-size: var(--md-sys-typescale-headline-s-font-size);
+  font-weight: 475;
+  letter-spacing: var(--md-sys-typescale-headline-s-letter-spacing);
+  line-height: var(--md-sys-typescale-headline-s-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-headline-s-font-variation-GRAD), "opsz" var(--md-sys-typescale-headline-s-font-variation-opsz);
   color: var(--md-sys-color-on-surface, #1c1b1f);
-  margin-bottom: 8px;
-  position: relative;
-  z-index: 1;
+  margin: 0 16px 8px;
 }
 
-.post-card__excerpt {
+.toc__indicator {
+  position: absolute;
+  width: 156px;
+  left: 0;
+  top: v-bind(indicatorTop + 'px');
+  border: 1px solid var(--md-sys-color-outline, #79747e);
+  border-radius: 18px;
+  background-color: rgba(0, 0, 0, 0);
+  opacity: 1;
+  z-index: -1;
+  pointer-events: none;
+  transition: transform 0.5s cubic-bezier(0.2, 0, 0, 1),
+              opacity 0.2s cubic-bezier(0.2, 0, 0, 1),
+              height 0.5s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.toc__indicator--hide {
+  opacity: 0;
+}
+
+.toc__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.toc__item {
+  display: flex;
+  padding: 8px 16px;
+  min-height: 36px;
+  box-sizing: border-box;
+  border-radius: 18px;
+  cursor: pointer;
+  align-items: center;
+}
+
+.toc__item:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface, #1c1b1f) 8%, transparent);
+}
+
+.toc__link {
   font-family: var(--md-sys-typescale-body-m-font-family);
   font-size: var(--md-sys-typescale-body-m-font-size);
   font-weight: var(--md-sys-typescale-body-m-font-weight);
@@ -315,116 +661,221 @@ function openPost(post) {
   line-height: var(--md-sys-typescale-body-m-line-height);
   font-variation-settings: "GRAD" var(--md-sys-typescale-body-m-font-variation-GRAD), "opsz" var(--md-sys-typescale-body-m-font-variation-opsz);
   color: var(--md-sys-color-on-surface-variant, #49454f);
-  position: relative;
-  z-index: 1;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: color 200ms cubic-bezier(0.2, 0, 0, 1),
+              font-variation-settings 200ms cubic-bezier(0.2, 0, 0, 1);
 }
 
-.post-card__footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 12px;
-  position: relative;
-  z-index: 1;
-}
-
-.post-card__tags {
-  display: flex;
-  gap: 6px;
-}
-
-.post-card__tag {
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-family: var(--md-sys-typescale-label-s-font-family);
-  font-size: var(--md-sys-typescale-label-s-font-size);
-  font-weight: var(--md-sys-typescale-label-s-font-weight);
-  letter-spacing: var(--md-sys-typescale-label-s-letter-spacing);
-  line-height: var(--md-sys-typescale-label-s-line-height);
-  font-variation-settings: "GRAD" var(--md-sys-typescale-label-s-font-variation-GRAD), "opsz" var(--md-sys-typescale-label-s-font-variation-opsz);
-  background-color: var(--md-sys-color-secondary-container, #e8def8);
+.toc__link--selected {
   color: var(--md-sys-color-on-secondary-container, #1d192b);
+  font-variation-settings: "GRAD" 125;
 }
 
-.post-card__date {
-  font-family: var(--md-sys-typescale-label-m-font-family);
-  font-size: var(--md-sys-typescale-label-m-font-size);
-  font-weight: var(--md-sys-typescale-label-m-font-weight);
-  letter-spacing: var(--md-sys-typescale-label-m-letter-spacing);
-  line-height: var(--md-sys-typescale-label-m-line-height);
-  font-variation-settings: "GRAD" var(--md-sys-typescale-label-m-font-variation-GRAD), "opsz" var(--md-sys-typescale-label-m-font-variation-opsz);
-  color: var(--md-sys-color-outline, #79747e);
+@media screen and (max-width: 1294px) {
+  .toc {
+    display: none;
+  }
+  .content-container {
+    flex-direction: column;
+  }
 }
 
-/* ======== Post Detail Overlay ======== */
-.post-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 500;
-  background-color: color-mix(in srgb, var(--md-sys-color-scrim, #000000) 40%, transparent);
-  display: flex;
-  justify-content: center;
-  padding: 48px 24px;
-  overflow-y: auto;
+/* ================================================================
+   posts-container
+   ================================================================ */
+.posts-container {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
-.post-detail {
-  max-width: 680px;
-  width: 100%;
-  background-color: var(--md-sys-color-surface, #fffbfe);
-  border-radius: 28px;
-  padding: 32px;
-  position: relative;
-  max-height: calc(100vh - 96px);
-  overflow-y: auto;
+.toc--placeholder {
+  visibility: hidden;
 }
 
-.post-detail__close {
-  position: absolute;
-  top: 16px;
-  right: 16px;
+.toc--fade-in {
+  animation: toc-fade-in 200ms linear forwards;
 }
 
-.post-detail__badge {
-  display: inline-flex;
-  padding: 4px 12px;
+@keyframes toc-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.skeleton-heading {
+  display: inline-block;
+  height: 28px;
+  vertical-align: middle;
   border-radius: 8px;
-  font-family: var(--md-sys-typescale-label-m-font-family);
-  font-size: var(--md-sys-typescale-label-m-font-size);
-  font-weight: var(--md-sys-typescale-label-m-font-weight);
-  letter-spacing: var(--md-sys-typescale-label-m-letter-spacing);
-  line-height: var(--md-sys-typescale-label-m-line-height);
-  font-variation-settings: "GRAD" var(--md-sys-typescale-label-m-font-variation-GRAD), "opsz" var(--md-sys-typescale-label-m-font-variation-opsz);
-  background-color: var(--md-sys-color-primary, #6750a4);
-  color: var(--md-sys-color-on-primary, #ffffff);
-  margin-bottom: 16px;
 }
 
-.post-detail__title {
+.sub-heading .skeleton-heading {
+  height: 24px;
+}
+
+.posts-inner {
+  transition: opacity 200ms linear, transform 200ms linear;
+}
+
+.posts-inner--skeleton {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.posts-inner--loaded {
+  animation: posts-fade-in 200ms linear forwards;
+}
+
+@keyframes posts-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ================================================================
+   section
+   ================================================================ */
+.section {
+  margin: 72px 0 96px;
+}
+
+.section-header {
+  margin: 24px;
+}
+
+.section-header h2 {
+  font-family: var(--md-sys-typescale-display-l-font-family);
+  font-size: var(--md-sys-typescale-display-l-font-size);
+  font-weight: var(--md-sys-typescale-display-l-font-weight);
+  letter-spacing: var(--md-sys-typescale-display-l-letter-spacing);
+  line-height: var(--md-sys-typescale-display-l-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-display-l-font-variation-GRAD), "opsz" var(--md-sys-typescale-display-l-font-variation-opsz);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0 0 8px;
+}
+
+.section-header h2.sub-heading {
   font-family: var(--md-sys-typescale-headline-m-font-family);
   font-size: var(--md-sys-typescale-headline-m-font-size);
   font-weight: var(--md-sys-typescale-headline-m-font-weight);
   letter-spacing: var(--md-sys-typescale-headline-m-letter-spacing);
   line-height: var(--md-sys-typescale-headline-m-line-height);
   font-variation-settings: "GRAD" var(--md-sys-typescale-headline-m-font-variation-GRAD), "opsz" var(--md-sys-typescale-headline-m-font-variation-opsz);
-  color: var(--md-sys-color-on-surface, #1c1b1f);
-  margin-bottom: 8px;
+  margin: 48px 0 8px;
 }
 
-.post-detail__meta {
-  display: flex;
+/* ================================================================
+   card-set
+   ================================================================ */
+.card-set {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
-  font-family: var(--md-sys-typescale-body-s-font-family);
-  font-size: var(--md-sys-typescale-body-s-font-size);
-  font-weight: var(--md-sys-typescale-body-s-font-weight);
-  letter-spacing: var(--md-sys-typescale-body-s-letter-spacing);
-  line-height: var(--md-sys-typescale-body-s-line-height);
-  font-variation-settings: "GRAD" var(--md-sys-typescale-body-s-font-variation-GRAD), "opsz" var(--md-sys-typescale-body-s-font-variation-opsz);
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  margin-bottom: 20px;
+  padding: 0 8px;
+  margin: 24px 0 0;
 }
 
-.post-detail__body {
+@media screen and (max-width: 600px) {
+  .card-set {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ================================================================
+   卡片通用 — thumbnail
+   ================================================================ */
+.thumbnail {
+  position: relative;
+  display: inline-flex;
+  border-radius: 24px;
+  background-color: var(--md-sys-color-surface-container-low, #f8f1f6);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  text-decoration: none;
+  overflow: hidden;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-radius 0.3s cubic-bezier(0.2, 0, 0, 1), background-color 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.thumbnail:hover,
+.thumbnail:focus,
+.thumbnail:active {
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
+}
+
+.feature-card.thumbnail:hover,
+.feature-card.thumbnail:focus,
+.feature-card.thumbnail:active,
+.regular-card.thumbnail:hover,
+.regular-card.thumbnail:focus,
+.regular-card.thumbnail:active {
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
+}
+
+.thumbnail:focus {
+  border-radius: 48px;
+  outline: 2px solid var(--md-sys-color-on-surface, #1c1b1f);
+  outline-offset: 1px;
+}
+
+.feature-card.thumbnail:focus,
+.regular-card.thumbnail:focus {
+  border-radius: 48px;
+  outline: 2px solid var(--md-sys-color-on-surface, #1c1b1f);
+  outline-offset: 1px;
+}
+
+.thumbnail:active {
+  border-radius: 48px;
+  outline: initial;
+}
+
+.feature-card.thumbnail:active,
+.regular-card.thumbnail:active {
+  border-radius: 48px;
+  outline: initial;
+}
+
+.thumbnail > .ripple {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  display: none;
+  z-index: 0;
+  transform-origin: center center;
+  filter: blur(4px);
+}
+
+/* ================================================================
+   content-container（卡片内部）
+   ================================================================ */
+.thumbnail > .content-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin: 24px;
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+  flex-shrink: 0;
+  max-width: none;
+  justify-content: start;
+}
+
+.thumbnail > .content-container .date {
   font-family: var(--md-sys-typescale-body-l-font-family);
   font-size: var(--md-sys-typescale-body-l-font-size);
   font-weight: var(--md-sys-typescale-body-l-font-weight);
@@ -432,65 +883,202 @@ function openPost(post) {
   line-height: var(--md-sys-typescale-body-l-line-height);
   font-variation-settings: "GRAD" var(--md-sys-typescale-body-l-font-variation-GRAD), "opsz" var(--md-sys-typescale-body-l-font-variation-opsz);
   color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0 0 8px;
+  display: block;
 }
 
-.post-detail__body h2 {
-  font-family: var(--md-sys-typescale-title-l-font-family);
-  font-size: var(--md-sys-typescale-title-l-font-size);
-  font-weight: var(--md-sys-typescale-title-l-font-weight);
-  letter-spacing: var(--md-sys-typescale-title-l-letter-spacing);
-  line-height: var(--md-sys-typescale-title-l-line-height);
-  font-variation-settings: "GRAD" var(--md-sys-typescale-title-l-font-variation-GRAD), "opsz" var(--md-sys-typescale-title-l-font-variation-opsz);
+.thumbnail > .content-container .mio-title-row {
+  display: flex;
+  gap: 5px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.thumbnail > .content-container .title {
+  font-family: var(--md-sys-typescale-headline-s-font-family);
+  font-size: var(--md-sys-typescale-headline-s-font-size);
+  font-weight: 475;
+  letter-spacing: var(--md-sys-typescale-headline-s-letter-spacing);
+  line-height: var(--md-sys-typescale-headline-s-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-headline-s-font-variation-GRAD), "opsz" var(--md-sys-typescale-headline-s-font-variation-opsz);
   color: var(--md-sys-color-on-surface, #1c1b1f);
-  margin-top: 28px;
-  margin-bottom: 12px;
+  margin: 0;
+  transition: font-variation-settings 0.3s cubic-bezier(0.2, 0, 0, 1),
+              font-weight 0.3s cubic-bezier(0.2, 0, 0, 1);
 }
 
-.post-detail__body p {
-  margin-bottom: 12px;
+.thumbnail:hover > .content-container .title {
+  font-variation-settings: "GRAD" 50, "opsz" 18;
+  font-weight: 475;
+}
+.thumbnail:hover > .content-container .title.title--cjk {
+  font-weight: 525;
 }
 
-.post-detail__body code {
-  padding: 2px 6px;
-  border-radius: 4px;
-  background-color: var(--md-sys-color-surface-container, #f3edf7);
-  font-family: var(--md-sys-typescale-code-m-font-family);
-  font-size: var(--md-sys-typescale-code-m-font-size);
-  font-weight: var(--md-sys-typescale-code-m-font-weight);
-  letter-spacing: var(--md-sys-typescale-code-m-letter-spacing);
-  line-height: var(--md-sys-typescale-code-m-line-height);
-  font-variation-settings: "GRAD" var(--md-sys-typescale-code-m-font-variation-GRAD), "opsz" var(--md-sys-typescale-code-m-font-variation-opsz);
+.thumbnail:active > .content-container .title {
+  font-variation-settings: "GRAD" -50, "opsz" 18;
+  font-weight: 475;
+}
+.thumbnail:active > .content-container .title.title--cjk {
+  font-weight: 425;
 }
 
-/* ======== 暗色主题 ======== */
-:global([data-theme="dark"]) .post-card {
-  background-color: var(--md-sys-color-surface-container, #211f26);
+.thumbnail > .content-container .description {
+  font-family: var(--md-sys-typescale-body-l-font-family);
+  font-size: var(--md-sys-typescale-body-l-font-size);
+  font-weight: var(--md-sys-typescale-body-l-font-weight);
+  letter-spacing: var(--md-sys-typescale-body-l-letter-spacing);
+  line-height: var(--md-sys-typescale-body-l-line-height);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-body-l-font-variation-GRAD), "opsz" var(--md-sys-typescale-body-l-font-variation-opsz);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0;
 }
 
-:global([data-theme="dark"]) .post-card::after {
-  background-color: var(--md-sys-color-on-surface, #e6e1e5);
+.regular-card.thumbnail > .content-container .description {
+  display: block;
+  overflow: visible;
 }
 
-:global([data-theme="dark"]) .post-card__badge {
-  background-color: var(--md-sys-color-primary, #d0bcff);
-  color: var(--md-sys-color-on-primary, #381e72);
+/* ================================================================
+   thumb-container
+   ================================================================ */
+.thumb-container {
+  border-radius: 24px;
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  flex-shrink: 0;
 }
 
-:global([data-theme="dark"]) .post-card__tag {
+.thumb-icon {
+  font-size: 56px;
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  opacity: 0.4;
+  z-index: 1;
+}
+
+/* ================================================================
+   feature-block 长卡
+   ================================================================ */
+.feature-card.thumbnail {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-flow: column;
+  align-items: center;
+  background-color: var(--md-sys-color-surface-container-low, #f8f1f6);
+}
+
+.feature-card.thumbnail > .content-container {
+  align-self: center;
+  width: calc(100% - 48px);
+  overflow: hidden;
+}
+
+.feature-card.thumbnail > .thumb-container {
+  min-height: 298px;
+  order: -1;
+}
+
+@media screen and (max-width: 600px) {
+  .feature-card.thumbnail {
+    display: inline-flex;
+    flex-direction: column-reverse;
+  }
+  .feature-card.thumbnail > .thumb-container {
+    min-height: 200px;
+    order: 0;
+  }
+}
+
+/* ================================================================
+   regular-card 中卡
+   ================================================================ */
+.regular-card.thumbnail {
+  display: inline-flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  background-color: var(--md-sys-color-surface-container-low, #f8f1f6);
+}
+
+.regular-card.thumbnail > .content-container {
+  align-self: start;
+  width: calc(100% - 48px);
+  overflow: hidden;
+}
+
+.regular-card.thumbnail > .thumb-container {
+  height: 298px;
+}
+
+@media screen and (max-width: 600px) {
+  .regular-card.thumbnail > .thumb-container {
+    height: 200px;
+  }
+  .feature-card.thumbnail > .thumb-container {
+    min-height: 200px;
+  }
+}
+
+/* ================================================================
+   暗色主题
+   ================================================================ */
+:global([data-theme="dark"] .primary-container) {
+  background: var(--md-sys-color-surface-container-low, #1d1b20);
+}
+
+:global([data-theme="dark"] .split-asset-image__foreground) {
+  background: linear-gradient(
+    135deg,
+    var(--md-sys-color-primary-container, #21005d) 0%,
+    var(--md-sys-color-secondary-container, #4a4458) 50%,
+    var(--md-sys-color-tertiary-container, #633b48) 100%
+  );
+}
+
+:global([data-theme="dark"] .thumbnail) {
+  background-color: var(--md-sys-color-surface-container-low, #1d1b20);
+}
+
+:global([data-theme="dark"] .thumbnail:hover),
+:global([data-theme="dark"] .thumbnail:focus),
+:global([data-theme="dark"] .thumbnail:active),
+:global([data-theme="dark"] .feature-card.thumbnail:hover),
+:global([data-theme="dark"] .feature-card.thumbnail:focus),
+:global([data-theme="dark"] .feature-card.thumbnail:active),
+:global([data-theme="dark"] .regular-card.thumbnail:hover),
+:global([data-theme="dark"] .regular-card.thumbnail:focus),
+:global([data-theme="dark"] .regular-card.thumbnail:active) {
   background-color: var(--md-sys-color-secondary-container, #4a4458);
+}
+
+:global([data-theme="dark"] .thumbnail:focus),
+:global([data-theme="dark"] .feature-card.thumbnail:focus),
+:global([data-theme="dark"] .regular-card.thumbnail:focus) {
+  border-radius: 48px;
+  outline: 2px solid var(--md-sys-color-on-surface, #e6e1e5);
+  outline-offset: 1px;
+}
+
+:global([data-theme="dark"] .thumb-icon) {
+  color: var(--md-sys-color-on-primary-container, #eaddff);
+}
+
+:global([data-theme="dark"] .toc__indicator) {
+  border-color: var(--md-sys-color-outline, #938f99);
+}
+
+:global([data-theme="dark"] .toc__item:hover) {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface, #e6e1e5) 8%, transparent);
+}
+
+:global([data-theme="dark"] .toc__link--selected) {
   color: var(--md-sys-color-on-secondary-container, #e8def8);
-}
-
-:global([data-theme="dark"]) .post-detail {
-  background-color: var(--md-sys-color-surface, #1c1b1f);
-}
-
-:global([data-theme="dark"]) .post-detail__badge {
-  background-color: var(--md-sys-color-primary, #d0bcff);
-  color: var(--md-sys-color-on-primary, #381e72);
-}
-
-:global([data-theme="dark"]) .post-detail__body code {
-  background-color: var(--md-sys-color-surface-container, #211f26);
 }
 </style>
