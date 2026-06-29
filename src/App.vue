@@ -14,15 +14,40 @@ const route = useRoute()
 const router = useRouter()
 
 const navApi = useNavItems()
-const navItems = computed(() => navApi.navItems())
+const blogNavItems = computed(() => navApi.navItems())
 
-const fabConfig = { icon: 'create', label: '新建' }
+// ===== Admin 模式 NavigationRail 配置 =====
+const ADMIN_TOKEN_KEY = 'strapi-admin-token'
+const isAdminRoute = computed(() => route.path === '/admin' || route.path.startsWith('/admin/'))
+const adminNavItems = [
+  { id: 'articles', label: '文章', icon: 'article', route: '/admin?tab=articles' },
+  { id: 'cards', label: '卡片', icon: 'dashboard', route: '/admin?tab=cards' },
+  { id: 'navigation', label: '导航', icon: 'menu', route: '/admin?tab=navigation' },
+]
+
+// 当前使用的 nav items：admin 路由用 admin 项，否则用博客导航
+const navItems = computed(() => isAdminRoute.value ? adminNavItems : blogNavItems.value)
+
+// Admin 模式 FAB：退出登录
+const fabConfig = computed(() => {
+  if (isAdminRoute.value) {
+    // 仅在已登录时显示退出 FAB
+    return sessionStorage.getItem(ADMIN_TOKEN_KEY) ? { icon: 'logout', label: '退出登录' } : null
+  }
+  return { icon: 'create', label: '新建' }
+})
 
 // 特殊路由映射：/article/* 归属于 blog 导航项
 const ROUTE_TO_NAV_MAP = { '/article': 'blog' }
 
 const activeNavId = computed(() => {
-  const items = navItems.value
+  // Admin 模式：根据 route.query.tab 匹配 admin 项
+  if (isAdminRoute.value) {
+    const tab = route.query.tab || 'articles'
+    return adminNavItems.find(item => item.id === tab)?.id || 'articles'
+  }
+
+  const items = blogNavItems.value
   // 先检查特殊路由映射
   for (const [prefix, navId] of Object.entries(ROUTE_TO_NAV_MAP)) {
     if (route.path === prefix || route.path.startsWith(prefix + '/')) {
@@ -39,16 +64,19 @@ const activeNavId = computed(() => {
 const PERSISTENT_THRESHOLD = 1200 // 常驻模式的最小宽度
 
 const activeSubItems = computed(() => {
-  const activeItem = navItems.value.find(item => item.id === activeNavId.value)
+  if (isAdminRoute.value) return null // admin 无子菜单
+  const activeItem = blogNavItems.value.find(item => item.id === activeNavId.value)
   return activeItem?.children?.length ? activeItem.children : null
 })
 
 // 当前活跃一级菜单项的完整数据
 const activeNavItem = computed(() => {
-  return navItems.value.find(item => item.id === activeNavId.value)
+  if (isAdminRoute.value) return null
+  return blogNavItems.value.find(item => item.id === activeNavId.value)
 })
 
 const activeSubItemId = computed(() => {
+  if (isAdminRoute.value) return null
   if (!activeSubItems.value) return null
   const exact = activeSubItems.value.find(child => route.path === child.route)
   if (exact) return exact.id
@@ -108,9 +136,10 @@ const isPersistentPanel = computed(() => {
 // 优先级：hover 项 > active 项（仅 persistent 模式）
 const displaySubItems = computed(() => {
   if (!isWideScreen.value) return null
+  if (isAdminRoute.value) return null // admin 无子面板
   // hover 优先（悬停模式，浮动不压缩页面）
   if (hoveredNavId.value) {
-    const hoverItem = navItems.value.find(i => i.id === hoveredNavId.value)
+    const hoverItem = blogNavItems.value.find(i => i.id === hoveredNavId.value)
     if (hoverItem?.children?.length) return hoverItem.children
   }
   // 常驻模式：显示 active 项的子菜单
@@ -121,7 +150,7 @@ const displaySubItems = computed(() => {
 // 当前子面板显示的是哪个父菜单（用于 Transition key 触发 fade）
 const displayParentId = computed(() => {
   if (hoveredNavId.value) {
-    const hoverItem = navItems.value.find(i => i.id === hoveredNavId.value)
+    const hoverItem = blogNavItems.value.find(i => i.id === hoveredNavId.value)
     if (hoverItem?.children?.length) return hoveredNavId.value
   }
   if (isPersistentPanel.value) return activeNavId.value
@@ -131,9 +160,10 @@ const displayParentId = computed(() => {
 // 子面板是否显示（hover 模式 或 常驻模式）
 const subPanelVisible = computed(() => {
   if (!isWideScreen.value) return false
+  if (isAdminRoute.value) return false // admin 无子面板
   // hover 触发：任何有 children 的项被悬停时都显示
   if (hoveredNavId.value) {
-    const hoverItem = navItems.value.find(i => i.id === hoveredNavId.value)
+    const hoverItem = blogNavItems.value.find(i => i.id === hoveredNavId.value)
     if (hoverItem?.children?.length) return true
   }
   // 常驻触发：仅在 persistent 模式下自动显示 active 项的子菜单
@@ -145,7 +175,7 @@ const isHoverMode = computed(() => {
   if (!subPanelVisible.value) return false
   // 如果是因为 hover 而显示的 → hover 模式
   if (hoveredNavId.value) {
-    const hoverItem = navItems.value.find(i => i.id === hoveredNavId.value)
+    const hoverItem = blogNavItems.value.find(i => i.id === hoveredNavId.value)
     if (hoverItem?.children?.length) return true
   }
   // 如果 active 就是当前显示的内容，但屏幕不够宽做常驻 → 也算 hover 模式
@@ -175,6 +205,7 @@ const hoverLeaveTimer = ref(null)
 
 // hover 进入 Rail 项
 function onRailItemHover(itemId) {
+  if (isAdminRoute.value) return // admin 无 hover 子面板
   if (hoverLeaveTimer.value) {
     clearTimeout(hoverLeaveTimer.value)
     hoverLeaveTimer.value = null
@@ -184,8 +215,9 @@ function onRailItemHover(itemId) {
 
 // hover 离开 Rail 项（延迟清除，给鼠标移到子面板留时间）
 function onRailItemLeave() {
+  if (isAdminRoute.value) return
   // 只有当前 hover 项有 children 时才延迟，否则立即清除
-  const item = navItems.value.find(i => i.id === hoveredNavId.value)
+  const item = blogNavItems.value.find(i => i.id === hoveredNavId.value)
   if (item?.children?.length) {
     hoverLeaveTimer.value = setTimeout(() => {
       hoveredNavId.value = null
@@ -223,7 +255,12 @@ function navigateTo(item) {
 }
 
 function onFabClick() {
-  // FAB 点击事件，后续扩展
+  if (isAdminRoute.value) {
+    // Admin FAB: 退出登录 → 清除 token + 回到首页
+    sessionStorage.removeItem(ADMIN_TOKEN_KEY)
+    router.push('/')
+  }
+  // 博客 FAB 点击事件，后续扩展
 }
 
 // ======== 移动端 Navigation Drawer ========
@@ -266,6 +303,11 @@ function navigateDrawerSubItem(child) {
 
 // 抽屉主菜单项点击逻辑
 function onDrawerItemClick(item) {
+  if (isAdminRoute.value) {
+    // admin 模式：直接导航
+    navigateTo(item)
+    return
+  }
   if (item.children?.length) {
     openDrawerSubMenu(item)
   } else {
@@ -275,15 +317,17 @@ function onDrawerItemClick(item) {
 
 // 当前子菜单的子项列表
 const drawerSubItems = computed(() => {
+  if (isAdminRoute.value) return null
   if (!drawerSubMenu.value) return null
-  const parent = navItems.value.find(i => i.id === drawerSubMenu.value)
+  const parent = blogNavItems.value.find(i => i.id === drawerSubMenu.value)
   return parent?.children || null
 })
 
 // 当前子菜单的父级项数据
 const drawerSubParent = computed(() => {
+  if (isAdminRoute.value) return null
   if (!drawerSubMenu.value) return null
-  return navItems.value.find(i => i.id === drawerSubMenu.value) || null
+  return blogNavItems.value.find(i => i.id === drawerSubMenu.value) || null
 })
 
 // 桌面端内容区左边距
