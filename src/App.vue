@@ -262,6 +262,11 @@ function onFabClick() {
   // 博客 FAB 点击事件，后续扩展
 }
 
+// Admin 进入：导航到 /admin
+function onAdminEnter() {
+  router.push('/admin')
+}
+
 // Admin 退出登录：清除 token + 回到首页
 function onAdminLogout() {
   sessionStorage.removeItem(ADMIN_TOKEN_KEY)
@@ -351,11 +356,13 @@ const bodyMarginLeft = computed(() => {
     <!-- 桌面端：左侧 Navigation Rail -->
     <NavigationRail
       class="app-layout__rail"
+      :class="{ 'app-layout__rail--admin': isAdminRoute }"
       :items="navItems"
       :fab="fabConfig"
       :admin-mode="isAdminRoute"
       @fab-click="onFabClick"
       @admin-logout="onAdminLogout"
+      @admin-enter="onAdminEnter"
       @item-hover="onRailItemHover"
       @item-leave="onRailItemLeave"
     />
@@ -612,6 +619,20 @@ const bodyMarginLeft = computed(() => {
   flex-direction: column;
   overflow: hidden;
   transition: margin-left 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* ======== Navigation Rail 模式切换过渡 ======== */
+/* FAB 图标变化 + 底部按钮区切换使用 opacity + translateY 过渡 */
+.app-layout__rail :deep(.nav-rail__fab) {
+  transition: color 0.2s, background-color 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.app-layout__rail :deep(.nav-rail__fab-icon) {
+  transition: font-variation-settings 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.app-layout__rail :deep(.nav-rail__bottom-actions) {
+  transition: opacity 0.25s cubic-bezier(0.2, 0, 0, 1);
 }
 
 /* ======== 主内容区（滚动容器，匹配 m3 .page-content） ======== */
