@@ -44,7 +44,15 @@ function createDefaultData() {
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw)
+    if (raw) {
+      const data = JSON.parse(raw)
+      // 迁移：清除已移除的 /blog/:category 子菜单缓存
+      const blogItem = data?.navItems?.find(i => i.id === 'blog')
+      if (blogItem && blogItem.children?.length) {
+        blogItem.children = []
+      }
+      return data
+    }
   } catch (e) {
     console.warn('blogStore: localStorage load failed, using defaults')
   }
