@@ -195,14 +195,22 @@ watch([authToken, () => route.query.tab], ([token, tab]) => {
 </script>
 
 <style scoped>
+/* ===== Admin View 根容器 ===== */
+.admin-view {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
 /* ===== 登录页 ===== */
 .admin-login {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 70vh;
-  padding: 24px;
+  min-height: 100%;
+  padding: 48px 24px;
   position: relative;
+  flex: 1;
 }
 
 /* ======== 缓冲进度条 ======== */
@@ -231,10 +239,22 @@ watch([authToken, () => route.query.tab], ([token, tab]) => {
   border-radius: 28px;
   background: var(--md-sys-color-surface-container-low, #f8f1f6);
   transition: opacity 0.3s ease;
+  animation: login-card-enter 200ms linear 200ms both;
 }
 
 .admin-login__card--loading {
   opacity: 0.85;
+}
+
+@keyframes login-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .admin-login__icon {

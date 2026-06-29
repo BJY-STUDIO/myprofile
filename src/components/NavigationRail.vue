@@ -62,9 +62,22 @@ const activeId = computed(() => {
       return navId
     }
   }
+  // 匹配导航项：同时考虑 path 和 query
   const matched = props.items.find((item) => {
-    if (item.route) return route.path === item.route || route.path.startsWith(item.route + '/')
-    return false
+    if (!item.route) return false
+    // 解析 item.route 为 path + search
+    const url = new URL(item.route, window.location.origin)
+    const itemPath = url.pathname
+    const itemSearch = url.searchParams
+    // path 必须匹配
+    if (route.path !== itemPath && !route.path.startsWith(itemPath + '/')) return false
+    // 如果 item 有 query 参数，当前路由也必须匹配所有 query
+    if (itemSearch.toString()) {
+      for (const [key, value] of itemSearch.entries()) {
+        if (route.query[key] !== value) return false
+      }
+    }
+    return true
   })
   return matched ? matched.id : props.items[0]?.id
 })
