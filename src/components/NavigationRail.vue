@@ -171,7 +171,6 @@ function onItemLeave() {
             @click.prevent="emit('admin-logout')"
           >
             <span class="material-symbols-rounded">logout</span>
-            <span class="nav-rail__admin-logout-label">退出</span>
           </a>
         </div>
         <!-- 正常模式：divider + GitHub + 调色板 -->
@@ -526,28 +525,22 @@ function onItemLeave() {
   opacity: 0;
 }
 
-/* ======== Admin 退出按钮 ======== */
+/* ======== Admin 退出按钮（48x48 圆形，与底部其他按钮一致） ======== */
 .nav-rail__admin-logout {
-  width: 56px;
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   color: var(--md-sys-color-on-surface-variant, #49454f);
   text-decoration: none;
   position: relative;
-  overflow: visible;
+  overflow: hidden;
 }
 
-/* Admin 退出图标区域：48x48 圆形 */
 .nav-rail__admin-logout .material-symbols-rounded {
   font-size: 24px;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 24px;
   position: relative;
   z-index: 1;
 }
@@ -555,10 +548,7 @@ function onItemLeave() {
 .nav-rail__admin-logout::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 4px;
-  width: 48px;
-  height: 48px;
+  inset: 0;
   border-radius: 24px;
   background-color: var(--md-sys-color-on-surface-variant, #49454f);
   opacity: 0;
@@ -697,9 +687,5 @@ function onItemLeave() {
 
 :global([data-theme="dark"]) .nav-rail__admin-logout:hover {
   color: var(--md-sys-color-on-surface, #e6e1e5);
-}
-
-:global([data-theme="dark"]) .nav-rail__admin-logout-label {
-  color: var(--md-sys-color-on-surface-variant, #cac4d0);
 }
 </style>
