@@ -47,7 +47,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['fab-click', 'item-hover', 'item-leave', 'admin-logout', 'admin-enter'])
+const emit = defineEmits(['fab-click', 'item-hover', 'item-leave', 'admin-logout'])
 
 const route = useRoute()
 const router = useRouter()
@@ -122,85 +122,83 @@ function onItemLeave() {
 
       <div v-else class="nav-rail__fab-spacer"></div>
 
-      <!-- 导航目标项 -->
-      <a
-        v-for="item in items"
-        :key="item.id"
-        class="nav-rail__destination"
-        :class="{
-          'nav-rail__destination--active': activeId === item.id,
-          'nav-rail__destination--animate-indicator': transitionsReady,
-          'nav-rail__destination--has-children': item.children?.length,
-        }"
-        role="link"
-        :aria-selected="activeId === item.id"
-        :aria-expanded="item.children?.length ? activeId === item.id : undefined"
-        :aria-label="item.label"
-        :aria-controls="item.id"
-        tabindex="0"
-        @click.prevent="navigate(item)"
-        @keydown.enter="navigate(item)"
-        @keydown.space.prevent="navigate(item)"
-        @mouseenter="onItemHover(item.id)"
-        @mouseleave="onItemLeave"
-      >
-        <!-- 图标区域（含 indicator + state layer + 图标本身） -->
-        <span class="nav-rail__icon">
-          <span class="nav-rail__icon-glyph">{{ activeId === item.id ? (item.activeIcon || item.icon) : item.icon }}</span>
-        </span>
-        <div class="nav-rail__label">{{ item.label }}</div>
-      </a>
+      <!-- 导航目标项（Transition 实现模式切换平滑过渡） -->
+      <Transition name="nav-rail-items" mode="out-in">
+        <div :key="adminMode ? 'admin' : 'blog'" class="nav-rail__items-container">
+          <a
+            v-for="item in items"
+            :key="item.id"
+            class="nav-rail__destination"
+            :class="{
+              'nav-rail__destination--active': activeId === item.id,
+              'nav-rail__destination--animate-indicator': transitionsReady,
+              'nav-rail__destination--has-children': item.children?.length,
+            }"
+            role="link"
+            :aria-selected="activeId === item.id"
+            :aria-expanded="item.children?.length ? activeId === item.id : undefined"
+            :aria-label="item.label"
+            :aria-controls="item.id"
+            tabindex="0"
+            @click.prevent="navigate(item)"
+            @keydown.enter="navigate(item)"
+            @keydown.space.prevent="navigate(item)"
+            @mouseenter="onItemHover(item.id)"
+            @mouseleave="onItemLeave"
+          >
+            <!-- 图标区域（含 indicator + state layer + 图标本身） -->
+            <span class="nav-rail__icon">
+              <span class="nav-rail__icon-glyph">{{ activeId === item.id ? (item.activeIcon || item.icon) : item.icon }}</span>
+            </span>
+            <div class="nav-rail__label">{{ item.label }}</div>
+          </a>
+        </div>
+      </Transition>
     </div>
 
     <!-- 下半部分（固定底部）-->
     <div class="nav-rail__bottom">
       <md-divider></md-divider>
-      <!-- Admin 模式：退出登录按钮 -->
-      <div v-if="adminMode" class="nav-rail__bottom-actions">
-        <a
-          class="nav-rail__admin-logout"
-          href="#"
-          role="button"
-          aria-label="退出管理"
-          title="退出管理"
-          @click.prevent="emit('admin-logout')"
-        >
-          <span class="material-symbols-rounded">logout</span>
-        </a>
-      </div>
-      <!-- 正常模式：GitHub + Admin + 调色板 -->
-      <div v-else class="nav-rail__bottom-actions">
-        <a
-          class="nav-rail__github-btn"
-          href="https://github.com/BJY-STUDIO/myprofile"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="GitHub repository"
-          title="GitHub repository"
-        >
-          <svg viewBox="0 0 16 16" fill="currentColor">
-            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
-          </svg>
-        </a>
-        <a
-          class="nav-rail__admin-enter"
-          href="#"
-          role="button"
-          aria-label="管理后台"
-          title="管理后台"
-          @click.prevent="emit('admin-enter')"
-        >
-          <span class="material-symbols-rounded">admin_panel_settings</span>
-        </a>
-        <md-icon-button
-          id="theme-btn"
-          class="nav-rail__action-btn"
-          aria-label="Toggle theme"
-          title="Toggle theme"
-        >
-          <span class="material-symbols-rounded">palette</span>
-        </md-icon-button>
-      </div>
+      <Transition name="nav-rail-bottom" mode="out-in">
+        <!-- Admin 模式：退出登录按钮 -->
+        <div v-if="adminMode" key="admin" class="nav-rail__bottom-actions">
+          <a
+            class="nav-rail__admin-logout"
+            href="#"
+            role="button"
+            aria-label="退出管理"
+            title="退出管理"
+            @click.prevent="emit('admin-logout')"
+          >
+            <span class="material-symbols-rounded">logout</span>
+            <span class="nav-rail__admin-logout-label">退出</span>
+          </a>
+        </div>
+        <!-- 正常模式：GitHub + 调色板 -->
+        <div v-else key="blog" class="nav-rail__bottom-actions">
+          <a
+            class="nav-rail__github-btn"
+            href="https://github.com/BJY-STUDIO/myprofile"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="GitHub repository"
+            title="GitHub repository"
+          >
+            <svg viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+            </svg>
+          </a>
+          <md-icon-button
+            id="theme-btn"
+            class="nav-rail__action-btn"
+            touch-target="none"
+            aria-label="Toggle theme"
+            title="Toggle theme"
+          >
+            <span class="material-symbols-rounded">palette</span>
+          </md-icon-button>
+        </div>
+      </Transition>
     </div>
   </nav>
 </template>
@@ -488,27 +486,61 @@ function onItemLeave() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 0;
+}
+
+/* ======== 导航项 Transition（博客↔admin 模式切换） ======== */
+/* m3 fadeInOut: FADE_OUT=100ms cubic-bezier(.2,0,0,1), FADE_IN=200ms delay+200ms linear */
+.nav-rail-items-enter-active {
+  transition: opacity 200ms linear 100ms, transform 200ms linear 100ms;
+}
+.nav-rail-items-leave-active {
+  transition: opacity 100ms cubic-bezier(0.2, 0, 0, 1), transform 100ms cubic-bezier(0.2, 0, 0, 1);
+}
+.nav-rail-items-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.nav-rail-items-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* 导航项容器 */
+.nav-rail__items-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ======== 底部区域 Transition ======== */
+.nav-rail-bottom-enter-active {
+  transition: opacity 200ms linear 100ms;
+}
+.nav-rail-bottom-leave-active {
+  transition: opacity 100ms cubic-bezier(0.2, 0, 0, 1);
+}
+.nav-rail-bottom-enter-from,
+.nav-rail-bottom-leave-to {
+  opacity: 0;
 }
 
 /* ======== Admin 退出按钮 ======== */
-.nav-rail__admin-logout,
-.nav-rail__admin-enter {
-  width: 48px;
+.nav-rail__admin-logout {
+  width: 56px;
   height: 48px;
   border-radius: 24px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   color: var(--md-sys-color-on-surface-variant, #49454f);
   text-decoration: none;
   position: relative;
   overflow: hidden;
-  margin-bottom: 0;
 }
 
-.nav-rail__admin-logout::before,
-.nav-rail__admin-enter::before {
+.nav-rail__admin-logout::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -519,18 +551,15 @@ function onItemLeave() {
   pointer-events: none;
 }
 
-.nav-rail__admin-logout:hover::before,
-.nav-rail__admin-enter:hover::before {
+.nav-rail__admin-logout:hover::before {
   opacity: 0.08;
 }
 
-.nav-rail__admin-logout:hover,
-.nav-rail__admin-enter:hover {
+.nav-rail__admin-logout:hover {
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
-.nav-rail__admin-logout .material-symbols-rounded,
-.nav-rail__admin-enter .material-symbols-rounded {
+.nav-rail__admin-logout .material-symbols-rounded {
   font-size: 24px;
   position: relative;
   z-index: 1;
@@ -544,15 +573,17 @@ function onItemLeave() {
   line-height: 16px;
   text-align: center;
   color: var(--md-sys-color-on-surface-variant, #49454f);
-  margin-top: -4px;
+  margin-top: 2px;
+  position: relative;
+  z-index: 1;
 }
 
 /* ======== 底部操作按钮 ======== */
-/* GitHub <a> 链接：icon-button 风格，hover 有 state layer */
+/* 底部按钮统一 56px 宽（与导航项对齐），24px 图标居中 */
 .nav-rail__github-btn {
-  width: 48px;
+  width: 56px;
   height: 48px;
-  border-radius: 24px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -567,7 +598,7 @@ function onItemLeave() {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 24px;
+  border-radius: 16px;
   background-color: var(--md-sys-color-on-surface-variant, #49454f);
   opacity: 0;
   transition: opacity 0.2s;
@@ -591,9 +622,12 @@ function onItemLeave() {
 
 .nav-rail__action-btn {
   --md-icon-button-icon-size: 24px;
-  --md-icon-button-state-layer-width: 48px;
+  width: 56px;
+  height: 48px;
+  /* 抑制 md-icon-button 的 touch-target 自动 margin */
+  --md-icon-button-state-layer-width: 56px;
   --md-icon-button-state-layer-height: 48px;
-  --md-icon-button-state-layer-shape: 24px;
+  --md-icon-button-state-layer-shape: 16px;
 }
 
 /* ======== 暗色主题（通过 data-theme 属性切换） ======== */
@@ -656,19 +690,16 @@ function onItemLeave() {
   color: var(--md-sys-color-on-surface-variant, #cac4d0);
 }
 
-/* ======== 暗色主题 - Admin 退出/进入按钮 ======== */
-:global([data-theme="dark"]) .nav-rail__admin-logout,
-:global([data-theme="dark"]) .nav-rail__admin-enter {
+/* ======== 暗色主题 - Admin 退出按钮 ======== */
+:global([data-theme="dark"]) .nav-rail__admin-logout {
   color: var(--md-sys-color-on-surface-variant, #cac4d0);
 }
 
-:global([data-theme="dark"]) .nav-rail__admin-logout::before,
-:global([data-theme="dark"]) .nav-rail__admin-enter::before {
+:global([data-theme="dark"]) .nav-rail__admin-logout::before {
   background-color: var(--md-sys-color-on-surface-variant, #cac4d0);
 }
 
-:global([data-theme="dark"]) .nav-rail__admin-logout:hover,
-:global([data-theme="dark"]) .nav-rail__admin-enter:hover {
+:global([data-theme="dark"]) .nav-rail__admin-logout:hover {
   color: var(--md-sys-color-on-surface, #e6e1e5);
 }
 
