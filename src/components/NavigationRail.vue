@@ -47,7 +47,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['fab-click', 'item-hover', 'item-leave', 'admin-logout'])
+const emit = defineEmits(['fab-click', 'item-hover', 'item-leave', 'admin-logout', 'theme-click'])
 
 const route = useRoute()
 const router = useRouter()
@@ -194,6 +194,7 @@ function onItemLeave() {
             touch-target="none"
             aria-label="Toggle theme"
             title="Toggle theme"
+            @click="emit('theme-click')"
           >
             <span class="material-symbols-rounded">palette</span>
           </md-icon-button>

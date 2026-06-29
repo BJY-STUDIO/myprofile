@@ -49,11 +49,9 @@ requestAnimationFrame(() => {
 setTimeout(initThemePanel, 100)
 
 function initThemePanel() {
-  const themeBtn = document.getElementById('theme-btn')
-  const themeBtnMobile = document.getElementById('theme-btn-mobile')
   const themeMenu = document.getElementById('theme-menu')
-  if (!themeMenu || (!themeBtn && !themeBtnMobile)) {
-    // 移动端可能还没有渲染，等路由完成再试
+  if (!themeMenu) {
+    // 菜单 DOM 还没就绪，等路由完成再试
     setTimeout(initThemePanel, 500)
     return
   }
@@ -97,23 +95,9 @@ function initThemePanel() {
   }
   updatePreview()
 
-  // 绑定打开菜单——桌面端
-  if (themeBtn) {
-    themeBtn.addEventListener('click', () => {
-      themeMenu.setAttribute('anchor', 'theme-btn')
-      themeMenu.open = !themeMenu.open
-      if (themeMenu.open) patchMenuZIndex(themeMenu)
-    })
-  }
-
-  // 绑定打开菜单——移动端
-  if (themeBtnMobile) {
-    themeBtnMobile.addEventListener('click', () => {
-      themeMenu.setAttribute('anchor', 'theme-btn-mobile')
-      themeMenu.open = !themeMenu.open
-      if (themeMenu.open) patchMenuZIndex(themeMenu)
-    })
-  }
+  // 注意：theme-btn 和 theme-btn-mobile 的 click 事件已由 Vue 组件处理
+  // （NavigationRail emit theme-click → App.vue onThemeClick）
+  // 此处不再 DOM 绑定，避免 Transition 销毁重建 DOM 后事件丢失
 
   // 覆盖 md-menu shadow DOM 内部 .menu 的 z-index，
   // 使其高于 Navigation Rail (z-index:100) 和 Drawer (z-index:201)
