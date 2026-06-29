@@ -158,10 +158,10 @@ function onItemLeave() {
 
     <!-- 下半部分（固定底部）-->
     <div class="nav-rail__bottom">
-      <md-divider></md-divider>
       <Transition name="nav-rail-bottom" mode="out-in">
-        <!-- Admin 模式：退出登录按钮 -->
+        <!-- Admin 模式：divider + 退出登录按钮 -->
         <div v-if="adminMode" key="admin" class="nav-rail__bottom-actions">
+          <md-divider></md-divider>
           <a
             class="nav-rail__admin-logout"
             href="#"
@@ -174,8 +174,9 @@ function onItemLeave() {
             <span class="nav-rail__admin-logout-label">退出</span>
           </a>
         </div>
-        <!-- 正常模式：GitHub + 调色板 -->
+        <!-- 正常模式：divider + GitHub + 调色板 -->
         <div v-else key="blog" class="nav-rail__bottom-actions">
+          <md-divider></md-divider>
           <a
             class="nav-rail__github-btn"
             href="https://github.com/BJY-STUDIO/myprofile"
@@ -477,7 +478,7 @@ function onItemLeave() {
   padding-bottom: 16px;
 }
 
-.nav-rail__bottom md-divider {
+.nav-rail__bottom-actions md-divider {
   width: 56px;
   margin-bottom: 12px;
 }
@@ -528,8 +529,6 @@ function onItemLeave() {
 /* ======== Admin 退出按钮 ======== */
 .nav-rail__admin-logout {
   width: 56px;
-  height: 48px;
-  border-radius: 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -537,13 +536,29 @@ function onItemLeave() {
   color: var(--md-sys-color-on-surface-variant, #49454f);
   text-decoration: none;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+}
+
+/* Admin 退出图标区域：48x48 圆形 */
+.nav-rail__admin-logout .material-symbols-rounded {
+  font-size: 24px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 24px;
+  position: relative;
+  z-index: 1;
 }
 
 .nav-rail__admin-logout::before {
   content: '';
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 4px;
+  width: 48px;
+  height: 48px;
   border-radius: 24px;
   background-color: var(--md-sys-color-on-surface-variant, #49454f);
   opacity: 0;
@@ -559,31 +574,12 @@ function onItemLeave() {
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
-.nav-rail__admin-logout .material-symbols-rounded {
-  font-size: 24px;
-  position: relative;
-  z-index: 1;
-}
-
-.nav-rail__admin-logout-label {
-  font-family: var(--md-sys-typescale-label-medium-font, 'Google Sans Text', 'Roboto', sans-serif);
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.1px;
-  line-height: 16px;
-  text-align: center;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  margin-top: 2px;
-  position: relative;
-  z-index: 1;
-}
-
 /* ======== 底部操作按钮 ======== */
 /* 底部按钮统一 56px 宽（与导航项对齐），24px 图标居中 */
 .nav-rail__github-btn {
-  width: 56px;
+  width: 48px;
   height: 48px;
-  border-radius: 16px;
+  border-radius: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -598,7 +594,7 @@ function onItemLeave() {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 16px;
+  border-radius: 24px;
   background-color: var(--md-sys-color-on-surface-variant, #49454f);
   opacity: 0;
   transition: opacity 0.2s;
@@ -622,12 +618,12 @@ function onItemLeave() {
 
 .nav-rail__action-btn {
   --md-icon-button-icon-size: 24px;
-  width: 56px;
+  width: 48px;
   height: 48px;
   /* 抑制 md-icon-button 的 touch-target 自动 margin */
-  --md-icon-button-state-layer-width: 56px;
+  --md-icon-button-state-layer-width: 48px;
   --md-icon-button-state-layer-height: 48px;
-  --md-icon-button-state-layer-shape: 16px;
+  --md-icon-button-state-layer-shape: 24px;
 }
 
 /* ======== 暗色主题（通过 data-theme 属性切换） ======== */

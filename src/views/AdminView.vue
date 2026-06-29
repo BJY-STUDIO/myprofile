@@ -347,23 +347,22 @@ watch([authToken, () => route.query.tab], ([token, tab]) => {
 }
 
 /* ===== 已登录内容 fadeIn ===== */
+/* 仅用 opacity 过渡，不用 transform:translateY 避免影响布局高度 */
+/* opacity:0 不影响文档流占位，元素仍占空间，滚动条不会因高度变化闪烁 */
 .admin-content {
   opacity: 0;
-  transform: translateY(10px);
 }
 
 .admin-content--fadein {
-  animation: admin-content-fadein 200ms linear 200ms both;
+  animation: admin-content-fadein 200ms linear both;
 }
 
 @keyframes admin-content-fadein {
   from {
     opacity: 0;
-    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
