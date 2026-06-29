@@ -96,9 +96,12 @@ const isOnSubItemPage = computed(() => {
   )
 })
 
-// 是否处于常驻模式：当前激活的一级菜单有子菜单 且 屏幕足够宽 且 在二级页面（非三级深页面）
+// 是否处于常驻模式：当前激活的一级菜单有子菜单 且 开启了 persistent 且 屏幕足够宽 且 在二级页面（非三级深页面）
 const isPersistentPanel = computed(() => {
-  return isPersistentScreen.value && !!activeSubItems.value && isOnSubItemPage.value
+  return isPersistentScreen.value
+    && !!activeSubItems.value
+    && !!activeNavItem.value?.persistent
+    && isOnSubItemPage.value
 })
 
 // 计算当前要显示在子面板中的子菜单项

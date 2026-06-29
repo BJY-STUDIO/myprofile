@@ -18,18 +18,18 @@ const NAV_CACHE_KEY = 'm3-nav-cache'
 // ===== 默认导航数据 =====
 function createDefaultNavItems() {
   return [
-    { id: 'home', label: '首页', icon: 'home', route: '/', children: [] },
-    { id: 'about', label: '关于', icon: 'person_outline', route: '/about', children: [] },
-    { id: 'blog', label: '博客', icon: 'description', route: '/blog', children: [] },
+    { id: 'home', label: '首页', icon: 'home', route: '/', persistent: false, children: [] },
+    { id: 'about', label: '关于', icon: 'person_outline', route: '/about', persistent: false, children: [] },
+    { id: 'blog', label: '博客', icon: 'description', route: '/blog', persistent: false, children: [] },
     {
-      id: 'projects', label: '项目', icon: 'code', route: '/projects',
+      id: 'projects', label: '项目', icon: 'code', route: '/projects', persistent: true,
       children: [
         { id: 'projects-overview', label: '全部项目', route: '/projects' },
         { id: 'projects-web', label: 'Web 应用', route: '/projects/web' },
         { id: 'projects-tools', label: '工具', route: '/projects/tools' },
       ],
     },
-    { id: 'contact', label: '联系', icon: 'mail_outline', route: '/contact', children: [] },
+    { id: 'contact', label: '联系', icon: 'mail_outline', route: '/contact', persistent: false, children: [] },
   ]
 }
 
@@ -154,6 +154,7 @@ export function useNavItems() {
       label: item.label || '新页面',
       icon: item.icon || 'article',
       route: item.route || `/${item.id || Date.now()}`,
+      persistent: item.persistent ?? false,
       children: item.children || [],
       ...(item._documentId ? { _documentId: item._documentId } : {}),
     })
@@ -190,6 +191,24 @@ export function useNavItems() {
     store.navItems[parentIndex]?.children?.splice(subIndex, 1)
   }
 
+  // 一级菜单排序
+  function optimisticMoveNav(from, to) {
+    if (from < 0 || from >= store.navItems.length) return
+    const clampedTo = Math.max(0, Math.min(to, store.navItems.length - 1))
+    const [item] = store.navItems.splice(from, 1)
+    store.navItems.splice(clampedTo, 0, item)
+  }
+
+  // 子菜单排序
+  function optimisticMoveSub(parentIndex, from, to) {
+    const children = store.navItems[parentIndex]?.children
+    if (!children) return
+    if (from < 0 || from >= children.length) return
+    const clampedTo = Math.max(0, Math.min(to, children.length - 1))
+    const [item] = children.splice(from, 1)
+    children.splice(clampedTo, 0, item)
+  }
+
   return {
     navItems,
     // 乐观更新（NavManager 使用）
@@ -199,6 +218,8 @@ export function useNavItems() {
     optimisticAddSub,
     optimisticUpdateSub,
     optimisticRemoveSub,
+    optimisticMoveNav,
+    optimisticMoveSub,
   }
 }
 

@@ -5,7 +5,7 @@
       <div class="section-title__actions">
         <md-filled-tonal-button v-if="isLoggedIn" @click="onAddNav">
           <span class="material-symbols-rounded" slot="icon">add</span>
-          添加一级菜单
+          添加菜单
         </md-filled-tonal-button>
         <md-outlined-button v-if="!isLoggedIn" @click="showLoginDialog = true">
           <span class="material-symbols-rounded" slot="icon">login</span>
@@ -43,8 +43,18 @@
             <span class="nav-card__label">{{ item.label }}</span>
             <span class="nav-card__route">{{ item.route }}</span>
           </div>
+          <!-- 排序按钮 -->
+          <div v-if="isLoggedIn" class="nav-card__sort">
+            <md-icon-button :disabled="i === 0" @click="onMoveNav(i, i - 1)">
+              <span class="material-symbols-rounded">keyboard_arrow_up</span>
+            </md-icon-button>
+            <md-icon-button :disabled="i === navItems.length - 1" @click="onMoveNav(i, i + 1)">
+              <span class="material-symbols-rounded">keyboard_arrow_down</span>
+            </md-icon-button>
+          </div>
+          <!-- 操作按钮 -->
           <div v-if="isLoggedIn" class="nav-card__actions">
-            <md-icon-button @click="editNav = i; pickedIcon = navItems[i]?.icon || 'article'; showNavDialog = true">
+            <md-icon-button @click="editNav = i; pickedIcon = navItems[i]?.icon || 'article'; editPersistent = navItems[i]?.persistent || false; showNavDialog = true">
               <span class="material-symbols-rounded">edit</span>
             </md-icon-button>
             <md-icon-button @click="removeNav(i)">
@@ -62,6 +72,15 @@
           >
             <span class="sub-item__label">{{ sub.label }}</span>
             <span class="sub-item__route">{{ sub.route }}</span>
+            <!-- 子菜单排序 -->
+            <div v-if="isLoggedIn" class="sub-item__sort">
+              <md-icon-button :disabled="j === 0" @click="onMoveSub(i, j, j - 1)">
+                <span class="material-symbols-rounded">expand_less</span>
+              </md-icon-button>
+              <md-icon-button :disabled="j === item.children.length - 1" @click="onMoveSub(i, j, j + 1)">
+                <span class="material-symbols-rounded">expand_more</span>
+              </md-icon-button>
+            </div>
             <div v-if="isLoggedIn" class="sub-item__actions">
               <md-icon-button @click="editSub = { p: i, s: j }; showSubDialog = true">
                 <span class="material-symbols-rounded">edit</span>
@@ -122,6 +141,11 @@
           </div>
           <IconPicker v-if="showIconPicker" :modelValue="pickedIcon || (editNav >= 0 ? navItems[editNav]?.icon : 'article')" @update:modelValue="onPickIcon" class="icon-field__picker" />
         </div>
+        <label class="switch-field">
+          <md-switch :selected="editPersistent" @change="editPersistent = $event.target.selected"></md-switch>
+          <span class="switch-field__label">二级菜单常驻显示</span>
+        </label>
+        <span class="switch-field__hint">开启后，当页面宽度足够时，此项的二级菜单会常驻显示在侧边栏中</span>
       </form>
       <div slot="actions">
         <md-text-button form="nav-form" @click="showNavDialog = false">取消</md-text-button>
@@ -134,7 +158,7 @@
       <div slot="headline">{{ editSub ? '编辑' : '添加' }}子菜单</div>
       <form slot="content" class="dialog-form" id="sub-form" @submit.prevent>
         <md-outlined-text-field label="名称" :value="editSub ? navItems[editSub.p]?.children?.[editSub.s]?.label : ''" id="sub-label"></md-outlined-text-field>
-        <md-outlined-text-field label="路由" :value="editSub ? navItems[editSub.p]?.children?.[editSub.s]?.route : ''" id="sub-route"></md-outlined-text-field>
+        <md-outlined-text-field label="路由路径" :value="editSub ? navItems[editSub.p]?.children?.[editSub.s]?.route : ''" id="sub-route"></md-outlined-text-field>
         <md-outlined-text-field label="导航 ID" :value="editSub ? navItems[editSub.p]?.children?.[editSub.s]?.id : ''" id="sub-id"></md-outlined-text-field>
       </form>
       <div slot="actions">
@@ -162,6 +186,7 @@ import '@material/web/button/text-button'
 import '@material/web/iconbutton/icon-button'
 import '@material/web/dialog/dialog'
 import '@material/web/textfield/outlined-text-field'
+import '@material/web/switch/switch'
 
 const {
   navItems: getNavItems,
@@ -171,6 +196,8 @@ const {
   optimisticAddSub,
   optimisticUpdateSub,
   optimisticRemoveSub,
+  optimisticMoveNav,
+  optimisticMoveSub,
 } = useNavItems()
 
 const navItems = computed(() => getNavItems())
@@ -204,10 +231,7 @@ function clearToken() {
 }
 
 onMounted(() => {
-  // 恢复登录状态
-  if (getToken()) {
-    isLoggedIn.value = true
-  }
+  if (getToken()) isLoggedIn.value = true
 })
 
 async function onLogin() {
@@ -242,18 +266,14 @@ function showNotice(msg, isError = false) {
   operationMessage.value = msg
   operationError.value = isError
   clearTimeout(noticeTimer)
-  noticeTimer = setTimeout(() => {
-    operationMessage.value = ''
-  }, 4000)
+  noticeTimer = setTimeout(() => { operationMessage.value = '' }, 4000)
 }
 
 // ===== 图标选择 =====
 const showIconPicker = ref(false)
 const pickedIcon = ref('')
 
-function onPickIcon(icon) {
-  pickedIcon.value = icon
-}
+function onPickIcon(icon) { pickedIcon.value = icon }
 
 function toggleIconPicker() {
   showIconPicker.value = !showIconPicker.value
@@ -263,23 +283,21 @@ function toggleIconPicker() {
         const dialog = document.querySelector('md-dialog[open]')
         if (!dialog) return
         const scroller = dialog.shadowRoot?.querySelector('.scroller')
-        if (scroller) {
-          scroller.scrollTo({ top: scroller.scrollHeight, behavior: 'smooth' })
-        }
+        if (scroller) scroller.scrollTo({ top: scroller.scrollHeight, behavior: 'smooth' })
       })
     })
   }
 }
 
-// ===== 导航菜单 CRUD =====
-
-// 添加一级菜单
+// ===== 一级菜单 CRUD =====
 const showNavDialog = ref(false)
 const editNav = ref(-1)
+const editPersistent = ref(false)
 
 function onAddNav() {
   editNav.value = -1
   pickedIcon.value = 'article'
+  editPersistent.value = false
   showIconPicker.value = false
   showNavDialog.value = true
 }
@@ -289,62 +307,32 @@ async function onSaveNav() {
   const route = document.getElementById('nav-route')?.value?.trim() || '/'
   const navId = document.getElementById('nav-id')?.value?.trim() || `nav-${Date.now()}`
   const icon = pickedIcon.value || (editNav.value >= 0 ? navItems.value[editNav.value]?.icon : 'article')
+  const persistent = editPersistent.value
 
   const token = getToken()
-  if (!token) {
-    showNotice('请先登录 Strapi', true)
-    return
-  }
+  if (!token) { showNotice('请先登录 Strapi', true); return }
 
   saving.value = true
   try {
     if (editNav.value >= 0) {
-      // 编辑现有菜单
       const item = navItems.value[editNav.value]
       const docId = item._documentId
-
       if (docId) {
-        // 通过 Strapi API 更新
-        await updateNavItemApi(token, docId, {
-          title: label,
-          icon,
-          route,
-          navId,
-        })
-        optimisticUpdate(editNav.value, { label, icon, route, id: navId })
+        await updateNavItemApi(token, docId, { title: label, icon, route, navId, persistent })
+        optimisticUpdate(editNav.value, { label, icon, route, id: navId, persistent })
         await refreshNavItems()
         showNotice('菜单已更新')
       } else {
-        // 没 _documentId（来自默认数据），先创建
         const sortOrder = editNav.value
-        const result = await createNavItem(token, {
-          title: label,
-          icon,
-          route,
-          navId,
-          sortOrder,
-        })
-        optimisticUpdate(editNav.value, { label, icon, route, id: navId, _documentId: result.documentId })
+        const result = await createNavItem(token, { title: label, icon, route, navId, sortOrder, persistent })
+        optimisticUpdate(editNav.value, { label, icon, route, id: navId, persistent, _documentId: result.documentId })
         await refreshNavItems()
         showNotice('菜单已同步到 Strapi')
       }
     } else {
-      // 添加新菜单
       const sortOrder = navItems.value.length
-      const result = await createNavItem(token, {
-        title: label,
-        icon,
-        route,
-        navId,
-        sortOrder,
-      })
-      optimisticAdd({
-        id: navId,
-        label,
-        icon,
-        route,
-        _documentId: result.documentId,
-      })
+      const result = await createNavItem(token, { title: label, icon, route, navId, sortOrder, persistent })
+      optimisticAdd({ id: navId, label, icon, route, persistent, _documentId: result.documentId })
       await refreshNavItems()
       showNotice('菜单已创建')
     }
@@ -359,25 +347,17 @@ async function onSaveNav() {
 async function removeNav(i) {
   const item = navItems.value[i]
   if (!confirm(`确认删除「${item?.label}」？`)) return
-
   const token = getToken()
-  if (!token) {
-    showNotice('请先登录 Strapi', true)
-    return
-  }
+  if (!token) { showNotice('请先登录 Strapi', true); return }
 
   try {
     const docId = item._documentId
     if (docId) {
-      // 先删除子菜单
       if (item.children?.length) {
         for (const child of item.children) {
-          if (child._documentId) {
-            await deleteNavItemApi(token, child._documentId)
-          }
+          if (child._documentId) await deleteNavItemApi(token, child._documentId)
         }
       }
-      // 再删除父菜单
       await deleteNavItemApi(token, docId)
     }
     optimisticRemove(i)
@@ -388,8 +368,49 @@ async function removeNav(i) {
   }
 }
 
-// ===== 二级菜单 CRUD =====
+// ===== 菜单排序 =====
+async function onMoveNav(from, to) {
+  const token = getToken()
+  if (!token) { showNotice('请先登录 Strapi', true); return }
 
+  optimisticMoveNav(from, to)
+
+  // 更新 Strapi 中所有受影响项的 sortOrder
+  try {
+    const items = navItems.value
+    for (let idx = 0; idx < items.length; idx++) {
+      const item = items[idx]
+      if (item._documentId && item._documentId !== undefined) {
+        await updateNavItemApi(token, item._documentId, { sortOrder: idx })
+      }
+    }
+  } catch (e) {
+    showNotice('排序同步失败：' + (e.message || '未知错误'), true)
+    await refreshNavItems()
+  }
+}
+
+async function onMoveSub(parentIdx, from, to) {
+  const token = getToken()
+  if (!token) { showNotice('请先登录 Strapi', true); return }
+
+  optimisticMoveSub(parentIdx, from, to)
+
+  try {
+    const children = navItems.value[parentIdx]?.children || []
+    for (let idx = 0; idx < children.length; idx++) {
+      const child = children[idx]
+      if (child._documentId) {
+        await updateNavItemApi(token, child._documentId, { sortOrder: idx })
+      }
+    }
+  } catch (e) {
+    showNotice('排序同步失败：' + (e.message || '未知错误'), true)
+    await refreshNavItems()
+  }
+}
+
+// ===== 二级菜单 CRUD =====
 const showSubDialog = ref(false)
 const editSub = ref(null)
 const parentForSub = ref(-1)
@@ -401,10 +422,7 @@ async function onSaveSub() {
   const pIdx = editSub.value ? editSub.value.p : parentForSub.value
 
   const token = getToken()
-  if (!token) {
-    showNotice('请先登录 Strapi', true)
-    return
-  }
+  if (!token) { showNotice('请先登录 Strapi', true); return }
 
   const parentItem = navItems.value[pIdx]
   if (!parentItem) return
@@ -412,33 +430,18 @@ async function onSaveSub() {
   saving.value = true
   try {
     if (editSub.value) {
-      // 编辑子菜单
       const subItem = parentItem.children[editSub.value.s]
       const docId = subItem._documentId
-
       if (docId) {
-        await updateNavItemApi(token, docId, {
-          title: label,
-          route,
-          navId: subNavId,
-        })
+        await updateNavItemApi(token, docId, { title: label, route, navId: subNavId })
         optimisticUpdateSub(pIdx, editSub.value.s, { label, route, id: subNavId })
         await refreshNavItems()
         showNotice('子菜单已更新')
       } else {
-        // 子菜单没有 _documentId，可能来自默认数据
-        // 需要先创建并关联到父级
         const parentDocId = parentItem._documentId
         if (parentDocId) {
           const sortOrder = editSub.value.s
-          const result = await createNavItem(token, {
-            title: label,
-            icon: 'article',
-            route,
-            navId: subNavId,
-            sortOrder,
-            parent: { connect: [parentDocId] },
-          })
+          const result = await createNavItem(token, { title: label, icon: 'article', route, navId: subNavId, sortOrder, parent: { connect: [parentDocId] } })
           optimisticUpdateSub(pIdx, editSub.value.s, { label, route, id: subNavId, _documentId: result.documentId })
           await refreshNavItems()
           showNotice('子菜单已同步到 Strapi')
@@ -447,28 +450,11 @@ async function onSaveSub() {
         }
       }
     } else {
-      // 添加子菜单
       const parentDocId = parentItem._documentId
-      if (!parentDocId) {
-        showNotice('父菜单未关联 Strapi，请先编辑父菜单', true)
-        saving.value = false
-        return
-      }
+      if (!parentDocId) { showNotice('父菜单未关联 Strapi，请先编辑父菜单', true); saving.value = false; return }
       const sortOrder = parentItem.children?.length || 0
-      const result = await createNavItem(token, {
-        title: label,
-        icon: 'article',
-        route,
-        navId: subNavId,
-        sortOrder,
-        parent: { connect: [parentDocId] },
-      })
-      optimisticAddSub(pIdx, {
-        id: subNavId,
-        label,
-        route,
-        _documentId: result.documentId,
-      })
+      const result = await createNavItem(token, { title: label, icon: 'article', route, navId: subNavId, sortOrder, parent: { connect: [parentDocId] } })
+      optimisticAddSub(pIdx, { id: subNavId, label, route, _documentId: result.documentId })
       await refreshNavItems()
       showNotice('子菜单已创建')
     }
@@ -483,19 +469,13 @@ async function onSaveSub() {
 
 async function removeSub(p, s) {
   if (!confirm('确认删除子菜单？')) return
-
   const token = getToken()
-  if (!token) {
-    showNotice('请先登录 Strapi', true)
-    return
-  }
+  if (!token) { showNotice('请先登录 Strapi', true); return }
 
   try {
     const subItem = navItems.value[p]?.children?.[s]
     const docId = subItem?._documentId
-    if (docId) {
-      await deleteNavItemApi(token, docId)
-    }
+    if (docId) await deleteNavItemApi(token, docId)
     optimisticRemoveSub(p, s)
     await refreshNavItems()
     showNotice('子菜单已删除')
@@ -572,6 +552,12 @@ async function removeSub(p, s) {
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
+.nav-card__sort {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
 .nav-card__actions {
   display: flex;
   gap: 4px;
@@ -593,12 +579,18 @@ async function removeSub(p, s) {
 .sub-item__label {
   font-size: 14px;
   color: var(--md-sys-color-on-surface, #1c1b1f);
+  min-width: 60px;
 }
 
 .sub-item__route {
   font-size: 12px;
   color: var(--md-sys-color-on-surface-variant, #49454f);
   flex: 1;
+}
+
+.sub-item__sort {
+  display: flex;
+  gap: 0;
 }
 
 .sub-item__actions {
@@ -642,7 +634,27 @@ async function removeSub(p, s) {
   color: var(--md-sys-color-primary, #6750a4);
 }
 
-/* 登录/状态提示 */
+/* persistent 开关 */
+.switch-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.switch-field__label {
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.switch-field__hint {
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  line-height: 1.4;
+  margin-top: -8px;
+}
+
+/* 状态提示 */
 .admin-notice {
   display: flex;
   align-items: center;

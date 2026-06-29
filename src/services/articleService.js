@@ -912,6 +912,15 @@ let _navItemsCache = null
 
 /**
  * 将 Strapi NavItem 映射为 blogStore 导航格式
+ *
+ * 字段映射：
+ *   navId        → id        前端导航标识
+ *   title        → label     显示名称
+ *   icon         → icon      Material Symbols 图标名
+ *   route        → route     前端路由路径
+ *   persistent   → persistent 宽度足够时二级菜单是否常驻
+ *   _documentId  → _documentId Strapi document ID（写操作用）
+ *   children     → children  子菜单列表
  */
 function mapStrapiNavItem(strapiItem) {
   return {
@@ -919,7 +928,8 @@ function mapStrapiNavItem(strapiItem) {
     label: strapiItem.title,
     icon: strapiItem.icon || 'article',
     route: strapiItem.route || '/',
-    _documentId: strapiItem.documentId,  // 保留 Strapi documentId 用于写操作
+    persistent: strapiItem.persistent ?? false,
+    _documentId: strapiItem.documentId,
     children: (strapiItem.children || [])
       .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
       .map(child => ({
@@ -933,6 +943,7 @@ function mapStrapiNavItem(strapiItem) {
 
 /**
  * 从 Strapi 获取导航菜单数据
+ * 必须同时 populate[parent] 以区分顶层/子级菜单项
  * @param {number} timeoutMs
  * @returns {Promise<Array|null>}
  */
@@ -941,14 +952,14 @@ async function fetchNavItems(timeoutMs = API_FETCH_TIMEOUT) {
 
   try {
     const res = await fetchWithTimeout(
-      `${API_BASE_URL}/nav-items?populate[children][populate]=*&sort=sortOrder:asc`,
+      `${API_BASE_URL}/nav-items?populate[children][populate]=*&populate[parent]=&sort=sortOrder:asc`,
       timeoutMs
     )
     if (!res.ok) throw new Error(`API ${res.status}`)
     const json = await res.json()
     const items = json.data || []
 
-    // 过滤出顶层项目（没有 parent 字段）并按 sortOrder 排序
+    // 过滤出顶层项目（没有 parent 字段或 parent 为 null）并按 sortOrder 排序
     _navItemsCache = items
       .filter(item => !item.parent)
       .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
