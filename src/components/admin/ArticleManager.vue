@@ -747,7 +747,12 @@ function onCardRipple(e) {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--md-sys-color-surface-container-low, #f8f1f6);
+  background: linear-gradient(
+    135deg,
+    var(--md-sys-color-primary-container, #eaddff) 0%,
+    var(--md-sys-color-secondary-container, #e8def8) 50%,
+    var(--md-sys-color-tertiary-container, #ffd8e4) 100%
+  );
   border-radius: 24px;
   margin: 8px;
   padding: 0;
@@ -1417,7 +1422,12 @@ function onCardRipple(e) {
 
 /* ======== 暗色主题 ======== */
 :global([data-theme="dark"]) .hero {
-  background-color: var(--md-sys-color-surface-container-low, #1d1b20);
+  background: linear-gradient(
+    135deg,
+    var(--md-sys-color-primary-container, #21005d) 0%,
+    var(--md-sys-color-secondary-container, #4a4458) 50%,
+    var(--md-sys-color-tertiary-container, #633b48) 100%
+  );
 }
 
 :global([data-theme="dark"]) .link-card {
