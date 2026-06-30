@@ -47,29 +47,23 @@
           <h1 class="hero__title">文章管理</h1>
           <p class="hero__desc">创建、编辑和发布博客文章。管理文章内容、排序和发布状态。</p>
           <div class="hero__toc">
-            <button class="link-card" @click="onCreate">
-              <span class="material-symbols-rounded link-card__icon">note_add</span>
+            <button class="link-card" @click="onCreate" @pointerdown="onCardRipple">
               <div class="link-card__text">
                 <span class="link-card__title">新建文章</span>
                 <span class="link-card__desc">创建一篇新文章</span>
               </div>
-              <span class="material-symbols-rounded link-card__arrow">arrow_forward</span>
             </button>
-            <button class="link-card" @click="cycleFilter">
-              <span class="material-symbols-rounded link-card__icon">filter_list</span>
+            <button class="link-card" @click="cycleFilter" @pointerdown="onCardRipple">
               <div class="link-card__text">
                 <span class="link-card__title">{{ filterLabel }}</span>
                 <span class="link-card__desc">{{ articles.length }} 篇文章</span>
               </div>
-              <span class="material-symbols-rounded link-card__arrow">arrow_forward</span>
             </button>
-            <button class="link-card" @click="reloadArticles()">
-              <span class="material-symbols-rounded link-card__icon">refresh</span>
+            <button class="link-card" @click="reloadArticles()" @pointerdown="onCardRipple">
               <div class="link-card__text">
                 <span class="link-card__title">刷新</span>
                 <span class="link-card__desc">重新加载列表</span>
               </div>
-              <span class="material-symbols-rounded link-card__arrow">arrow_forward</span>
             </button>
           </div>
         </div>
@@ -78,19 +72,19 @@
       <!-- ======== main-toc（≤1294px 时在 hero 下方显示，2列卡片；≥1295px 隐藏） ======== -->
       <div class="main-toc-container">
         <div class="main-toc">
-          <button class="link-card" @click="onCreate">
+          <button class="link-card" @click="onCreate" @pointerdown="onCardRipple">
             <div class="link-card__text">
               <span class="link-card__title">新建文章</span>
               <span class="link-card__desc">创建一篇新文章</span>
             </div>
           </button>
-          <button class="link-card" @click="cycleFilter">
+          <button class="link-card" @click="cycleFilter" @pointerdown="onCardRipple">
             <div class="link-card__text">
               <span class="link-card__title">{{ filterLabel }}</span>
               <span class="link-card__desc">{{ articles.length }} 篇文章</span>
             </div>
           </button>
-          <button class="link-card" @click="reloadArticles()">
+          <button class="link-card" @click="reloadArticles()" @pointerdown="onCardRipple">
             <div class="link-card__text">
               <span class="link-card__title">刷新</span>
               <span class="link-card__desc">重新加载列表</span>
@@ -611,6 +605,43 @@ function insertMd(type) {
     ta.setSelectionRange(cursorPos, cursorPos)
   })
 }
+
+// ===== M3 Ripple 交互动画 =====
+// 严格遵循 m3 mioripple 实现：position:absolute; border-radius:50%; filter:blur(4px)
+// 初始尺寸 = 容器最大维度 × 20%, softEdgeSize = max(0.35 × maxDim, 75)
+// rippleScale = (maxRadius + softEdgeSize) / initialSize
+// 动画时长 450ms，缓动 cubic-bezier(0.2, 0, 0, 1)
+// 颜色硬编码 #001d35（M3 官方一致）
+function onCardRipple(e) {
+  const card = e.currentTarget
+  const rect = card.getBoundingClientRect()
+  const x = e.clientX - rect.left
+  const y = e.clientY - rect.top
+  const maxDim = Math.max(rect.width, rect.height)
+  const initialSize = maxDim * 0.2
+  const softEdgeSize = Math.max(0.35 * maxDim, 75)
+  const maxRadius = maxDim / 2
+  const rippleScale = (maxRadius + softEdgeSize) / initialSize
+
+  const ripple = document.createElement('span')
+  ripple.className = 'card-ripple'
+  const startX = x - initialSize / 2
+  const startY = y - initialSize / 2
+  ripple.style.cssText = `
+    width:${initialSize}px; height:${initialSize}px;
+    left:${startX}px; top:${startY}px;
+  `
+  card.appendChild(ripple)
+
+  ripple.animate([
+    { transform: 'scale(0)', opacity: 0.28 },
+    { transform: `scale(${rippleScale})`, opacity: 0 },
+  ], {
+    duration: 450,
+    easing: 'cubic-bezier(0.2, 0, 0, 1)',
+    fill: 'forwards',
+  }).onfinish = () => ripple.remove()
+}
 </script>
 
 <style scoped>
@@ -672,6 +703,7 @@ function insertMd(type) {
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0;
   text-align: center;
+  font-variation-settings: "GRAD" 0, "opsz" 18;
 }
 
 /* m3 .hero-description: font-size:22px; font-weight:400; line-height:30px; max-width:760px; text-align:center; margin:0 0 24px */
@@ -680,10 +712,11 @@ function insertMd(type) {
   font-size: 22px;
   font-weight: 400;
   line-height: 30px;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0 0 24px;
   max-width: 760px;
   text-align: center;
+  font-variation-settings: "GRAD" 0, "opsz" 17;
 }
 
 /* m3 .hero-toc: display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin:32px 0 0 */
@@ -736,6 +769,7 @@ function insertMd(type) {
   border: none;
   cursor: pointer;
   overflow: hidden;
+  position: relative;
   width: 100%;
   height: 112px;
   transition: border-radius 0.3s cubic-bezier(0.2, 0, 0, 1),
@@ -769,13 +803,13 @@ function insertMd(type) {
   text-overflow: ellipsis;
 }
 
-/* M3 .description: font-size:16px; font-weight:400; line-height:24px */
+/* M3 .description: font-size:16px; font-weight:400; line-height:24px; color:on-surface */
 .link-card__desc {
   font-family: var(--md-sys-typescale-body-m-font-family);
   font-size: 16px;
   font-weight: 400;
   line-height: 24px;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -802,6 +836,19 @@ function insertMd(type) {
 
 .link-card:hover .link-card__arrow {
   opacity: 1;
+}
+
+/* ======== M3 Ripple 交互动画 ======== */
+/* 严格对标 m3 mioripple: position:absolute; border-radius:50%; filter:blur(4px) */
+/* 颜色 #001d35（M3 官方一致） */
+.card-ripple {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  filter: blur(4px);
+  pointer-events: none;
+  background-color: #001d35;
 }
 
 /* ======== 内容区（对标 m3 scroll-show-container: flex row, 左50% + 右50% sticky） ======== */
