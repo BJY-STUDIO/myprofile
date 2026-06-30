@@ -20,6 +20,12 @@
           </div>
         </div>
       </section>
+      <!-- 骨架屏 main-toc（≤1294px 时显示） -->
+      <div class="main-toc-container">
+        <div class="main-toc">
+          <span v-for="n in 3" :key="'mtoc-sk-'+n" class="skeleton" style="height:112px;border-radius:24px;"></span>
+        </div>
+      </div>
       <section class="content-section">
         <div class="content-section__list">
           <div class="article-list">
@@ -68,6 +74,30 @@
           </div>
         </div>
       </section>
+
+      <!-- ======== main-toc（≤1294px 时在 hero 下方显示，2列卡片；≥1295px 隐藏） ======== -->
+      <div class="main-toc-container">
+        <div class="main-toc">
+          <button class="link-card" @click="onCreate">
+            <div class="link-card__text">
+              <span class="link-card__title">新建文章</span>
+              <span class="link-card__desc">创建一篇新文章</span>
+            </div>
+          </button>
+          <button class="link-card" @click="cycleFilter">
+            <div class="link-card__text">
+              <span class="link-card__title">{{ filterLabel }}</span>
+              <span class="link-card__desc">{{ articles.length }} 篇文章</span>
+            </div>
+          </button>
+          <button class="link-card" @click="reloadArticles()">
+            <div class="link-card__text">
+              <span class="link-card__title">刷新</span>
+              <span class="link-card__desc">重新加载列表</span>
+            </div>
+          </button>
+        </div>
+      </div>
 
       <!-- ======== 内容区（对齐 m3 get-started：grid 两栏，左1.2fr 右1fr） ======== -->
       <section v-if="editingIndex < 0" class="content-section">
@@ -656,40 +686,66 @@ function insertMd(type) {
   text-align: center;
 }
 
-/* m3 .hero-toc: display:grid; gap:8px; margin:32px 0 0 */
+/* m3 .hero-toc: display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin:32px 0 0 */
 .hero__toc {
   display: grid;
+  grid-template-columns: repeat(6, 1fr);
   gap: 8px;
   margin-top: 32px;
   width: 100%;
 }
 
-/* ======== link-card（对标 m3 mio-card <a>: surface-container-low, radius:24px） ======== */
-/* M3: inline-flex; flex-direction:column-reverse; align-items:center; justify-content:space-between; 
-   bg:rgb(248,241,246)=surface-container-low; border-radius:24px; height:112px */
+/* ======== main-toc（≤1294px 时在 hero 下方显示，2列卡片；≥1295px 隐藏） ======== */
+/* M3: .main-toc-conatiner { display:flex; flex-direction:column; align-items:center; width:100% } */
+/* M3 @min-width:1295px → display:none */
+.main-toc-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+/* M3: .main-toc { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin:24px 0 0 } */
+/* 实际渲染为 2 列（由 grid auto-fill 决定） */
+.main-toc {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 24px;
+  width: 100%;
+  max-width: 1200px;
+  padding: 0 56px;
+}
+
+/* ======== link-card（严格对标 m3 mio-card <a>） ======== */
+/* M3: inline-flex; flex-direction:column-reverse; align-items:center; justify-content:space-between;
+   bg:surface-container-low; border-radius:24px; height:112px; overflow:hidden;
+   transition: border-radius 0.3s + background-color 0.3s (cubic-bezier(0.2,0,0,1)) */
 .link-card {
   display: inline-flex;
-  flex-direction: row;
+  flex-direction: column-reverse;
   align-items: center;
   justify-content: space-between;
   padding: 0;
   border-radius: 24px;
-  background-color: var(--md-sys-color-surface-container-low, #f8f1f6);
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
   text-decoration: none;
   text-align: left;
   font-family: inherit;
   color: inherit;
   border: none;
   cursor: pointer;
-  transition: background-color 200ms cubic-bezier(0.2, 0, 0, 1),
-              box-shadow 200ms cubic-bezier(0.2, 0, 0, 1);
+  overflow: hidden;
   width: 100%;
+  height: 112px;
+  transition: border-radius 0.3s cubic-bezier(0.2, 0, 0, 1),
+              background-color 0.3s cubic-bezier(0.2, 0, 0, 1);
   -webkit-tap-highlight-color: transparent;
 }
 
+/* M3 hover: backgroundColor=surface-container-high, NO box-shadow */
 .link-card:hover {
-  background-color: var(--md-sys-color-surface-container, #ece7e9);
-  box-shadow: var(--md-sys-elevation-1, 0 1px 3px 1px rgba(0,0,0,0.15), 0 1px 2px 0 rgba(0,0,0,0.3));
+  background-color: var(--md-sys-color-surface-container-high, #e6e0e9);
 }
 
 /* M3 .content-container: grid; gap:8px; margin:24px */
@@ -725,21 +781,22 @@ function insertMd(type) {
   text-overflow: ellipsis;
 }
 
-/* M3 section-card icon: 24px icon in a visual context — not present in hero-toc medium cards, 
-   but for our admin UI, align with M3's content-container margin:24px */
+/* Icon in hero-toc card: positioned at top of card via column-reverse */
 .link-card__icon {
   font-size: 24px;
   color: var(--md-sys-color-on-surface-variant, #49454f);
-  margin-left: 24px;
+  margin: 24px 24px 0;
   flex-shrink: 0;
 }
 
+/* Arrow indicator (not in M3 original, but useful for admin UX) */
 .link-card__arrow {
   font-size: 20px;
   color: var(--md-sys-color-on-surface-variant, #49454f);
   opacity: 0;
   transition: opacity 200ms;
   flex-shrink: 0;
+  align-self: center;
   margin-right: 24px;
 }
 
@@ -780,8 +837,15 @@ function insertMd(type) {
   padding-right: 0;
 }
 
+/* 列表中的文章卡片：保持 row 方向（不同于 hero-toc 的 column-reverse） */
 .article-card {
-  /* full-width card in the list */
+  flex-direction: row;
+  height: auto;
+  min-height: 80px;
+}
+
+.article-card .link-card__icon {
+  margin: 0 0 0 24px;
 }
 
 .article-card .link-card__title {
@@ -1174,7 +1238,11 @@ function insertMd(type) {
 }
 
 :global([data-theme="dark"]) .link-card:hover {
-  background-color: var(--md-sys-color-surface-container, #211f26);
+  background-color: var(--md-sys-color-surface-container-high, #34302e);
+}
+
+:global([data-theme="dark"]) .main-toc-container {
+  background-color: transparent;
 }
 
 :global([data-theme="dark"]) .empty-state {
@@ -1226,9 +1294,19 @@ function insertMd(type) {
 
 /* ======== 响应式（严格对标 m3 get-started hero 断点） ======== */
 
-/* M3 中间断点（≤1200px）：
-   h1: 88px/96px lh, desc margin: 0, hero-toc: display:none */
-@media (max-width: 1200px) {
+/* ===== M3 切换断点（1295px）：
+   ≥1295px: hero-toc 可见, main-toc 隐藏
+   ≤1294px: hero-toc 隐藏, main-toc 可见 ===== */
+
+/* ≥1295px：main-toc 隐藏 */
+@media (min-width: 1295px) {
+  .main-toc-container {
+    display: none;
+  }
+}
+
+/* ≤1294px：hero-toc 隐藏, main-toc 可见 + h1/desc 缩小 */
+@media (max-width: 1294px) {
   .hero__title {
     font-size: 88px;
     line-height: 96px;
@@ -1246,10 +1324,16 @@ function insertMd(type) {
   .skeleton-container .hero__toc {
     display: none;
   }
+
+  /* main-toc 在 ≤1294px 变为 2 列 */
+  .main-toc {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 /* M3 小断点（≤600px）：
-   .hero .content margin: 32px, h1: 57px/64px lh, desc: 16px/24px margin:0 */
+   .hero .content margin: 32px, h1: 57px/64px lh, desc: 16px/24px margin:0,
+   main-toc 变为 1 列 */
 @media (max-width: 600px) {
   .hero__inner {
     margin: 32px;
@@ -1264,6 +1348,11 @@ function insertMd(type) {
     font-size: 16px;
     line-height: 24px;
     margin: 0;
+  }
+
+  .main-toc {
+    grid-template-columns: 1fr;
+    padding: 0 32px;
   }
 }
 
