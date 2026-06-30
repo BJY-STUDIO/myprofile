@@ -618,7 +618,7 @@ function insertMd(type) {
   justify-content: center;
   background-color: var(--md-sys-color-surface-container-low, #f8f1f6);
   border-radius: 24px;
-  margin: 0 24px 8px;
+  margin: 0 0 8px;
   padding: 0;
 }
 
@@ -1224,25 +1224,51 @@ function insertMd(type) {
   --md-text-button-label-text-color: var(--md-sys-color-error, #f2b8b5);
 }
 
-/* ======== 响应式 ======== */
-@media (max-width: 840px) {
-  .hero {
-    margin: 0 16px 8px;
-    border-radius: 24px;
+/* ======== 响应式（严格对标 m3 get-started hero 断点） ======== */
+
+/* M3 中间断点（≤1200px）：
+   h1: 88px/96px lh, desc margin: 0, hero-toc: display:none */
+@media (max-width: 1200px) {
+  .hero__title {
+    font-size: 88px;
+    line-height: 96px;
   }
 
-  .hero__inner {
-    margin: 32px 24px;
+  .hero__desc {
+    margin: 0;
   }
 
   .hero__toc {
-    /* grid auto-fill on mobile */
+    display: none;
   }
 
-  .link-card {
-    /* full width on mobile */
+  /* 骨架屏同步隐藏 */
+  .skeleton-container .hero__toc {
+    display: none;
+  }
+}
+
+/* M3 小断点（≤600px）：
+   .hero .content margin: 32px, h1: 57px/64px lh, desc: 16px/24px margin:0 */
+@media (max-width: 600px) {
+  .hero__inner {
+    margin: 32px;
   }
 
+  .hero__title {
+    font-size: 57px;
+    line-height: 64px;
+  }
+
+  .hero__desc {
+    font-size: 16px;
+    line-height: 24px;
+    margin: 0;
+  }
+}
+
+/* ======== 移动端布局（≤840px） ======== */
+@media (max-width: 840px) {
   .content-section {
     flex-direction: column;
     padding: 24px 16px;
