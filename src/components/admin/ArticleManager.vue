@@ -721,7 +721,10 @@ function onCardRipple(e) {
 <style scoped>
 .article-manager {
   position: relative;
+  display: flex;
+  flex-direction: column;
   min-height: 100%;
+  min-height: 100dvh;
 }
 
 /* ======== 骨架屏容器 ======== */
@@ -1188,10 +1191,16 @@ function onCardRipple(e) {
 }
 
 /* ======== 编辑器区域 ======== */
+/* 紧跟 hero 下方，自动填满视口剩余高度（滚到编辑器时占满视口），上下 margin 8px */
 .editor-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   max-width: 1400px;
-  margin: 0 auto;
-  padding: 24px 24px 48px;
+  margin: 0 8px 8px;
+  padding: 0;
+  min-height: calc(100dvh - 16px);
+  align-self: center;
 }
 
 /* 顶部操作栏 */
@@ -1241,7 +1250,8 @@ function onCardRipple(e) {
   background-color: var(--md-sys-color-surface-container-low, #f8f1f6);
   border-radius: 0 0 28px 28px;
   overflow: hidden;
-  min-height: calc(100vh - 280px);
+  flex: 1;
+  min-height: 0;
 }
 
 /* 左栏字段 */
@@ -1252,7 +1262,6 @@ function onCardRipple(e) {
   gap: 16px;
   border-right: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   overflow-y: auto;
-  max-height: calc(100vh - 280px);
 }
 
 .field {
