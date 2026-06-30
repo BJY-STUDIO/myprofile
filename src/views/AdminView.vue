@@ -214,12 +214,13 @@ watch([authToken, () => route.query.tab], ([token, tab]) => {
 }
 
 /* ======== 缓冲进度条 ======== */
+/* 只覆盖右侧内容区域，不占用 nav rail (80px) */
 .loading-progress {
   position: fixed;
   top: 0;
-  left: 0;
+  left: 80px;
   z-index: 100;
-  width: 100%;
+  width: calc(100% - 80px);
   --md-linear-progress-active-indicator-color: var(--md-sys-color-primary, #6750a4);
   --md-linear-progress-track-color: var(--md-sys-color-surface-container-highest, #e6e0e9);
   transition: opacity 400ms ease-out;
@@ -365,6 +366,14 @@ watch([authToken, () => route.query.tab], ([token, tab]) => {
   }
   to {
     opacity: 1;
+  }
+}
+
+/* ===== 移动端：nav rail 隐藏，progress bar 全宽 ===== */
+@media (max-width: 840px) {
+  .loading-progress {
+    left: 0;
+    width: 100%;
   }
 }
 
