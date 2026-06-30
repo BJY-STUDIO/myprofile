@@ -751,8 +751,10 @@ function onCardRipple(e) {
 }
 
 /* ======== link-card（严格对标 m3 mio-card <a>） ======== */
-/* M3: inline-flex; flex-direction:column-reverse; align-items:center; justify-content:space-between;
-   bg:surface-container-low; border-radius:24px; height:112px; overflow:hidden;
+/* M3: inline-flex; column-reverse; align-items:center; justify-content:space-between;
+   bg:var(--mio-theme-color-surface-1)→surface-container-low; border-radius:24px;
+   height:100%(from grid-auto-rows); overflow:hidden; color:on-surface;
+   font-variation-settings:"GRAD" 0;
    transition: border-radius 0.3s + background-color 0.3s (cubic-bezier(0.2,0,0,1)) */
 .link-card {
   display: inline-flex;
@@ -762,54 +764,89 @@ function onCardRipple(e) {
   padding: 0;
   border-radius: 24px;
   background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
   text-decoration: none;
   text-align: left;
   font-family: inherit;
-  color: inherit;
   border: none;
   cursor: pointer;
   overflow: hidden;
   position: relative;
   width: 100%;
   height: 112px;
+  font-variation-settings: "GRAD" 0;
   transition: border-radius 0.3s cubic-bezier(0.2, 0, 0, 1),
               background-color 0.3s cubic-bezier(0.2, 0, 0, 1);
   -webkit-tap-highlight-color: transparent;
 }
 
-/* M3 hover: backgroundColor=surface-container-high, NO box-shadow */
-.link-card:hover {
-  background-color: var(--md-sys-color-surface-container-high, #e6e0e9);
+/* M3 hover/focus/active: background=secondary-container, color=on-secondary-container */
+.link-card:hover,
+.link-card:focus,
+.link-card:active {
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
 }
 
-/* M3 .content-container: grid; gap:8px; margin:24px */
+/* M3 hover: title GRAD 50 */
+.link-card:hover .link-card__title {
+  font-variation-settings: "GRAD" 50, "opsz" 18;
+}
+
+/* M3 focus: border-radius 48px + outline */
+.link-card:focus {
+  margin: initial;
+  border: initial;
+  border-radius: 48px;
+  outline: 2px solid var(--md-sys-color-on-surface, #1c1b1f);
+  box-shadow: initial;
+}
+
+/* M3 active: border-radius 48px */
+.link-card:active {
+  border-radius: 48px;
+  outline: initial;
+}
+
+/* M3 active: title GRAD -50 */
+.link-card:active .link-card__title {
+  font-variation-settings: "GRAD" -50, "opsz" 18;
+}
+
+/* M3 .content-container: display:grid; position:relative; align-self:start; min-width:calc(100% - 48px); margin:24px; gap:8px */
 .link-card__text {
   display: grid;
-  gap: 8px;
+  position: relative;
+  align-self: start;
+  min-width: calc(100% - 48px);
   margin: 24px;
-  flex: 1;
-  min-width: 0;
+  gap: 8px;
 }
 
-/* M3 .title: font-size:24px; font-weight:475; line-height:32px */
+/* M3 .title: headline-s 24px/475/32px + font-variation-settings GRAD 0 opsz 18 + transition */
 .link-card__title {
   font-family: var(--md-sys-typescale-headline-s-font-family);
   font-size: 24px;
   font-weight: var(--md-sys-typescale-headline-s-font-weight, 475);
   line-height: 32px;
+  letter-spacing: var(--md-sys-typescale-headline-s-letter-spacing, 0);
   color: var(--md-sys-color-on-surface, #1c1b1f);
+  font-variation-settings: "GRAD" 0, "opsz" 18;
+  transition: font-variation-settings 0.3s cubic-bezier(0.2, 0, 0, 1);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* M3 .description: font-size:16px; font-weight:400; line-height:24px; color:on-surface */
+/* M3 .description: body-l 16px/400/24px + font-variation-settings GRAD 0 opsz 17; color:on-surface */
 .link-card__desc {
-  font-family: var(--md-sys-typescale-body-m-font-family);
+  font-family: var(--md-sys-typescale-body-l-font-family);
   font-size: 16px;
   font-weight: 400;
   line-height: 24px;
+  letter-spacing: var(--md-sys-typescale-body-l-letter-spacing, 0);
   color: var(--md-sys-color-on-surface, #1c1b1f);
+  font-variation-settings: "GRAD" 0, "opsz" 17;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1284,8 +1321,15 @@ function onCardRipple(e) {
   background-color: var(--md-sys-color-surface-container-low, #1d1b20);
 }
 
-:global([data-theme="dark"]) .link-card:hover {
-  background-color: var(--md-sys-color-surface-container-high, #34302e);
+:global([data-theme="dark"]) .link-card:hover,
+:global([data-theme="dark"]) .link-card:focus,
+:global([data-theme="dark"]) .link-card:active {
+  background-color: var(--md-sys-color-secondary-container, #4a4458);
+  color: var(--md-sys-color-on-secondary-container, #e8def8);
+}
+
+:global([data-theme="dark"]) .link-card:focus {
+  outline-color: var(--md-sys-color-on-surface, #e6e1e5);
 }
 
 :global([data-theme="dark"]) .main-toc-container {
