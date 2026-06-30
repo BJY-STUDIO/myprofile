@@ -13,17 +13,51 @@
     <div v-if="!loader.dataLoaded.value" class="skeleton-container">
       <section class="hero">
         <div class="hero__inner">
-          <span class="skeleton" style="height:56px;width:35%;border-radius:8px;"></span>
-          <span class="skeleton" style="height:22px;width:55%;margin-top:16px;border-radius:4px;"></span>
-          <div class="hero__toc" style="margin-top:32px;">
-            <span v-for="n in 3" :key="'toc-sk-'+n" class="skeleton" style="height:112px;border-radius:24px;"></span>
+          <h1 class="hero__title">文章管理</h1>
+          <p class="hero__desc">创建、编辑和发布博客文章。管理文章内容、排序和发布状态。</p>
+          <div class="hero__toc">
+            <button class="link-card" @click="onCreate" @pointerdown="onCardRipple">
+              <div class="link-card__text">
+                <span class="link-card__title">新建文章</span>
+                <span class="link-card__desc">创建一篇新文章</span>
+              </div>
+            </button>
+            <button class="link-card" @click="cycleFilter" @pointerdown="onCardRipple">
+              <div class="link-card__text">
+                <span class="link-card__title">{{ filterLabel }}</span>
+                <span class="link-card__desc">{{ articles.length }} 篇文章</span>
+              </div>
+            </button>
+            <button class="link-card" @click="reloadArticles()" @pointerdown="onCardRipple">
+              <div class="link-card__text">
+                <span class="link-card__title">刷新</span>
+                <span class="link-card__desc">重新加载列表</span>
+              </div>
+            </button>
           </div>
         </div>
       </section>
-      <!-- 骨架屏 main-toc（≤1294px 时显示） -->
+      <!-- main-toc（≤1294px 时显示） -->
       <div class="main-toc-container">
         <div class="main-toc">
-          <span v-for="n in 3" :key="'mtoc-sk-'+n" class="skeleton" style="height:112px;border-radius:24px;"></span>
+          <button class="link-card" @click="onCreate" @pointerdown="onCardRipple">
+            <div class="link-card__text">
+              <span class="link-card__title">新建文章</span>
+              <span class="link-card__desc">创建一篇新文章</span>
+            </div>
+          </button>
+          <button class="link-card" @click="cycleFilter" @pointerdown="onCardRipple">
+            <div class="link-card__text">
+              <span class="link-card__title">{{ filterLabel }}</span>
+              <span class="link-card__desc">{{ articles.length }} 篇文章</span>
+            </div>
+          </button>
+          <button class="link-card" @click="reloadArticles()" @pointerdown="onCardRipple">
+            <div class="link-card__text">
+              <span class="link-card__title">刷新</span>
+              <span class="link-card__desc">重新加载列表</span>
+            </div>
+          </button>
         </div>
       </div>
       <section class="content-section">
