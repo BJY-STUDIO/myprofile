@@ -47,6 +47,7 @@ function onThemeMobileClick() {
 const ADMIN_TOKEN_KEY = 'strapi-admin-token'
 const isAdminRoute = computed(() => route.path === '/admin' || route.path.startsWith('/admin/'))
 const adminNavItems = [
+  { id: 'dashboard', label: '首页', icon: 'home', route: '/admin?tab=dashboard' },
   { id: 'articles', label: '文章', icon: 'article', route: '/admin?tab=articles' },
   { id: 'cards', label: '卡片', icon: 'dashboard', route: '/admin?tab=cards' },
   { id: 'navigation', label: '导航', icon: 'menu', route: '/admin?tab=navigation' },
@@ -69,8 +70,8 @@ const ROUTE_TO_NAV_MAP = { '/article': 'blog' }
 const activeNavId = computed(() => {
   // Admin 模式：根据 route.query.tab 匹配 admin 项
   if (isAdminRoute.value) {
-    const tab = route.query.tab || 'articles'
-    return adminNavItems.find(item => item.id === tab)?.id || 'articles'
+    const tab = route.query.tab || 'dashboard'
+    return adminNavItems.find(item => item.id === tab)?.id || 'dashboard'
   }
 
   const items = blogNavItems.value

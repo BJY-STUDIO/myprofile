@@ -66,7 +66,8 @@
       <!-- 已登录：模块内容（导航由 App.vue NavigationRail 处理） -->
       <div v-else key="content" class="admin-content">
         <Transition name="admin-tab" mode="out-in">
-          <ArticleManager v-if="activeModule === 'articles'" key="articles" :token="authToken" />
+          <AdminDashboard v-if="activeModule === 'dashboard'" key="dashboard" :token="authToken" />
+          <ArticleManager v-else-if="activeModule === 'articles'" key="articles" :token="authToken" />
           <CardStyleManager v-else-if="activeModule === 'cards'" key="cards" :token="authToken" />
           <NavManager v-else-if="activeModule === 'navigation'" key="navigation" :token="authToken" />
         </Transition>
@@ -83,6 +84,7 @@ import { useAdminLoader } from '@/composables/useAdminLoader'
 import ArticleManager from '@/components/admin/ArticleManager.vue'
 import CardStyleManager from '@/components/admin/CardStyleManager.vue'
 import NavManager from '@/components/admin/NavManager.vue'
+import AdminDashboard from '@/components/admin/AdminDashboard.vue'
 import '@material/web/button/filled-button'
 import '@material/web/textfield/outlined-text-field'
 import '@material/web/progress/linear-progress'
@@ -187,12 +189,12 @@ function onLoginSuccess(token) {
 }
 
 // ===== 模块切换（由 NavigationRail 通过 route.query.tab 驱动） =====
-const activeModule = computed(() => route.query.tab || 'articles')
+const activeModule = computed(() => route.query.tab || 'dashboard')
 
 // 登录后确保 URL 有 tab 参数
 watch([authToken, () => route.query.tab], ([token, tab]) => {
   if (token && route.path === '/admin' && !tab) {
-    router.replace({ path: '/admin', query: { tab: 'articles' } })
+    router.replace({ path: '/admin', query: { tab: 'dashboard' } })
   }
 }, { immediate: true })
 </script>
