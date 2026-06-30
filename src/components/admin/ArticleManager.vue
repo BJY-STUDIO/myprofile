@@ -9,15 +9,27 @@
       :buffer="loader.progressBuffer.value"
     ></md-linear-progress>
 
-    <!-- ======== 骨架屏 ======== -->
-    <div v-if="!loader.dataLoaded.value" class="hero">
-      <div class="hero__inner">
-        <span class="skeleton" style="height:56px;width:35%;border-radius:8px;"></span>
-        <span class="skeleton" style="height:22px;width:55%;margin-top:16px;border-radius:4px;"></span>
-        <div class="hero__toc" style="margin-top:32px;">
-          <span v-for="n in 3" :key="'toc-sk-'+n" class="skeleton" style="height:112px;border-radius:24px;"></span>
+    <!-- ======== 骨架屏（匹配真实内容布局：hero + content-section，防止尺寸跳变） ======== -->
+    <div v-if="!loader.dataLoaded.value" class="content-fadein">
+      <section class="hero">
+        <div class="hero__inner">
+          <span class="skeleton" style="height:56px;width:35%;border-radius:8px;"></span>
+          <span class="skeleton" style="height:22px;width:55%;margin-top:16px;border-radius:4px;"></span>
+          <div class="hero__toc" style="margin-top:32px;">
+            <span v-for="n in 3" :key="'toc-sk-'+n" class="skeleton" style="height:112px;border-radius:24px;"></span>
+          </div>
         </div>
-      </div>
+      </section>
+      <section class="content-section">
+        <div class="content-section__list">
+          <div class="article-list">
+            <span v-for="n in 3" :key="'list-sk-'+n" class="skeleton" style="height:80px;border-radius:24px;"></span>
+          </div>
+        </div>
+        <div class="content-section__detail">
+          <span class="skeleton" style="height:240px;border-radius:28px;width:100%;"></span>
+        </div>
+      </section>
     </div>
 
     <!-- ======== 真实内容（fadeIn） ======== -->
@@ -1131,6 +1143,7 @@ function insertMd(type) {
 }
 
 /* ======== fadeIn 动画 ======== */
+/* 仅用纯 opacity，不用 transform:translateY 避免与 sticky 右栏交互导致布局抖动 */
 .content-fadein {
   animation: admin-fadein 200ms linear 200ms both;
 }
@@ -1138,11 +1151,9 @@ function insertMd(type) {
 @keyframes admin-fadein {
   from {
     opacity: 0;
-    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 

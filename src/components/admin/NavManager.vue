@@ -813,7 +813,8 @@ async function doRemoveSub(p, s) {
   color: var(--md-sys-color-on-error-container, #410e0b);
 }
 
-/* ======== fadeIn 动画（对照 M3: opacity 0→1 + translateY 10px→0, 200ms delay + 200ms linear） ======== */
+/* ======== fadeIn 动画 ======== */
+/* 仅用纯 opacity，不用 translateY 避免布局抖动 */
 .content-fadein {
   animation: admin-fadein 200ms linear 200ms both;
 }
@@ -821,16 +822,14 @@ async function doRemoveSub(p, s) {
 @keyframes admin-fadein {
   from {
     opacity: 0;
-    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 </style>
