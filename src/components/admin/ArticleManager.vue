@@ -741,14 +741,15 @@ function onCardRipple(e) {
 }
 
 /* ======== Hero（严格对标 m3 get-started） ======== */
-/* m3 .hero: display:flex; align-items:center; justify-content:center; border-radius:24px; margin:0 0 8px */
+/* m3 .hero: display:flex; align-items:center; justify-content:center; border-radius:24px */
+/* M3: mio-guide-page margin:8px 8px 0 + hero margin:0 0 8px → 四周 8px 间距 */
 .hero {
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: var(--md-sys-color-surface-container-low, #f8f1f6);
   border-radius: 24px;
-  margin: 0 0 8px;
+  margin: 8px;
   padding: 0;
 }
 
