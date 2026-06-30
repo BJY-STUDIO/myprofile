@@ -200,6 +200,7 @@ watch([authToken, () => route.query.tab], ([token, tab]) => {
   display: flex;
   flex-direction: column;
   min-height: 100%;
+  scrollbar-gutter: stable;
 }
 
 /* ===== 登录页 ===== */
