@@ -59,125 +59,138 @@
         </div>
       </header>
 
-      <!-- 1. 问候模块 -->
-      <section class="dashboard-greeting">
-        <h1 class="dashboard-greeting__title">{{ greetingText }}, Bao 👋</h1>
-        <p class="dashboard-greeting__subtitle">Here's what's happening with your blog today.</p>
-      </section>
+      <!-- 内容区统一 padding -->
+      <div class="dashboard-body">
 
-      <!-- 2. Continue writing -->
-      <section v-if="lastDraft" class="dashboard-section">
-        <h2 class="dashboard-section__title">Continue writing</h2>
-        <div class="continue-card">
-          <div class="continue-card__thumb">
-            <span class="material-symbols-rounded continue-card__thumb-icon">edit_note</span>
-          </div>
-          <div class="continue-card__body">
-            <span class="continue-card__title">{{ lastDraft.title || '(无标题)' }}</span>
-            <span class="continue-card__desc">{{ lastDraft.description || '暂无描述' }}</span>
-            <span class="continue-card__meta">Last edited {{ formatRelativeTime(lastDraft.updatedAt) }}</span>
-          </div>
-          <button class="continue-card__menu" aria-label="More options">
-            <span class="material-symbols-rounded">more_vert</span>
-          </button>
-          <button class="continue-card__action" @click="onContinueWriting(lastDraft)">
-            <span>Continue writing</span>
-            <span class="material-symbols-rounded">arrow_forward</span>
-          </button>
-        </div>
-      </section>
+        <!-- 1. 问候模块 -->
+        <section class="dashboard-greeting">
+          <h1 class="dashboard-greeting__title">{{ greetingText }}, Bao 👋</h1>
+          <p class="dashboard-greeting__subtitle">Here's what's happening with your blog today.</p>
+        </section>
 
-      <!-- 3. Recent articles -->
-      <section class="dashboard-section">
-        <div class="dashboard-section__header">
-          <h2 class="dashboard-section__title">Recent articles</h2>
-          <button class="dashboard-section__link" @click="goToArticles">
-            View all <span class="material-symbols-rounded">arrow_forward</span>
-          </button>
-        </div>
-        <div class="recent-list" v-if="recentArticles.length">
-          <div
-            v-for="(art, idx) in recentArticles"
-            :key="art.documentId"
-            class="recent-item"
-            :class="{ 'recent-item--last': idx === recentArticles.length - 1 }"
-            @click="onArticleClick(art)"
-          >
-            <div class="recent-item__thumb" :class="getArticleThumbClass(art)">
-              <span class="material-symbols-rounded">{{ art.publishedAt ? 'article' : 'edit_note' }}</span>
+        <!-- 2. Continue writing — 用最近编辑的文章做占位 -->
+        <section v-if="continueArticle" class="dashboard-section">
+          <h2 class="dashboard-section__title">Continue writing</h2>
+          <div class="continue-card">
+            <div class="continue-card__thumb">
+              <span class="material-symbols-rounded continue-card__thumb-icon">
+                {{ continueArticle.publishedAt ? 'article' : 'edit_note' }}
+              </span>
             </div>
-            <div class="recent-item__body">
-              <span class="recent-item__title">{{ art.title || '(无标题)' }}</span>
-              <span class="recent-item__desc">{{ art.description || '暂无描述' }}</span>
+            <div class="continue-card__body">
+              <span class="continue-card__title">{{ continueArticle.title || '(无标题)' }}</span>
+              <span class="continue-card__desc">{{ continueArticle.description || '暂无描述' }}</span>
+              <span class="continue-card__meta">Last edited {{ formatRelativeTime(continueArticle.updatedAt) }}</span>
             </div>
-            <span
-              class="recent-item__status"
-              :class="art.publishedAt ? 'recent-item__status--published' : 'recent-item__status--draft'"
-            >
-              {{ art.publishedAt ? 'Published' : 'Draft' }}
-            </span>
-            <span class="recent-item__date">{{ formatDate(art.publishedAt || art.createdAt) }}</span>
-            <div class="recent-item__tags" v-if="art.tags && art.tags.length">
-              <span
-                v-for="(tag, ti) in getVisibleTags(art.tags)"
-                :key="ti"
-                class="recent-item__tag"
-                :class="getTagClass(tag)"
-              >{{ tag }}</span>
-            </div>
-            <button class="recent-item__menu" aria-label="More options" @click.stop>
+            <button class="continue-card__menu" aria-label="More options">
               <span class="material-symbols-rounded">more_vert</span>
             </button>
+            <button class="continue-card__action" @click="onContinueWriting(continueArticle)">
+              <span>Continue writing</span>
+              <span class="material-symbols-rounded">arrow_forward</span>
+            </button>
           </div>
-        </div>
-        <div v-else class="empty-state">
-          <span class="material-symbols-rounded empty-state__icon">article</span>
-          <p class="empty-state__text">暂无文章</p>
-        </div>
-      </section>
+        </section>
 
-      <!-- 4. Quick actions -->
-      <section class="dashboard-section">
-        <h2 class="dashboard-section__title">Quick actions</h2>
-        <div class="quick-actions-grid">
-          <button class="quick-action-card" @click="onQuickAction('new-article')">
-            <div class="quick-action-card__icon quick-action-card__icon--primary">
-              <span class="material-symbols-rounded">edit</span>
+        <!-- 3. Recent articles -->
+        <section class="dashboard-section">
+          <div class="dashboard-section__header">
+            <h2 class="dashboard-section__title">Recent articles</h2>
+            <button class="dashboard-section__link" @click="goToArticles">
+              View all <span class="material-symbols-rounded">arrow_forward</span>
+            </button>
+          </div>
+          <div class="recent-list" v-if="recentArticles.length">
+            <div
+              v-for="(art, idx) in recentArticles"
+              :key="art.documentId"
+              class="recent-item"
+              :class="{ 'recent-item--last': idx === recentArticles.length - 1 }"
+              @click="onArticleClick(art)"
+            >
+              <!-- 封面图占位 -->
+              <div class="recent-item__thumb" :class="getArticleThumbClass(art)">
+                <span class="material-symbols-rounded">{{ art.publishedAt ? 'article' : 'edit_note' }}</span>
+              </div>
+              <!-- 标题+描述 -->
+              <div class="recent-item__body">
+                <span class="recent-item__title">{{ art.title || '(无标题)' }}</span>
+                <span class="recent-item__desc">{{ art.description || '暂无描述' }}</span>
+              </div>
+              <!-- 状态 — 固定宽度列对齐 -->
+              <span
+                class="recent-item__status"
+                :class="art.publishedAt ? 'recent-item__status--published' : 'recent-item__status--draft'"
+              >
+                {{ art.publishedAt ? 'Published' : 'Draft' }}
+              </span>
+              <!-- 日期 — 固定宽度列对齐 -->
+              <span class="recent-item__date">{{ formatDate(art.publishedAt || art.createdAt) }}</span>
+              <!-- 分类标签 — 固定宽度列对齐 -->
+              <div class="recent-item__tags" v-if="art.tags && art.tags.length">
+                <span
+                  v-for="(tag, ti) in getVisibleTags(art.tags)"
+                  :key="ti"
+                  class="recent-item__tag"
+                  :class="getTagClass(tag)"
+                >{{ tag }}</span>
+              </div>
+              <!-- 三点菜单 -->
+              <button class="recent-item__menu" aria-label="More options" @click.stop>
+                <span class="material-symbols-rounded">more_vert</span>
+              </button>
             </div>
-            <div class="quick-action-card__text">
-              <span class="quick-action-card__title">New article</span>
-              <span class="quick-action-card__desc">Start writing a new article</span>
-            </div>
-          </button>
-          <button class="quick-action-card" @click="onQuickAction('upload-media')">
-            <div class="quick-action-card__icon quick-action-card__icon--green">
-              <span class="material-symbols-rounded">upload</span>
-            </div>
-            <div class="quick-action-card__text">
-              <span class="quick-action-card__title">Upload media</span>
-              <span class="quick-action-card__desc">Add image or file</span>
-            </div>
-          </button>
-          <button class="quick-action-card" @click="onQuickAction('new-category')">
-            <div class="quick-action-card__icon quick-action-card__icon--orange">
-              <span class="material-symbols-rounded">folder</span>
-            </div>
-            <div class="quick-action-card__text">
-              <span class="quick-action-card__title">New category</span>
-              <span class="quick-action-card__desc">Create a new category</span>
-            </div>
-          </button>
-          <button class="quick-action-card" @click="onQuickAction('view-analytics')">
-            <div class="quick-action-card__icon quick-action-card__icon--blue">
-              <span class="material-symbols-rounded">bar_chart</span>
-            </div>
-            <div class="quick-action-card__text">
-              <span class="quick-action-card__title">View analytics</span>
-              <span class="quick-action-card__desc">Check your blog stats</span>
-            </div>
-          </button>
-        </div>
-      </section>
+          </div>
+          <div v-else class="empty-state">
+            <span class="material-symbols-rounded empty-state__icon">article</span>
+            <p class="empty-state__text">暂无文章</p>
+          </div>
+        </section>
+
+        <!-- 4. Quick actions -->
+        <section class="dashboard-section dashboard-section--last">
+          <h2 class="dashboard-section__title">Quick actions</h2>
+          <div class="quick-actions-grid">
+            <button class="quick-action-card" @click="onQuickAction('new-article')">
+              <div class="quick-action-card__icon quick-action-card__icon--primary">
+                <span class="material-symbols-rounded">edit</span>
+              </div>
+              <div class="quick-action-card__text">
+                <span class="quick-action-card__title">New article</span>
+                <span class="quick-action-card__desc">Start writing a new article</span>
+              </div>
+            </button>
+            <button class="quick-action-card" @click="onQuickAction('upload-media')">
+              <div class="quick-action-card__icon quick-action-card__icon--green">
+                <span class="material-symbols-rounded">upload</span>
+              </div>
+              <div class="quick-action-card__text">
+                <span class="quick-action-card__title">Upload media</span>
+                <span class="quick-action-card__desc">Add image or file</span>
+              </div>
+            </button>
+            <button class="quick-action-card" @click="onQuickAction('new-category')">
+              <div class="quick-action-card__icon quick-action-card__icon--orange">
+                <span class="material-symbols-rounded">folder</span>
+              </div>
+              <div class="quick-action-card__text">
+                <span class="quick-action-card__title">New category</span>
+                <span class="quick-action-card__desc">Create a new category</span>
+              </div>
+            </button>
+            <button class="quick-action-card" @click="onQuickAction('view-analytics')">
+              <div class="quick-action-card__icon quick-action-card__icon--blue">
+                <span class="material-symbols-rounded">bar_chart</span>
+              </div>
+              <div class="quick-action-card__text">
+                <span class="quick-action-card__title">View analytics</span>
+                <span class="quick-action-card__desc">Check your blog stats</span>
+              </div>
+            </button>
+          </div>
+        </section>
+
+      </div><!-- /.dashboard-body -->
     </div>
   </div>
 </template>
@@ -215,12 +228,15 @@ const recentArticles = computed(() => {
     .slice(0, 5)
 })
 
-// ===== 最近草稿（用于 Continue writing） =====
-const lastDraft = computed(() => {
-  const drafts = articles.value
-    .filter(a => !a.publishedAt)
+// ===== Continue writing — 优先后取草稿，无草稿则取最近编辑的文章 =====
+const continueArticle = computed(() => {
+  const sorted = [...articles.value]
     .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt))
-  return drafts[0] || null
+  // 优先草稿
+  const draft = sorted.find(a => !a.publishedAt)
+  if (draft) return draft
+  // 无草稿则取最近编辑的文章
+  return sorted[0] || null
 })
 
 // ===== 数据加载 =====
@@ -349,8 +365,7 @@ function getTagClass(tag) {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  padding: 24px;
-  max-width: 960px;
+  padding: 32px 48px;
 }
 .skeleton {
   border-radius: 12px;
@@ -377,7 +392,7 @@ function getTagClass(tag) {
   align-items: center;
   justify-content: space-between;
   height: 64px;
-  padding: 0 24px;
+  padding: 0 48px;
   background: #FFFFFF;
   border-bottom: 1px solid #F1F5F9;
   position: sticky;
@@ -497,16 +512,13 @@ function getTagClass(tag) {
   color: #6366F1;
 }
 
-/* 通用内容区域内边距 */
-.dashboard-greeting,
-.dashboard-section {
-  padding-left: 24px;
-  padding-right: 24px;
+/* ===== 内容区统一 padding ===== */
+.dashboard-body {
+  padding: 32px 48px 48px;
 }
 
 /* ===== 问候模块 ===== */
 .dashboard-greeting {
-  padding-top: 32px;
   margin-bottom: 0;
 }
 .dashboard-greeting__title {
@@ -527,6 +539,9 @@ function getTagClass(tag) {
 /* ===== 通用 section ===== */
 .dashboard-section {
   margin-top: 32px;
+}
+.dashboard-section--last {
+  margin-bottom: 0;
 }
 .dashboard-section__header {
   display: flex;
@@ -574,8 +589,8 @@ function getTagClass(tag) {
   flex-wrap: wrap;
 }
 .continue-card__thumb {
-  width: 220px;
-  height: 140px;
+  width: 320px;
+  height: 180px;
   border-radius: 12px;
   background: linear-gradient(135deg, #F1F0FF 0%, #ede9fe 50%, #e5e0ff 100%);
   display: flex;
@@ -584,9 +599,9 @@ function getTagClass(tag) {
   flex-shrink: 0;
 }
 .continue-card__thumb-icon {
-  font-size: 56px;
+  font-size: 64px;
   color: #6366F1;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 .continue-card__body {
   flex: 1;
@@ -610,9 +625,10 @@ function getTagClass(tag) {
   font-weight: 400;
   color: #64748B;
   line-height: 20px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   margin-bottom: 16px;
 }
 .continue-card__meta {
@@ -668,7 +684,7 @@ function getTagClass(tag) {
 }
 
 /* ================================================================
-   Recent articles 列表
+   Recent articles 列表 — 列对齐
    ================================================================ */
 .recent-list {
   background: #FFFFFF;
@@ -694,18 +710,19 @@ function getTagClass(tag) {
   background: #FAFAFF;
 }
 
-/* 缩略图 48x48 */
+/* 封面图占位 — 64x48 比例，圆角8px */
 .recent-item__thumb {
-  width: 48px;
+  width: 64px;
   height: 48px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
 }
 .recent-item__thumb .material-symbols-rounded {
-  font-size: 22px;
+  font-size: 24px;
   color: white;
 }
 .recent-item__thumb--purple {
@@ -715,7 +732,7 @@ function getTagClass(tag) {
   background: linear-gradient(135deg, #f59e0b, #fbbf24);
 }
 
-/* 文字区域 */
+/* 文字区域 — flex:1 占据剩余空间 */
 .recent-item__body {
   flex: 1;
   min-width: 0;
@@ -742,17 +759,20 @@ function getTagClass(tag) {
   white-space: nowrap;
 }
 
-/* 状态标签 */
+/* 状态标签 — 固定宽度 96px 实现列对齐 */
 .recent-item__status {
   font-size: 12px;
   font-weight: 500;
-  padding: 4px 12px;
+  padding: 4px 0;
   border-radius: 8px;
   flex-shrink: 0;
   white-space: nowrap;
   height: 24px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  width: 96px;
+  text-align: center;
 }
 .recent-item__status--published {
   background: #ECFDF5;
@@ -763,19 +783,21 @@ function getTagClass(tag) {
   color: #D97706;
 }
 
-/* 日期 */
+/* 日期 — 固定宽度 120px 实现列对齐 */
 .recent-item__date {
   font-size: 13px;
   color: #64748B;
   flex-shrink: 0;
   white-space: nowrap;
+  width: 120px;
 }
 
-/* 分类标签组 */
+/* 分类标签组 — 固定宽度 180px 实现列对齐 */
 .recent-item__tags {
   display: flex;
   gap: 8px;
   flex-shrink: 0;
+  width: 180px;
 }
 .recent-item__tag {
   font-size: 12px;
@@ -872,7 +894,7 @@ function getTagClass(tag) {
   transform: translateY(-1px);
 }
 
-/* 图标容器：浅色背景 + 彩色图标（非白色填充） */
+/* 图标容器：浅色背景 + 彩色图标 */
 .quick-action-card__icon {
   width: 44px;
   height: 44px;
@@ -930,14 +952,31 @@ function getTagClass(tag) {
   .dashboard-topbar__search {
     width: 280px;
   }
-  .recent-item__date { display: none; }
+  .dashboard-body {
+    padding: 32px 32px 48px;
+  }
+  .dashboard-topbar {
+    padding: 0 32px;
+  }
+  /* 日期列缩窄 */
+  .recent-item__date { width: 100px; }
+  /* tags列缩窄 */
+  .recent-item__tags { width: 140px; }
 }
 
 @media (max-width: 840px) {
   .dashboard-topbar__search { display: none; }
   .dashboard-topbar__search-kbd { display: none; }
-  .continue-card__thumb { width: 120px; height: 80px; }
-  .continue-card__thumb-icon { font-size: 36px; }
+  .dashboard-body {
+    padding: 24px 24px 48px;
+  }
+  .dashboard-topbar {
+    padding: 0 24px;
+  }
+  .continue-card__thumb { width: 160px; height: 100px; }
+  .continue-card__thumb-icon { font-size: 40px; }
+  .recent-item__date { display: none; }
+  .recent-item__tags { width: auto; }
 }
 
 @media (max-width: 600px) {
@@ -945,14 +984,22 @@ function getTagClass(tag) {
     grid-template-columns: 1fr;
   }
   .dashboard-greeting__title { font-size: 24px; }
+  .dashboard-body {
+    padding: 20px 16px 48px;
+  }
+  .dashboard-topbar {
+    padding: 0 16px;
+  }
   .recent-item { flex-wrap: wrap; gap: 8px; }
   .recent-item__desc { display: none; }
-  .recent-item__tags { flex-wrap: wrap; }
+  .recent-item__tags { flex-wrap: wrap; width: auto; }
+  .recent-item__status { width: auto; padding: 4px 12px; }
+  .recent-item__date { display: none; }
   .continue-card {
     flex-direction: column;
     align-items: flex-start;
   }
-  .continue-card__thumb { width: 100%; height: 120px; }
+  .continue-card__thumb { width: 100%; height: 140px; }
   .continue-card__menu { top: 12px; right: 12px; }
 }
 
