@@ -9,7 +9,7 @@
       :buffer="loader.progressBuffer.value"
     ></md-linear-progress>
 
-    <!-- ======== 骨架屏（约束到视口高度，防止加载期溢出产生滚动条） ======== -->
+    <!-- ======== 加载占位 ======== -->
     <div v-if="!loader.dataLoaded.value" class="skeleton-container">
       <section class="hero">
         <div class="hero__inner">
@@ -22,16 +22,28 @@
                 <span class="link-card__desc">创建一篇新文章</span>
               </div>
             </button>
-            <button class="link-card" @click="cycleFilter" @pointerdown="onCardRipple">
-              <div class="link-card__text">
-                <span class="link-card__title">{{ filterLabel }}</span>
-                <span class="link-card__desc">{{ articles.length }} 篇文章</span>
-              </div>
-            </button>
             <button class="link-card" @click="reloadArticles()" @pointerdown="onCardRipple">
               <div class="link-card__text">
                 <span class="link-card__title">刷新</span>
                 <span class="link-card__desc">重新加载列表</span>
+              </div>
+            </button>
+            <button class="link-card" :class="{ 'link-card--active': showPublishedFilter === 'all' }" @click="showPublishedFilter = 'all'" @pointerdown="onCardRipple">
+              <div class="link-card__text">
+                <span class="link-card__title">全部文章</span>
+                <span class="link-card__desc">{{ articles.length }} 篇</span>
+              </div>
+            </button>
+            <button class="link-card" :class="{ 'link-card--active': showPublishedFilter === 'published' }" @click="showPublishedFilter = 'published'" @pointerdown="onCardRipple">
+              <div class="link-card__text">
+                <span class="link-card__title">已发布</span>
+                <span class="link-card__desc">{{ publishedCount }} 篇</span>
+              </div>
+            </button>
+            <button class="link-card" :class="{ 'link-card--active': showPublishedFilter === 'draft' }" @click="showPublishedFilter = 'draft'" @pointerdown="onCardRipple">
+              <div class="link-card__text">
+                <span class="link-card__title">草稿</span>
+                <span class="link-card__desc">{{ draftCount }} 篇</span>
               </div>
             </button>
           </div>
@@ -46,16 +58,28 @@
               <span class="link-card__desc">创建一篇新文章</span>
             </div>
           </button>
-          <button class="link-card" @click="cycleFilter" @pointerdown="onCardRipple">
-            <div class="link-card__text">
-              <span class="link-card__title">{{ filterLabel }}</span>
-              <span class="link-card__desc">{{ articles.length }} 篇文章</span>
-            </div>
-          </button>
           <button class="link-card" @click="reloadArticles()" @pointerdown="onCardRipple">
             <div class="link-card__text">
               <span class="link-card__title">刷新</span>
               <span class="link-card__desc">重新加载列表</span>
+            </div>
+          </button>
+          <button class="link-card" :class="{ 'link-card--active': showPublishedFilter === 'all' }" @click="showPublishedFilter = 'all'" @pointerdown="onCardRipple">
+            <div class="link-card__text">
+              <span class="link-card__title">全部文章</span>
+              <span class="link-card__desc">{{ articles.length }} 篇</span>
+            </div>
+          </button>
+          <button class="link-card" :class="{ 'link-card--active': showPublishedFilter === 'published' }" @click="showPublishedFilter = 'published'" @pointerdown="onCardRipple">
+            <div class="link-card__text">
+              <span class="link-card__title">已发布</span>
+              <span class="link-card__desc">{{ publishedCount }} 篇</span>
+            </div>
+          </button>
+          <button class="link-card" :class="{ 'link-card--active': showPublishedFilter === 'draft' }" @click="showPublishedFilter = 'draft'" @pointerdown="onCardRipple">
+            <div class="link-card__text">
+              <span class="link-card__title">草稿</span>
+              <span class="link-card__desc">{{ draftCount }} 篇</span>
             </div>
           </button>
         </div>
@@ -75,7 +99,7 @@
     <!-- ======== 真实内容（fadeIn） ======== -->
     <div v-else :class="{ 'content-fadein': loader.fadeInActive.value }">
 
-      <!-- ======== Hero（对齐 m3 get-started：大圆角容器 + 居中标题 + TOC link-cards） ======== -->
+      <!-- ======== Hero ======== -->
       <section class="hero">
         <div class="hero__inner">
           <h1 class="hero__title">文章管理</h1>
@@ -87,23 +111,35 @@
                 <span class="link-card__desc">创建一篇新文章</span>
               </div>
             </button>
-            <button class="link-card" @click="cycleFilter" @pointerdown="onCardRipple">
-              <div class="link-card__text">
-                <span class="link-card__title">{{ filterLabel }}</span>
-                <span class="link-card__desc">{{ articles.length }} 篇文章</span>
-              </div>
-            </button>
             <button class="link-card" @click="reloadArticles()" @pointerdown="onCardRipple">
               <div class="link-card__text">
                 <span class="link-card__title">刷新</span>
                 <span class="link-card__desc">重新加载列表</span>
               </div>
             </button>
+            <button class="link-card" :class="{ 'link-card--active': showPublishedFilter === 'all' }" @click="showPublishedFilter = 'all'" @pointerdown="onCardRipple">
+              <div class="link-card__text">
+                <span class="link-card__title">全部文章</span>
+                <span class="link-card__desc">{{ articles.length }} 篇</span>
+              </div>
+            </button>
+            <button class="link-card" :class="{ 'link-card--active': showPublishedFilter === 'published' }" @click="showPublishedFilter = 'published'" @pointerdown="onCardRipple">
+              <div class="link-card__text">
+                <span class="link-card__title">已发布</span>
+                <span class="link-card__desc">{{ publishedCount }} 篇</span>
+              </div>
+            </button>
+            <button class="link-card" :class="{ 'link-card--active': showPublishedFilter === 'draft' }" @click="showPublishedFilter = 'draft'" @pointerdown="onCardRipple">
+              <div class="link-card__text">
+                <span class="link-card__title">草稿</span>
+                <span class="link-card__desc">{{ draftCount }} 篇</span>
+              </div>
+            </button>
           </div>
         </div>
       </section>
 
-      <!-- ======== main-toc（≤1294px 时在 hero 下方显示，2列卡片；≥1295px 隐藏） ======== -->
+      <!-- ======== main-toc（≤1294px 时显示） ======== -->
       <div class="main-toc-container">
         <div class="main-toc">
           <button class="link-card" @click="onCreate" @pointerdown="onCardRipple">
@@ -112,16 +148,28 @@
               <span class="link-card__desc">创建一篇新文章</span>
             </div>
           </button>
-          <button class="link-card" @click="cycleFilter" @pointerdown="onCardRipple">
-            <div class="link-card__text">
-              <span class="link-card__title">{{ filterLabel }}</span>
-              <span class="link-card__desc">{{ articles.length }} 篇文章</span>
-            </div>
-          </button>
           <button class="link-card" @click="reloadArticles()" @pointerdown="onCardRipple">
             <div class="link-card__text">
               <span class="link-card__title">刷新</span>
               <span class="link-card__desc">重新加载列表</span>
+            </div>
+          </button>
+          <button class="link-card" :class="{ 'link-card--active': showPublishedFilter === 'all' }" @click="showPublishedFilter = 'all'" @pointerdown="onCardRipple">
+            <div class="link-card__text">
+              <span class="link-card__title">全部文章</span>
+              <span class="link-card__desc">{{ articles.length }} 篇</span>
+            </div>
+          </button>
+          <button class="link-card" :class="{ 'link-card--active': showPublishedFilter === 'published' }" @click="showPublishedFilter = 'published'" @pointerdown="onCardRipple">
+            <div class="link-card__text">
+              <span class="link-card__title">已发布</span>
+              <span class="link-card__desc">{{ publishedCount }} 篇</span>
+            </div>
+          </button>
+          <button class="link-card" :class="{ 'link-card--active': showPublishedFilter === 'draft' }" @click="showPublishedFilter = 'draft'" @pointerdown="onCardRipple">
+            <div class="link-card__text">
+              <span class="link-card__title">草稿</span>
+              <span class="link-card__desc">{{ draftCount }} 篇</span>
             </div>
           </button>
         </div>
@@ -421,17 +469,8 @@ const filteredArticles = computed(() => {
   return articles.value
 })
 
-const filterLabel = computed(() => {
-  if (showPublishedFilter.value === 'published') return '已发布'
-  if (showPublishedFilter.value === 'draft') return '草稿'
-  return '全部文章'
-})
-
-function cycleFilter() {
-  const order = ['all', 'published', 'draft']
-  const idx = order.indexOf(showPublishedFilter.value)
-  showPublishedFilter.value = order[(idx + 1) % order.length]
-}
+const publishedCount = computed(() => articles.value.filter(a => a.publishedAt).length)
+const draftCount = computed(() => articles.value.filter(a => !a.publishedAt).length)
 
 function findOriginalIndex(art) {
   return articles.value.findIndex(a => a.documentId === art.documentId)
@@ -775,7 +814,9 @@ function onCardRipple(e) {
   width: 100%;
 }
 
-/* M3: .main-toc = mio-card-set: 6列grid + cards grid-column: span 2 → 3 cards per row */
+/* M3: .main-toc = mio-card-set: 默认6列grid; ≤1294px→2列; ≤600px→1列 */
+/* 页面覆盖: main-toc cards grid-column: span 2 */
+/* 效果: ≥1295px→3/row, ≤1294px→1/row(2列×span2), ≤600px→1/row */
 .main-toc {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
@@ -820,6 +861,21 @@ function onCardRipple(e) {
   transition: border-radius 0.3s cubic-bezier(0.2, 0, 0, 1),
               background-color 0.3s cubic-bezier(0.2, 0, 0, 1);
   -webkit-tap-highlight-color: transparent;
+}
+
+/* M3 active filter card: selected state = secondary-container bg (matches hover/selected pattern) */
+.link-card--active {
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+.link-card--active .link-card__title {
+  font-variation-settings: "GRAD" 50, "opsz" 18;
+}
+
+/* Active card hover: maintain selected bg, allow ripple */
+.link-card--active:hover {
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
 }
 
 /* M3 hover/focus/active: background=secondary-container, color=on-secondary-container */
@@ -1363,6 +1419,11 @@ function onCardRipple(e) {
   background-color: var(--md-sys-color-surface-container-low, #1d1b20);
 }
 
+:global([data-theme="dark"]) .link-card--active {
+  background-color: var(--md-sys-color-secondary-container, #4a4458);
+  color: var(--md-sys-color-on-secondary-container, #e8def8);
+}
+
 :global([data-theme="dark"]) .link-card:hover,
 :global([data-theme="dark"]) .link-card:focus,
 :global([data-theme="dark"]) .link-card:active {
@@ -1458,9 +1519,10 @@ function onCardRipple(e) {
     display: none;
   }
 
-  /* main-toc 在 ≤1294px 保持 6 列 + span 2（3 cards/row） */
+  /* M3: ≤1294px mio-card-set grid 变为 repeat(2, 1fr)，cards span 2 → 1 card/row */
   .main-toc {
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(2, 1fr);
+    padding: 0 56px;
   }
 
   .main-toc .link-card {
@@ -1487,14 +1549,15 @@ function onCardRipple(e) {
     margin: 0;
   }
 
+  /* M3: ≤600px mio-card-set grid 变为 1fr，1 column */
   .main-toc {
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: 1fr;
     padding: 0 32px;
   }
 
-  /* M3: ≤600px cards span 6 → 1 card per row */
+  /* M3: ≤600px cards span 1 (only column) */
   .main-toc .link-card {
-    grid-column: span 6;
+    grid-column: span 1;
   }
 }
 
