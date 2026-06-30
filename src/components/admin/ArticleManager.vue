@@ -28,19 +28,19 @@
                 <span class="link-card__desc">重新加载列表</span>
               </div>
             </button>
-            <button class="link-card" :class="{ 'link-card--active': showPublishedFilter === 'all' }" @click="showPublishedFilter = 'all'" @pointerdown="onCardRipple">
+            <button class="link-card" @click="showPublishedFilter = 'all'" @pointerdown="onCardRipple">
               <div class="link-card__text">
                 <span class="link-card__title">全部文章</span>
                 <span class="link-card__desc">{{ articles.length }} 篇</span>
               </div>
             </button>
-            <button class="link-card" :class="{ 'link-card--active': showPublishedFilter === 'published' }" @click="showPublishedFilter = 'published'" @pointerdown="onCardRipple">
+            <button class="link-card" @click="showPublishedFilter = 'published'" @pointerdown="onCardRipple">
               <div class="link-card__text">
                 <span class="link-card__title">已发布</span>
                 <span class="link-card__desc">{{ publishedCount }} 篇</span>
               </div>
             </button>
-            <button class="link-card" :class="{ 'link-card--active': showPublishedFilter === 'draft' }" @click="showPublishedFilter = 'draft'" @pointerdown="onCardRipple">
+            <button class="link-card" @click="showPublishedFilter = 'draft'" @pointerdown="onCardRipple">
               <div class="link-card__text">
                 <span class="link-card__title">草稿</span>
                 <span class="link-card__desc">{{ draftCount }} 篇</span>
@@ -64,19 +64,19 @@
               <span class="link-card__desc">重新加载列表</span>
             </div>
           </button>
-          <button class="link-card" :class="{ 'link-card--active': showPublishedFilter === 'all' }" @click="showPublishedFilter = 'all'" @pointerdown="onCardRipple">
+          <button class="link-card" @click="showPublishedFilter = 'all'" @pointerdown="onCardRipple">
             <div class="link-card__text">
               <span class="link-card__title">全部文章</span>
               <span class="link-card__desc">{{ articles.length }} 篇</span>
             </div>
           </button>
-          <button class="link-card" :class="{ 'link-card--active': showPublishedFilter === 'published' }" @click="showPublishedFilter = 'published'" @pointerdown="onCardRipple">
+          <button class="link-card" @click="showPublishedFilter = 'published'" @pointerdown="onCardRipple">
             <div class="link-card__text">
               <span class="link-card__title">已发布</span>
               <span class="link-card__desc">{{ publishedCount }} 篇</span>
             </div>
           </button>
-          <button class="link-card" :class="{ 'link-card--active': showPublishedFilter === 'draft' }" @click="showPublishedFilter = 'draft'" @pointerdown="onCardRipple">
+          <button class="link-card" @click="showPublishedFilter = 'draft'" @pointerdown="onCardRipple">
             <div class="link-card__text">
               <span class="link-card__title">草稿</span>
               <span class="link-card__desc">{{ draftCount }} 篇</span>
@@ -117,19 +117,19 @@
                 <span class="link-card__desc">重新加载列表</span>
               </div>
             </button>
-            <button class="link-card" :class="{ 'link-card--active': showPublishedFilter === 'all' }" @click="showPublishedFilter = 'all'" @pointerdown="onCardRipple">
+            <button class="link-card" @click="showPublishedFilter = 'all'" @pointerdown="onCardRipple">
               <div class="link-card__text">
                 <span class="link-card__title">全部文章</span>
                 <span class="link-card__desc">{{ articles.length }} 篇</span>
               </div>
             </button>
-            <button class="link-card" :class="{ 'link-card--active': showPublishedFilter === 'published' }" @click="showPublishedFilter = 'published'" @pointerdown="onCardRipple">
+            <button class="link-card" @click="showPublishedFilter = 'published'" @pointerdown="onCardRipple">
               <div class="link-card__text">
                 <span class="link-card__title">已发布</span>
                 <span class="link-card__desc">{{ publishedCount }} 篇</span>
               </div>
             </button>
-            <button class="link-card" :class="{ 'link-card--active': showPublishedFilter === 'draft' }" @click="showPublishedFilter = 'draft'" @pointerdown="onCardRipple">
+            <button class="link-card" @click="showPublishedFilter = 'draft'" @pointerdown="onCardRipple">
               <div class="link-card__text">
                 <span class="link-card__title">草稿</span>
                 <span class="link-card__desc">{{ draftCount }} 篇</span>
@@ -154,19 +154,19 @@
               <span class="link-card__desc">重新加载列表</span>
             </div>
           </button>
-          <button class="link-card" :class="{ 'link-card--active': showPublishedFilter === 'all' }" @click="showPublishedFilter = 'all'" @pointerdown="onCardRipple">
+          <button class="link-card" @click="showPublishedFilter = 'all'" @pointerdown="onCardRipple">
             <div class="link-card__text">
               <span class="link-card__title">全部文章</span>
               <span class="link-card__desc">{{ articles.length }} 篇</span>
             </div>
           </button>
-          <button class="link-card" :class="{ 'link-card--active': showPublishedFilter === 'published' }" @click="showPublishedFilter = 'published'" @pointerdown="onCardRipple">
+          <button class="link-card" @click="showPublishedFilter = 'published'" @pointerdown="onCardRipple">
             <div class="link-card__text">
               <span class="link-card__title">已发布</span>
               <span class="link-card__desc">{{ publishedCount }} 篇</span>
             </div>
           </button>
-          <button class="link-card" :class="{ 'link-card--active': showPublishedFilter === 'draft' }" @click="showPublishedFilter = 'draft'" @pointerdown="onCardRipple">
+          <button class="link-card" @click="showPublishedFilter = 'draft'" @pointerdown="onCardRipple">
             <div class="link-card__text">
               <span class="link-card__title">草稿</span>
               <span class="link-card__desc">{{ draftCount }} 篇</span>
