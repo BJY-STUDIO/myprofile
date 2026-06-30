@@ -684,11 +684,7 @@ function onCardRipple(e) {
   min-height: 100%;
 }
 
-/* ======== 骨架屏容器（约束到视口高度，防止加载期溢出产生滚动条） ======== */
-.skeleton-container {
-  max-height: 100vh;
-  overflow: hidden;
-}
+/* ======== 骨架屏容器 ======== */
 
 /* ======== 缓冲进度条 ======== */
 .loading-progress {
