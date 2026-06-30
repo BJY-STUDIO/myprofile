@@ -1,67 +1,71 @@
 <template>
   <div class="admin-view">
-    <!-- 未登录：全屏登录表单 -->
-    <div v-if="!authToken" class="admin-login">
-      <!-- ======== 缓冲进度条 ======== -->
-      <md-linear-progress
-        v-if="loader.loadingActive.value"
-        :class="{ 'loading-progress--fading': loader.loadingFading.value }"
-        class="loading-progress"
-        :value="loader.progressValue.value"
-        :buffer="loader.progressBuffer.value"
-      ></md-linear-progress>
+    <Transition name="admin-switch" mode="out-in">
+      <!-- 未登录：全屏登录表单 -->
+      <div v-if="!authToken" key="login" class="admin-login">
+        <!-- ======== 缓冲进度条 ======== -->
+        <md-linear-progress
+          v-if="loader.loadingActive.value"
+          :class="{ 'loading-progress--fading': loader.loadingFading.value }"
+          class="loading-progress"
+          :value="loader.progressValue.value"
+          :buffer="loader.progressBuffer.value"
+        ></md-linear-progress>
 
-      <div class="admin-login__card" :class="{ 'admin-login__card--loading': loginLoading }">
-        <span class="material-symbols-rounded admin-login__icon">admin_panel_settings</span>
-        <h1 class="admin-login__title">博客管理后台</h1>
-        <p class="admin-login__desc">使用 Strapi CMS 管理员账号登录后即可管理内容</p>
+        <div class="admin-login__card" :class="{ 'admin-login__card--loading': loginLoading }">
+          <span class="material-symbols-rounded admin-login__icon">admin_panel_settings</span>
+          <h1 class="admin-login__title">博客管理后台</h1>
+          <p class="admin-login__desc">使用 Strapi CMS 管理员账号登录后即可管理内容</p>
 
-        <form class="admin-login__form" @submit.prevent="onLogin">
-          <md-outlined-text-field
-            label="邮箱"
-            type="email"
-            id="admin-email"
-            :value="loginEmail"
-            :disabled="loginLoading"
-            @input="loginEmail = $event.target.value"
-          ></md-outlined-text-field>
-          <md-outlined-text-field
-            label="密码"
-            type="password"
-            id="admin-password"
-            :value="loginPassword"
-            :disabled="loginLoading"
-            @input="loginPassword = $event.target.value"
-          ></md-outlined-text-field>
-          <div v-if="loginError" class="login-error">{{ loginError }}</div>
-          <md-filled-button class="admin-login__submit" :disabled="loginLoading">
-            {{ loginLoading ? '登录中...' : '登录' }}
-          </md-filled-button>
-        </form>
+          <form class="admin-login__form" @submit.prevent="onLogin">
+            <md-outlined-text-field
+              label="邮箱"
+              type="email"
+              id="admin-email"
+              :value="loginEmail"
+              :disabled="loginLoading"
+              @input="loginEmail = $event.target.value"
+            ></md-outlined-text-field>
+            <md-outlined-text-field
+              label="密码"
+              type="password"
+              id="admin-password"
+              :value="loginPassword"
+              :disabled="loginLoading"
+              @input="loginPassword = $event.target.value"
+            ></md-outlined-text-field>
+            <div v-if="loginError" class="login-error">{{ loginError }}</div>
+            <md-filled-button class="admin-login__submit" :disabled="loginLoading">
+              {{ loginLoading ? '登录中...' : '登录' }}
+            </md-filled-button>
+          </form>
 
-        <div v-if="retryStatus" class="login-retry-status">
-          <span class="material-symbols-rounded login-retry-status__icon">hourglass_top</span>
-          <span class="login-retry-status__text">{{ retryStatus }}</span>
-        </div>
+          <div v-if="retryStatus" class="login-retry-status">
+            <span class="material-symbols-rounded login-retry-status__icon">hourglass_top</span>
+            <span class="login-retry-status__text">{{ retryStatus }}</span>
+          </div>
 
-        <div class="admin-login__hint">
-          <span class="material-symbols-rounded">open_in_new</span>
-          <span>或前往 <a :href="strapiAdminUrl" target="_blank" rel="noopener noreferrer">Strapi 后台</a></span>
+          <div class="admin-login__hint">
+            <span class="material-symbols-rounded">open_in_new</span>
+            <span>或前往 <a :href="strapiAdminUrl" target="_blank" rel="noopener noreferrer">Strapi 后台</a></span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- 已登录：模块内容（导航由 App.vue NavigationRail 处理） -->
-    <div v-else class="admin-content" :class="{ 'admin-content--fadein': contentFadeIn }">
-      <ArticleManager v-if="activeModule === 'articles'" :token="authToken" />
-      <CardStyleManager v-else-if="activeModule === 'cards'" :token="authToken" />
-      <NavManager v-else-if="activeModule === 'navigation'" :token="authToken" />
-    </div>
+      <!-- 已登录：模块内容（导航由 App.vue NavigationRail 处理） -->
+      <div v-else key="content" class="admin-content">
+        <Transition name="admin-tab" mode="out-in">
+          <ArticleManager v-if="activeModule === 'articles'" key="articles" :token="authToken" />
+          <CardStyleManager v-else-if="activeModule === 'cards'" key="cards" :token="authToken" />
+          <NavManager v-else-if="activeModule === 'navigation'" key="navigation" :token="authToken" />
+        </Transition>
+      </div>
+    </Transition>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { strapiAdminLogin } from '@/services/articleService'
 import { useAdminLoader } from '@/composables/useAdminLoader'
@@ -79,17 +83,14 @@ const router = useRouter()
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:1337/api').replace(/\/api$/, '')
 const strapiAdminUrl = `${API_BASE}/admin`
 
-// ===== 认证状态 =====
+// ===== 认证状态（从 sessionStorage 初始化，避免刷新时闪登录页） =====
 const ADMIN_TOKEN_KEY = 'strapi-admin-token'
-const authToken = ref('')
+const authToken = ref(sessionStorage.getItem(ADMIN_TOKEN_KEY) || '')
 const loginEmail = ref('')
 const loginPassword = ref('')
 const loginError = ref('')
 const loginLoading = ref(false)
 const retryStatus = ref('')
-
-// ===== 登录后内容 fadeIn =====
-const contentFadeIn = ref(false)
 
 // ===== 进度条 + 冷启动重试 =====
 const loader = useAdminLoader()
@@ -98,17 +99,6 @@ const loader = useAdminLoader()
 const RETRY_BASE_DELAY = 3000
 const RETRY_MAX_DELAY = 30000
 const MAX_RETRY_ATTEMPTS = 5
-
-onMounted(() => {
-  const cached = sessionStorage.getItem(ADMIN_TOKEN_KEY)
-  if (cached) {
-    authToken.value = cached
-    // 已有 token 时也需要 fadeIn
-    requestAnimationFrame(() => {
-      contentFadeIn.value = true
-    })
-  }
-})
 
 async function onLogin() {
   loginLoading.value = true
@@ -174,13 +164,6 @@ function onLoginSuccess(token) {
   loader.progressValue.value = 1
   loader.progressBuffer.value = 1
   loader.fadeOutProgress()
-
-  // 内容 fadeIn
-  nextTick(() => {
-    requestAnimationFrame(() => {
-      contentFadeIn.value = true
-    })
-  })
 }
 
 // ===== 模块切换（由 NavigationRail 通过 route.query.tab 驱动） =====
@@ -201,6 +184,28 @@ watch([authToken, () => route.query.tab], ([token, tab]) => {
   flex-direction: column;
   min-height: 100%;
   scrollbar-gutter: stable;
+}
+
+/* ===== 登录↔内容切换过渡（Vue Transition） ===== */
+.admin-switch-enter-active,
+.admin-switch-leave-active {
+  transition: opacity 150ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.admin-switch-enter-from,
+.admin-switch-leave-to {
+  opacity: 0;
+}
+
+/* ===== Tab 切换过渡 ===== */
+.admin-tab-enter-active,
+.admin-tab-leave-active {
+  transition: opacity 150ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.admin-tab-enter-from,
+.admin-tab-leave-to {
+  opacity: 0;
 }
 
 /* ===== 登录页 ===== */
@@ -348,26 +353,9 @@ watch([authToken, () => route.query.tab], ([token, tab]) => {
   to { transform: rotate(360deg); }
 }
 
-/* ===== 已登录内容 fadeIn ===== */
-/* min-height:100% 确保内容不足时也填满视口，防止高度跳变 */
-/* 仅用 opacity 过渡，不用 transform:translateY 避免影响布局高度 */
-/* opacity:0 不影响文档流占位，元素仍占空间，滚动条不会因高度变化闪烁 */
+/* ===== 已登录内容区 ===== */
 .admin-content {
-  opacity: 0;
   min-height: 100%;
-}
-
-.admin-content--fadein {
-  animation: admin-content-fadein 200ms linear both;
-}
-
-@keyframes admin-content-fadein {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }
 
 /* ===== 移动端：nav rail 隐藏，progress bar 全宽 ===== */
