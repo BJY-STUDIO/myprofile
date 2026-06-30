@@ -766,12 +766,13 @@ function onCardRipple(e) {
 }
 
 /* m3 h1: font-size:96px; font-weight:475; line-height:96px; font-family:"Google Sans"; text-align:center */
+/* 注意: 不能用 token 变量（在窄屏解析为 57px），必须硬编码 M3 实际值，响应式由下方 @media 断点处理 */
 .hero__title {
   font-family: var(--md-sys-typescale-display-l-font-family);
-  font-size: var(--md-sys-typescale-display-l-font-size);
-  font-weight: var(--md-sys-typescale-display-l-font-weight);
-  line-height: var(--md-sys-typescale-display-l-line-height);
-  letter-spacing: var(--md-sys-typescale-display-l-letter-spacing);
+  font-size: 96px;
+  font-weight: 475;
+  line-height: 96px;
+  letter-spacing: normal;
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0;
   text-align: center;
