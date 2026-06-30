@@ -17,11 +17,20 @@
           <h1 class="admin-login__title">博客管理后台</h1>
           <p class="admin-login__desc">使用 Strapi CMS 管理员账号登录后即可管理内容</p>
 
-          <form class="admin-login__form" @submit.prevent="onLogin">
+          <form class="admin-login__form" action="#" @submit.prevent="onLogin" autocomplete="on">
+            <!-- 隐藏的原生 input，供 Edge/Chrome 密码管理器识别（穿透 Shadow DOM 的锚点） -->
+            <input type="email" name="email" autocomplete="email"
+              class="admin-login__native-input" tabindex="-1"
+              :value="loginEmail" aria-hidden="true" />
+            <input type="password" name="password" autocomplete="current-password"
+              class="admin-login__native-input" tabindex="-1"
+              :value="loginPassword" aria-hidden="true" />
             <md-outlined-text-field
               label="邮箱"
               type="email"
               id="admin-email"
+              name="email"
+              autocomplete="email"
               :value="loginEmail"
               :disabled="loginLoading"
               @input="loginEmail = $event.target.value"
@@ -30,6 +39,8 @@
               label="密码"
               type="password"
               id="admin-password"
+              name="password"
+              autocomplete="current-password"
               :value="loginPassword"
               :disabled="loginLoading"
               @input="loginPassword = $event.target.value"
@@ -153,6 +164,15 @@ async function onLogin() {
 }
 
 function onLoginSuccess(token) {
+  // 触发 Edge/Chrome 密码管理器保存提示
+  try {
+    if (navigator.credentials && loginEmail.value && loginPassword.value) {
+      navigator.credentials.store(
+        new PasswordCredential({ id: loginEmail.value, password: loginPassword.value, name: loginEmail.value })
+      ).catch(() => {}) // 静默忽略不支持的情况
+    }
+  } catch {}
+
   authToken.value = token
   sessionStorage.setItem(ADMIN_TOKEN_KEY, token)
   loginEmail.value = ''
@@ -183,7 +203,6 @@ watch([authToken, () => route.query.tab], ([token, tab]) => {
   display: flex;
   flex-direction: column;
   min-height: 100%;
-  scrollbar-gutter: stable;
 }
 
 /* ===== 登录↔内容切换过渡（Vue Transition） ===== */
@@ -217,6 +236,20 @@ watch([authToken, () => route.query.tab], ([token, tab]) => {
   padding: 48px 24px;
   position: relative;
   flex: 1;
+}
+
+/* ===== 隐藏原生 input（供浏览器密码管理器识别，不显示在 UI 中） ===== */
+.admin-login__native-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  opacity: 0;
 }
 
 /* ======== 缓冲进度条 ======== */
