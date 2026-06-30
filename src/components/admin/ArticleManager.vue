@@ -186,7 +186,6 @@
               class="link-card article-card"
               @click="onEdit(findOriginalIndex(art))"
             >
-              <span class="material-symbols-rounded link-card__icon">{{ art.publishedAt ? 'article' : 'draft' }}</span>
               <div class="link-card__text">
                 <span class="link-card__title">{{ art.title || '(无标题)' }}</span>
                 <span class="link-card__desc">
@@ -195,8 +194,10 @@
                 </span>
               </div>
               <span class="mio-icon-badge" :class="art.publishedAt ? 'mio-icon-badge--published' : 'mio-icon-badge--draft'">
-                <span class="material-symbols-rounded mio-icon-badge__icon">{{ art.publishedAt ? 'check_circle' : 'draft' }}</span>
-                {{ art.publishedAt ? '已发布' : '草稿' }}
+                <svg class="mio-icon-badge__clover" width="100%" height="100%" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M.887 14.467C-2.845 5.875 5.875-2.845 14.467.887l1.42.617a10.323 10.323 0 0 0 8.225 0l1.42-.617c8.593-3.732 17.313 4.988 13.581 13.58l-.617 1.42a10.323 10.323 0 0 0 0 8.225l.617 1.42c3.732 8.593-4.989 17.313-13.58 13.581l-1.42-.617a10.323 10.323 0 0 0-8.225 0l-1.42.617C5.874 42.845-2.846 34.125.886 25.533l.617-1.42a10.323 10.323 0 0 0 0-8.225l-.617-1.42Z" />
+                </svg>
+                <span class="mio-icon-badge__symbol material-symbols-rounded">{{ art.publishedAt ? 'check_circle' : 'draft' }}</span>
               </span>
             </button>
           </div>
@@ -1029,22 +1030,20 @@ function onCardRipple(e) {
   padding-right: 0;
 }
 
-/* 列表中的文章卡片：保持 row 方向（不同于 hero-toc 的 column-reverse） */
+/* 列表中的文章卡片：M3 mio-card size="small" = flex-direction:row; align-items:center; justify-content:space-between */
 .article-card {
   flex-direction: row;
   height: auto;
   min-height: 80px;
 }
 
-.article-card .link-card__icon {
-  margin: 0 0 0 24px;
+/* article-card content-container: align-self:end (M3 size=small) */
+.article-card .link-card__text {
+  align-self: end;
 }
 
-.article-card .link-card__title {
-  flex: 1;
-}
-
-/* ======== mio-icon-badge ======== */
+/* ======== mio-icon-badge（严格对标 M3 mio-icon-badge 组件） ======== */
+/* 默认 pill 样式（用于编辑器顶栏等非卡片场景） */
 .mio-icon-badge {
   display: inline-flex;
   align-items: center;
@@ -1070,6 +1069,60 @@ function onCardRipple(e) {
 .mio-icon-badge--draft {
   background: var(--md-sys-color-secondary-container, #e8def8);
   color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+/* M3 mio-icon-badge 在 article-card 内：
+   display:grid; grid-template-columns:40px; grid-template-rows:40px; place-items:center;
+   position:absolute; margin:24px; color:on-primary-container; overflow:visible */
+.article-card .mio-icon-badge {
+  display: grid;
+  grid-template-columns: 40px;
+  grid-template-rows: 40px;
+  place-items: center;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 40px;
+  height: 40px;
+  margin: 24px;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  overflow: visible;
+  flex-shrink: 1;
+}
+
+/* M3 .mask: clover SVG (grid-row:1; grid-column:1 with symbol) */
+.article-card .mio-icon-badge__clover {
+  grid-row: 1;
+  grid-column: 1;
+  width: 40px;
+  height: 40px;
+  overflow: visible;
+}
+
+/* 已发布: clover fill = #D3E3FD (M3 亮色) */
+.mio-icon-badge--published .mio-icon-badge__clover path {
+  fill: #D3E3FD;
+}
+
+/* 草稿: clover fill = #FFD8E3 (M3 亮色) */
+.mio-icon-badge--draft .mio-icon-badge__clover path {
+  fill: #FFD8E3;
+}
+
+/* M3 .symbol: grid-row:1; grid-column:1; z-index:1; 24px icon centered on the clover */
+.article-card .mio-icon-badge__symbol {
+  grid-row: 1;
+  grid-column: 1;
+  z-index: 1;
+  display: block;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 24px;
+  width: 24px;
+  height: 24px;
 }
 
 /* ======== 空状态 ======== */
@@ -1499,6 +1552,19 @@ function onCardRipple(e) {
 
 :global([data-theme="dark"]) .editor-fields__delete-btn {
   --md-text-button-label-text-color: var(--md-sys-color-error, #f2b8b5);
+}
+
+/* 暗色主题: article-card badge clover 深色调 + icon 高对比色 */
+:global([data-theme="dark"]) .article-card .mio-icon-badge {
+  color: var(--md-sys-color-on-primary-container, #e8def8);
+}
+
+:global([data-theme="dark"]) .mio-icon-badge--published .mio-icon-badge__clover path {
+  fill: #1a1a2e;
+}
+
+:global([data-theme="dark"]) .mio-icon-badge--draft .mio-icon-badge__clover path {
+  fill: #2a1a1e;
 }
 
 /* ======== 响应式（严格对标 m3 get-started hero 断点） ======== */
