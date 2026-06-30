@@ -750,12 +750,19 @@ function onCardRipple(e) {
 }
 
 /* m3 .hero-toc: display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin:32px 0 0 */
+/* M3 hero-toc cards = size="medium" → grid-column: span 3 (2 cards per row) */
 .hero__toc {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
+  grid-auto-flow: row;
+  grid-auto-rows: auto;
   gap: 8px;
   margin-top: 32px;
   width: 100%;
+}
+
+.hero__toc .link-card {
+  grid-column: span 3;
 }
 
 /* ======== main-toc（≤1294px 时在 hero 下方显示，2列卡片；≥1295px 隐藏） ======== */
@@ -768,16 +775,21 @@ function onCardRipple(e) {
   width: 100%;
 }
 
-/* M3: .main-toc { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin:24px 0 0 } */
-/* 实际渲染为 2 列（由 grid auto-fill 决定） */
+/* M3: .main-toc = mio-card-set: 6列grid + cards grid-column: span 2 → 3 cards per row */
 .main-toc {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(6, 1fr);
+  grid-auto-flow: row;
+  grid-auto-rows: auto;
   gap: 8px;
   margin-top: 24px;
   width: 100%;
   max-width: 1200px;
   padding: 0 56px;
+}
+
+.main-toc .link-card {
+  grid-column: span 2;
 }
 
 /* ======== link-card（严格对标 m3 mio-card <a>） ======== */
@@ -803,7 +815,7 @@ function onCardRipple(e) {
   overflow: hidden;
   position: relative;
   width: 100%;
-  height: 112px;
+  height: 100%;
   font-variation-settings: "GRAD" 0;
   transition: border-radius 0.3s cubic-bezier(0.2, 0, 0, 1),
               background-color 0.3s cubic-bezier(0.2, 0, 0, 1);
@@ -1446,9 +1458,13 @@ function onCardRipple(e) {
     display: none;
   }
 
-  /* main-toc 在 ≤1294px 变为 2 列 */
+  /* main-toc 在 ≤1294px 保持 6 列 + span 2（3 cards/row） */
   .main-toc {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .main-toc .link-card {
+    grid-column: span 2;
   }
 }
 
@@ -1472,8 +1488,13 @@ function onCardRipple(e) {
   }
 
   .main-toc {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(6, 1fr);
     padding: 0 32px;
+  }
+
+  /* M3: ≤600px cards span 6 → 1 card per row */
+  .main-toc .link-card {
+    grid-column: span 6;
   }
 }
 
