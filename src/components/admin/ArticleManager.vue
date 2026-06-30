@@ -753,10 +753,12 @@ function onCardRipple(e) {
 }
 
 /* m3 .hero .content: display:flex; flex-direction:column; align-items:center; max-width:1200px; margin:56px */
+/* 关键: width:100% 让 flex 子元素撑满父容器（受 max-width:1200px 限制），hero-toc 才能正确展开 */
 .hero__inner {
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
   max-width: 1200px;
   margin: 56px;
   padding: 0;
@@ -976,7 +978,8 @@ function onCardRipple(e) {
 /* ======== M3 Ripple 交互动画 ======== */
 /* 严格对标 m3 mioripple: position:absolute; border-radius:50%; filter:blur(4px) */
 /* 颜色 #001d35（M3 官方一致） */
-.card-ripple {
+/* 注意: .card-ripple 是 JS 动态创建的元素，没有 Vue scoped 属性，必须用 :global() */
+:global(.article-manager .card-ripple) {
   position: absolute;
   top: 0;
   left: 0;
