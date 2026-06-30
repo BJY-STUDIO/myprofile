@@ -9,8 +9,8 @@
       :buffer="loader.progressBuffer.value"
     ></md-linear-progress>
 
-    <!-- ======== 骨架屏（匹配真实内容布局：hero + content-section，防止尺寸跳变） ======== -->
-    <div v-if="!loader.dataLoaded.value" class="content-fadein">
+    <!-- ======== 骨架屏（约束到视口高度，防止加载期溢出产生滚动条） ======== -->
+    <div v-if="!loader.dataLoaded.value" class="skeleton-container">
       <section class="hero">
         <div class="hero__inner">
           <span class="skeleton" style="height:56px;width:35%;border-radius:8px;"></span>
@@ -586,6 +586,13 @@ function insertMd(type) {
 <style scoped>
 .article-manager {
   position: relative;
+  min-height: 100%;
+}
+
+/* ======== 骨架屏容器（约束到视口高度，防止加载期溢出产生滚动条） ======== */
+.skeleton-container {
+  max-height: 100vh;
+  overflow: hidden;
 }
 
 /* ======== 缓冲进度条 ======== */

@@ -23,26 +23,28 @@
       <span class="operation-notice__text">{{ operationMessage }}</span>
     </div>
 
-    <!-- ======== 骨架屏 ======== -->
-    <div v-if="!loader.dataLoaded.value" class="section-list">
-      <div v-for="n in 3" :key="'sk-' + n" class="section-card section-card--skeleton">
-        <div class="section-card__header">
-          <div class="section-card__info">
-            <div class="section-card__title-row">
-              <span class="skeleton" style="height:18px;width:35%;"></span>
-              <span class="skeleton" style="height:20px;width:48px;border-radius:8px;"></span>
+    <!-- ======== 骨架屏（约束到视口高度，防止加载期溢出产生滚动条） ======== -->
+    <div v-if="!loader.dataLoaded.value" class="skeleton-container">
+      <div class="section-list">
+        <div v-for="n in 3" :key="'sk-' + n" class="section-card section-card--skeleton">
+          <div class="section-card__header">
+            <div class="section-card__info">
+              <div class="section-card__title-row">
+                <span class="skeleton" style="height:18px;width:35%;"></span>
+                <span class="skeleton" style="height:20px;width:48px;border-radius:8px;"></span>
+              </div>
+              <div class="section-card__meta">
+                <span class="skeleton" style="height:12px;width:70px;"></span>
+                <span class="skeleton" style="height:12px;width:56px;"></span>
+                <span class="skeleton" style="height:12px;width:50px;"></span>
+              </div>
             </div>
-            <div class="section-card__meta">
-              <span class="skeleton" style="height:12px;width:70px;"></span>
-              <span class="skeleton" style="height:12px;width:56px;"></span>
-              <span class="skeleton" style="height:12px;width:50px;"></span>
+            <div class="section-card__actions section-card__actions--skeleton">
+              <span class="skeleton" style="width:40px;height:40px;border-radius:20px;"></span>
+              <span class="skeleton" style="width:40px;height:40px;border-radius:20px;"></span>
+              <span class="skeleton" style="width:40px;height:40px;border-radius:20px;"></span>
+              <span class="skeleton" style="width:40px;height:40px;border-radius:20px;"></span>
             </div>
-          </div>
-          <div class="section-card__actions section-card__actions--skeleton">
-            <span class="skeleton" style="width:40px;height:40px;border-radius:20px;"></span>
-            <span class="skeleton" style="width:40px;height:40px;border-radius:20px;"></span>
-            <span class="skeleton" style="width:40px;height:40px;border-radius:20px;"></span>
-            <span class="skeleton" style="width:40px;height:40px;border-radius:20px;"></span>
           </div>
         </div>
       </div>
@@ -439,6 +441,13 @@ function onToggleArticle(docId, checked) {
 <style scoped>
 .card-style-manager {
   padding: 24px;
+  min-height: 100%;
+}
+
+/* ======== 骨架屏容器 ======== */
+.skeleton-container {
+  max-height: 100vh;
+  overflow: hidden;
 }
 
 /* ======== 缓冲进度条 ======== */

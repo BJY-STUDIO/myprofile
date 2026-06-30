@@ -17,69 +17,71 @@
       </md-filled-tonal-button>
     </div>
 
-    <!-- ======== 骨架屏 ======== -->
-    <div v-if="!loader.dataLoaded.value" class="nav-list">
-      <!-- 骨架卡片 1：带子菜单 -->
-      <div class="nav-card nav-card--skeleton">
-        <div class="nav-card__header">
-          <span class="skeleton" style="width:24px;height:24px;border-radius:12px;flex-shrink:0;"></span>
-          <div class="nav-card__info">
-            <span class="skeleton" style="height:16px;width:45%;"></span>
-            <span class="skeleton" style="height:12px;width:30%;margin-top:4px;"></span>
+    <!-- ======== 骨架屏（约束到视口高度，防止加载期溢出产生滚动条） ======== -->
+    <div v-if="!loader.dataLoaded.value" class="skeleton-container">
+      <div class="nav-list">
+        <!-- 骨架卡片 1：带子菜单 -->
+        <div class="nav-card nav-card--skeleton">
+          <div class="nav-card__header">
+            <span class="skeleton" style="width:24px;height:24px;border-radius:12px;flex-shrink:0;"></span>
+            <div class="nav-card__info">
+              <span class="skeleton" style="height:16px;width:45%;"></span>
+              <span class="skeleton" style="height:12px;width:30%;margin-top:4px;"></span>
+            </div>
+            <div class="nav-card__sort nav-card__sort--skeleton">
+              <span class="skeleton" style="width:32px;height:32px;border-radius:16px;"></span>
+              <span class="skeleton" style="width:32px;height:32px;border-radius:16px;"></span>
+            </div>
+            <div class="nav-card__actions nav-card__actions--skeleton">
+              <span class="skeleton" style="width:32px;height:32px;border-radius:16px;"></span>
+              <span class="skeleton" style="width:32px;height:32px;border-radius:16px;"></span>
+            </div>
           </div>
-          <div class="nav-card__sort nav-card__sort--skeleton">
-            <span class="skeleton" style="width:32px;height:32px;border-radius:16px;"></span>
-            <span class="skeleton" style="width:32px;height:32px;border-radius:16px;"></span>
-          </div>
-          <div class="nav-card__actions nav-card__actions--skeleton">
-            <span class="skeleton" style="width:32px;height:32px;border-radius:16px;"></span>
-            <span class="skeleton" style="width:32px;height:32px;border-radius:16px;"></span>
+          <!-- 子菜单骨架 -->
+          <div class="sub-list sub-list--skeleton">
+            <div class="sub-item sub-item--skeleton">
+              <span class="skeleton" style="height:14px;width:60px;"></span>
+              <span class="skeleton" style="height:12px;width:50px;"></span>
+              <div class="sub-item__sort sub-item__sort--skeleton">
+                <span class="skeleton" style="width:28px;height:28px;border-radius:14px;"></span>
+                <span class="skeleton" style="width:28px;height:28px;border-radius:14px;"></span>
+              </div>
+              <div class="sub-item__actions sub-item__actions--skeleton">
+                <span class="skeleton" style="width:28px;height:28px;border-radius:14px;"></span>
+                <span class="skeleton" style="width:28px;height:28px;border-radius:14px;"></span>
+              </div>
+            </div>
+            <div class="sub-item sub-item--skeleton">
+              <span class="skeleton" style="height:14px;width:70px;"></span>
+              <span class="skeleton" style="height:12px;width:55px;"></span>
+              <div class="sub-item__sort sub-item__sort--skeleton">
+                <span class="skeleton" style="width:28px;height:28px;border-radius:14px;"></span>
+                <span class="skeleton" style="width:28px;height:28px;border-radius:14px;"></span>
+              </div>
+              <div class="sub-item__actions sub-item__actions--skeleton">
+                <span class="skeleton" style="width:28px;height:28px;border-radius:14px;"></span>
+                <span class="skeleton" style="width:28px;height:28px;border-radius:14px;"></span>
+              </div>
+            </div>
           </div>
         </div>
-        <!-- 子菜单骨架 -->
-        <div class="sub-list sub-list--skeleton">
-          <div class="sub-item sub-item--skeleton">
-            <span class="skeleton" style="height:14px;width:60px;"></span>
-            <span class="skeleton" style="height:12px;width:50px;"></span>
-            <div class="sub-item__sort sub-item__sort--skeleton">
-              <span class="skeleton" style="width:28px;height:28px;border-radius:14px;"></span>
-              <span class="skeleton" style="width:28px;height:28px;border-radius:14px;"></span>
-            </div>
-            <div class="sub-item__actions sub-item__actions--skeleton">
-              <span class="skeleton" style="width:28px;height:28px;border-radius:14px;"></span>
-              <span class="skeleton" style="width:28px;height:28px;border-radius:14px;"></span>
-            </div>
-          </div>
-          <div class="sub-item sub-item--skeleton">
-            <span class="skeleton" style="height:14px;width:70px;"></span>
-            <span class="skeleton" style="height:12px;width:55px;"></span>
-            <div class="sub-item__sort sub-item__sort--skeleton">
-              <span class="skeleton" style="width:28px;height:28px;border-radius:14px;"></span>
-              <span class="skeleton" style="width:28px;height:28px;border-radius:14px;"></span>
-            </div>
-            <div class="sub-item__actions sub-item__actions--skeleton">
-              <span class="skeleton" style="width:28px;height:28px;border-radius:14px;"></span>
-              <span class="skeleton" style="width:28px;height:28px;border-radius:14px;"></span>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- 骨架卡片 2-4 -->
-      <div v-for="n in 3" :key="'sk-' + n" class="nav-card nav-card--skeleton">
-        <div class="nav-card__header">
-          <span class="skeleton" style="width:24px;height:24px;border-radius:12px;flex-shrink:0;"></span>
-          <div class="nav-card__info">
-            <span class="skeleton" style="height:16px;width:40%;"></span>
-            <span class="skeleton" style="height:12px;width:28%;margin-top:4px;"></span>
-          </div>
-          <div class="nav-card__sort nav-card__sort--skeleton">
-            <span class="skeleton" style="width:32px;height:32px;border-radius:16px;"></span>
-            <span class="skeleton" style="width:32px;height:32px;border-radius:16px;"></span>
-          </div>
-          <div class="nav-card__actions nav-card__actions--skeleton">
-            <span class="skeleton" style="width:32px;height:32px;border-radius:16px;"></span>
-            <span class="skeleton" style="width:32px;height:32px;border-radius:16px;"></span>
+        <!-- 骨架卡片 2-4 -->
+        <div v-for="n in 3" :key="'sk-' + n" class="nav-card nav-card--skeleton">
+          <div class="nav-card__header">
+            <span class="skeleton" style="width:24px;height:24px;border-radius:12px;flex-shrink:0;"></span>
+            <div class="nav-card__info">
+              <span class="skeleton" style="height:16px;width:40%;"></span>
+              <span class="skeleton" style="height:12px;width:28%;margin-top:4px;"></span>
+            </div>
+            <div class="nav-card__sort nav-card__sort--skeleton">
+              <span class="skeleton" style="width:32px;height:32px;border-radius:16px;"></span>
+              <span class="skeleton" style="width:32px;height:32px;border-radius:16px;"></span>
+            </div>
+            <div class="nav-card__actions nav-card__actions--skeleton">
+              <span class="skeleton" style="width:32px;height:32px;border-radius:16px;"></span>
+              <span class="skeleton" style="width:32px;height:32px;border-radius:16px;"></span>
+            </div>
           </div>
         </div>
       </div>
@@ -538,6 +540,13 @@ async function doRemoveSub(p, s) {
 <style scoped>
 .nav-manager {
   padding: 24px;
+  min-height: 100%;
+}
+
+/* ======== 骨架屏容器 ======== */
+.skeleton-container {
+  max-height: 100vh;
+  overflow: hidden;
 }
 
 /* ======== 缓冲进度条 ======== */

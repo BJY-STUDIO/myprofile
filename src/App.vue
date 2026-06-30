@@ -663,7 +663,6 @@ const bodyMarginLeft = computed(() => {
   box-sizing: border-box;
   overflow-x: hidden;
   overflow-y: auto;
-  scrollbar-gutter: stable;
 }
 
 /* 页面切换 fadeIn 过渡
