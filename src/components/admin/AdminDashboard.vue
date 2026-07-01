@@ -64,7 +64,7 @@
 
         <!-- 1. 问候模块 -->
         <section class="dashboard-greeting">
-          <h1 class="dashboard-greeting__title">{{ greetingText }}, Bao 👋</h1>
+          <h1 class="dashboard-greeting__title">{{ greetingText }}, {{ adminName || 'Bao' }} 👋</h1>
           <p class="dashboard-greeting__subtitle">Here's what's happening with your blog today.</p>
         </section>
 
@@ -82,13 +82,15 @@
               <span class="continue-card__desc">{{ continueArticle.description || '暂无描述' }}</span>
               <span class="continue-card__meta">Last edited {{ formatRelativeTime(continueArticle.updatedAt) }}</span>
             </div>
-            <button class="continue-card__menu" aria-label="More options">
-              <span class="material-symbols-rounded">more_vert</span>
-            </button>
-            <button class="continue-card__action" @click="onContinueWriting(continueArticle)">
-              <span>Continue writing</span>
-              <span class="material-symbols-rounded">arrow_forward</span>
-            </button>
+            <div class="continue-card__actions">
+              <button class="continue-card__menu" aria-label="More options">
+                <span class="material-symbols-rounded">more_vert</span>
+              </button>
+              <button class="continue-card__action" @click="onContinueWriting(continueArticle)">
+                <span>Continue writing</span>
+                <span class="material-symbols-rounded">arrow_forward</span>
+              </button>
+            </div>
           </div>
         </section>
 
@@ -198,7 +200,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { cmList } from '@/services/articleService'
+import { cmList, strapiAdminMe } from '@/services/articleService'
 import { useAdminLoader } from '@/composables/useAdminLoader'
 import '@material/web/progress/linear-progress'
 import '@material/web/button/filled-button'
@@ -213,6 +215,9 @@ const loader = useAdminLoader()
 
 const articles = ref([])
 
+// ===== 管理员名称 =====
+const adminName = ref('')
+
 // ===== 问候语 =====
 const greetingText = computed(() => {
   const hour = new Date().getHours()
@@ -221,11 +226,11 @@ const greetingText = computed(() => {
   return 'Good evening'
 })
 
-// ===== 最近文章（按更新时间倒序取前 5 篇） =====
+// ===== 最近文章（按更新时间倒序取前 3 篇） =====
 const recentArticles = computed(() => {
   return [...articles.value]
     .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt))
-    .slice(0, 5)
+    .slice(0, 3)
 })
 
 // ===== Continue writing — 优先后取草稿，无草稿则取最近编辑的文章 =====
@@ -249,7 +254,21 @@ function loadArticles() {
   )
 }
 
-onMounted(loadArticles)
+// ===== 获取管理员名称 =====
+async function loadAdminName() {
+  try {
+    const user = await strapiAdminMe(props.token)
+    const name = user.firstname || user.username || user.email?.split('@')[0]
+    if (name) adminName.value = name
+  } catch (e) {
+    console.warn('[AdminDashboard] 获取管理员信息失败:', e.message)
+  }
+}
+
+onMounted(() => {
+  loadArticles()
+  loadAdminName()
+})
 
 // ===== 路由跳转 =====
 function goToArticles() {
@@ -589,7 +608,6 @@ function getTagClass(tag) {
   border-radius: 12px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.04);
   position: relative;
-  flex-wrap: wrap;
 }
 .continue-card__thumb {
   width: 180px;
@@ -643,11 +661,21 @@ function getTagClass(tag) {
   color: var(--md-sys-color-outline, #64748B);
 }
 
+/* 右侧操作列：三点菜单 + Continue writing 按钮 */
+.continue-card__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 16px;
+  flex-shrink: 0;
+  align-self: stretch;
+  justify-content: space-between;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
 /* 三点菜单 */
 .continue-card__menu {
-  position: absolute;
-  top: 24px;
-  right: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1008,7 +1036,7 @@ function getTagClass(tag) {
     align-items: flex-start;
   }
   .continue-card__thumb { width: 100%; height: 140px; }
-  .continue-card__menu { top: 12px; right: 12px; }
+  .continue-card__actions { flex-direction: row; align-self: stretch; justify-content: space-between; align-items: center; }
 }
 
 </style>

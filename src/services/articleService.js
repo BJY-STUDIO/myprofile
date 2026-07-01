@@ -1057,6 +1057,21 @@ export async function strapiAdminLogin(email, password) {
 }
 
 /**
+ * 获取当前登录的管理员信息
+ * Strapi v5 返回格式: { data: { id, firstname, lastname, username, email, ... } }
+ * @param {string} token - Admin JWT
+ * @returns {Promise<object>} 用户信息对象
+ */
+export async function strapiAdminMe(token) {
+  const res = await fetch(`${ADMIN_API_BASE}/admin/users/me`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error(`Failed to fetch user: ${res.status}`)
+  const json = await res.json()
+  return json.data || json
+}
+
+/**
  * 通过 Strapi content-manager API 创建 NavItem
  * Strapi v5 content-manager 响应格式: { data: { documentId, id, ... }, meta: {} }
  * @param {string} token - Admin JWT
