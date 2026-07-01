@@ -37,27 +37,8 @@
     <!-- ======== 真实内容 ======== -->
     <div v-else :class="{ 'content-fadein': loader.fadeInActive.value }">
 
-      <!-- ======== 顶部导航栏 ======== -->
-      <header class="dashboard-topbar">
-        <div class="dashboard-topbar__search">
-          <span class="material-symbols-rounded dashboard-topbar__search-icon">search</span>
-          <span class="dashboard-topbar__search-placeholder">Search articles...</span>
-          <span class="dashboard-topbar__search-kbd">⌘K</span>
-        </div>
-        <div class="dashboard-topbar__actions">
-          <md-filled-button class="dashboard-topbar__new-btn" @click="onQuickAction('new-article')">
-            <span class="material-symbols-rounded dashboard-topbar__new-icon" slot="icon">add</span>
-            New Article
-          </md-filled-button>
-          <button class="dashboard-topbar__icon-btn" aria-label="Notifications">
-            <span class="material-symbols-rounded">notifications</span>
-            <span class="dashboard-topbar__badge"></span>
-          </button>
-          <div class="dashboard-topbar__avatar">
-            <span class="material-symbols-rounded">person</span>
-          </div>
-        </div>
-      </header>
+      <!-- ======== 顶部导航栏（共享组件） ======== -->
+      <AdminTopbar @new-article="onQuickAction('new-article')" />
 
       <!-- 内容区统一 padding -->
       <div class="dashboard-body">
@@ -204,6 +185,7 @@ import { cmList, strapiAdminMe } from '@/services/articleService'
 import { useAdminLoader } from '@/composables/useAdminLoader'
 import '@material/web/progress/linear-progress'
 import '@material/web/button/filled-button'
+import AdminTopbar from './AdminTopbar.vue'
 
 const UID = 'api::article.article'
 const router = useRouter()
@@ -355,7 +337,7 @@ function getTagClass(tag) {
 <style scoped>
 /* ===== 根容器 — M3 surface ===== */
 .admin-dashboard {
-  background: var(--md-sys-color-surface, #F9FAFB);
+  background: var(--md-sys-color-surface, #F8F9FC);
 }
 
 /* ===== 进度条 ===== */
@@ -365,7 +347,7 @@ function getTagClass(tag) {
   left: 80px;
   z-index: 100;
   width: calc(100% - 80px);
-  --md-linear-progress-active-indicator-color: var(--md-sys-color-primary, #5E54F0);
+  --md-linear-progress-active-indicator-color: var(--md-sys-color-primary, #635bff);
   --md-linear-progress-track-color: var(--md-sys-color-primary-container, #eaddff);
   transition: opacity 400ms ease-out;
 }
@@ -406,134 +388,6 @@ function getTagClass(tag) {
 @keyframes skeleton-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
-}
-
-/* ================================================================
-   顶部导航栏
-   ================================================================ */
-.dashboard-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 64px;
-  padding: 0 48px;
-  background: var(--md-sys-color-surface-container-lowest, #FFFFFF);
-  border-bottom: 1px solid var(--md-sys-color-outline-variant, #E5E7EB);
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
-
-/* 搜索框 */
-.dashboard-topbar__search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 420px;
-  height: 40px;
-  padding: 0 12px;
-  border-radius: 8px;
-  background: var(--md-sys-color-surface-container-high, #F3F4F6);
-  cursor: pointer;
-  transition: background 200ms ease;
-}
-.dashboard-topbar__search:hover {
-  background: var(--md-sys-color-surface-container-highest, #E5E7EB);
-}
-.dashboard-topbar__search-icon {
-  font-size: 16px;
-  color: var(--md-sys-color-on-surface-variant, #64748B);
-  flex-shrink: 0;
-}
-.dashboard-topbar__search-placeholder {
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--md-sys-color-on-surface-variant, #9CA3AF);
-  flex: 1;
-}
-.dashboard-topbar__search-kbd {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--md-sys-color-on-surface-variant, #64748B);
-  padding: 2px 6px;
-  border-radius: 6px;
-  background: var(--md-sys-color-surface-container-highest, #E2E8F0);
-  flex-shrink: 0;
-  line-height: 1.4;
-}
-
-/* 右侧操作区 */
-.dashboard-topbar__actions {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-/* New Article 按钮 — 10px圆角 对标mockup */
-.dashboard-topbar__new-btn {
-  --md-filled-button-container-color: var(--md-sys-color-primary, #5E54F0);
-  --md-filled-button-label-text-color: var(--md-sys-color-on-primary, #FFFFFF);
-  --md-filled-button-container-height: 40px;
-  --md-filled-button-container-shape: 10px;
-  --md-filled-button-label-text-size: 14px;
-  --md-filled-button-label-text-weight: 600;
-  --md-filled-button-leading-space: 20px;
-  --md-filled-button-trailing-space: 20px;
-}
-.dashboard-topbar__new-icon {
-  font-size: 16px;
-}
-
-/* 通用图标按钮 */
-.dashboard-topbar__icon-btn {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  transition: background 200ms ease;
-}
-.dashboard-topbar__icon-btn:hover {
-  background: var(--md-sys-color-surface-container-high, #F3F4F6);
-}
-.dashboard-topbar__icon-btn .material-symbols-rounded {
-  font-size: 20px;
-  color: var(--md-sys-color-on-surface-variant, #64748B);
-}
-
-/* 通知红点 — 主色 */
-.dashboard-topbar__badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--md-sys-color-primary, #5E54F0);
-  border: 1.5px solid var(--md-sys-color-surface-container-lowest, #FFFFFF);
-}
-
-/* 头像 — primary-container */
-.dashboard-topbar__avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--md-sys-color-primary-container, #eaddff);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background 200ms ease;
-}
-.dashboard-topbar__avatar:hover { background: var(--md-sys-color-secondary-container, #e8def8); }
-.dashboard-topbar__avatar .material-symbols-rounded {
-  font-size: 20px;
-  color: var(--md-sys-color-on-primary-container, #21005d);
 }
 
 /* ===== 内容区统一 padding ===== */
@@ -592,7 +446,7 @@ function getTagClass(tag) {
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
-  color: var(--md-sys-color-primary, #5E54F0);
+  color: var(--md-sys-color-primary, #635bff);
   padding: 4px 0;
   font-family: inherit;
   transition: opacity 200ms ease;
@@ -612,7 +466,7 @@ function getTagClass(tag) {
   padding: 24px;
   background: var(--md-sys-color-surface-container-lowest, #FFFFFF);
   border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
   position: relative;
 }
 .continue-card__thumb {
@@ -630,7 +484,7 @@ function getTagClass(tag) {
 }
 .continue-card__thumb-icon {
   font-size: 40px;
-  color: var(--md-sys-color-primary, #5E54F0);
+  color: var(--md-sys-color-primary, #635bff);
   opacity: 0.5;
 }
 .continue-card__body {
@@ -708,7 +562,7 @@ function getTagClass(tag) {
   border-radius: 9999px;
   border: none;
   background: var(--md-sys-color-primary-container, #eaddff);
-  color: var(--md-sys-color-on-primary-container, #5E54F0);
+  color: var(--md-sys-color-on-primary-container, #635bff);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -729,7 +583,7 @@ function getTagClass(tag) {
 .recent-list {
   background: var(--md-sys-color-surface-container-lowest, #FFFFFF);
   border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
   overflow: hidden;
 }
 .recent-item {
@@ -767,7 +621,7 @@ function getTagClass(tag) {
 }
 .recent-item__thumb--purple {
   background: linear-gradient(135deg,
-    var(--md-sys-color-primary, #5E54F0),
+    var(--md-sys-color-primary, #635bff),
     var(--md-sys-color-secondary, #8b7ec8));
 }
 .recent-item__thumb--orange {
@@ -817,12 +671,12 @@ function getTagClass(tag) {
   text-align: center;
 }
 .recent-item__status--published {
-  background: #E6F6EE;
-  color: #0E9F6E;
+  background: #ecfdf5;
+  color: #065f46;
 }
 .recent-item__status--draft {
-  background: #FEF3E7;
-  color: #D97706;
+  background: #fff7ed;
+  color: #92400e;
 }
 
 /* 日期 — 固定宽度 120px 实现列对齐 */
@@ -855,7 +709,7 @@ function getTagClass(tag) {
 }
 .recent-item__tag--primary {
   background: #F5F3FF;
-  color: #5E54F0;
+  color: #635bff;
 }
 .recent-item__tag--blue {
   background: #EFF8FF;
@@ -899,7 +753,7 @@ function getTagClass(tag) {
   padding: 48px 32px;
   background: var(--md-sys-color-surface-container-lowest, #FFFFFF);
   border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
   color: var(--md-sys-color-on-surface-variant, #64748B);
 }
 .empty-state__icon {
@@ -930,7 +784,7 @@ function getTagClass(tag) {
   cursor: pointer;
   text-align: left;
   font-family: inherit;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
   transition: box-shadow 200ms ease, transform 200ms ease;
 }
 .quick-action-card:hover {
@@ -954,7 +808,7 @@ function getTagClass(tag) {
 .quick-action-card__icon--primary {
   background: #F5F3FF;
 }
-.quick-action-card__icon--primary .material-symbols-rounded { color: #5E54F0; }
+.quick-action-card__icon--primary .material-symbols-rounded { color: #635bff; }
 .quick-action-card__icon--green {
   background: #ECFDF3;
 }
@@ -993,14 +847,8 @@ function getTagClass(tag) {
   .quick-actions-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .dashboard-topbar__search {
-    width: 280px;
-  }
   .dashboard-body {
     padding: 32px 32px 8px;
-  }
-  .dashboard-topbar {
-    padding: 0 32px;
   }
   /* 日期列缩窄 */
   .recent-item__date { width: 100px; }
@@ -1013,13 +861,8 @@ function getTagClass(tag) {
 }
 
 @media (max-width: 840px) {
-  .dashboard-topbar__search { display: none; }
-  .dashboard-topbar__search-kbd { display: none; }
   .dashboard-body {
     padding: 24px 24px 8px;
-  }
-  .dashboard-topbar {
-    padding: 0 24px;
   }
   .continue-card__thumb { width: 140px; height: 94px; }
   .continue-card__thumb-icon { font-size: 28px; }
@@ -1033,9 +876,6 @@ function getTagClass(tag) {
   .dashboard-greeting__title { font-size: 24px; }
   .dashboard-body {
     padding: 20px 16px 8px;
-  }
-  .dashboard-topbar {
-    padding: 0 16px;
   }
   .recent-item { flex-wrap: wrap; gap: 8px; }
   .recent-item__desc { display: none; }
@@ -1057,12 +897,6 @@ function getTagClass(tag) {
    暗色主题 — 非 scoped 块，M3 CSS 变量自动切换，此处补充
    非变量层面的暗色专用覆盖（药丸/圆角/阴影等不受变量控制的部分）
    ================================================================ */
-
-/* ---- topbar ---- */
-[data-theme="dark"] .dashboard-topbar__search { background: var(--md-sys-color-surface-container-high, #2a2a3e); }
-[data-theme="dark"] .dashboard-topbar__search:hover { background: var(--md-sys-color-surface-container-highest, #36343b); }
-[data-theme="dark"] .dashboard-topbar__icon-btn:hover { background: var(--md-sys-color-surface-container-high, #2a2a3e); }
-[data-theme="dark"] .dashboard-topbar__badge { border-color: var(--md-sys-color-surface-container-lowest, #0f0d13); }
 
 /* ---- cards hover/阴影 ---- */
 [data-theme="dark"] .continue-card { box-shadow: none; }

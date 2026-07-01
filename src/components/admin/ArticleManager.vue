@@ -183,27 +183,8 @@
 
       <!-- ======== 列表模式 ======== -->
       <template v-else>
-        <!-- 顶部栏 -->
-        <header class="am-topbar">
-          <div class="am-topbar__search">
-            <span class="material-symbols-rounded am-topbar__search-icon">search</span>
-            <span class="am-topbar__search-placeholder">Search articles...</span>
-            <span class="am-topbar__search-kbd">⌘K</span>
-          </div>
-          <div class="am-topbar__actions">
-            <md-filled-button class="am-topbar__new-btn" @click="onCreate">
-              <span class="material-symbols-rounded am-topbar__new-icon" slot="icon">add</span>
-              New Article
-            </md-filled-button>
-            <button class="am-topbar__icon-btn" aria-label="Notifications">
-              <span class="material-symbols-rounded">notifications</span>
-              <span class="am-topbar__badge"></span>
-            </button>
-            <div class="am-topbar__avatar">
-              <span class="material-symbols-rounded">person</span>
-            </div>
-          </div>
-        </header>
+        <!-- 顶部栏（共享组件） -->
+        <AdminTopbar @new-article="onCreate" />
 
         <!-- 两栏布局：子导航 + 主内容 -->
         <div class="am-layout">
@@ -442,6 +423,7 @@ import '@material/web/dialog/dialog'
 import '@material/web/textfield/outlined-text-field'
 import '@material/web/switch/switch'
 import '@material/web/progress/linear-progress'
+import AdminTopbar from './AdminTopbar.vue'
 
 const UID = 'api::article.article'
 
@@ -913,6 +895,7 @@ function getReadTime(content) {
   flex-direction: column;
   min-height: 100%;
   min-height: 100dvh;
+  background: var(--md-sys-color-surface, #F8F9FC);
 }
 
 /* ======== 缓冲进度条 ======== */
@@ -978,118 +961,6 @@ function getReadTime(content) {
   height: 72px;
   width: 100%;
   margin-bottom: 8px;
-}
-
-/* ======== 顶部栏 ======== */
-.am-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 24px;
-  height: 64px;
-  background-color: var(--md-sys-color-surface-container-lowest, #f8f9ff);
-  gap: 16px;
-  flex-shrink: 0;
-}
-
-.am-topbar__search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  max-width: 400px;
-  height: 40px;
-  padding: 0 16px;
-  background-color: var(--md-sys-color-surface-container-lowest, #fff);
-  border-radius: 8px;
-  border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
-}
-
-.am-topbar__search-icon {
-  font-size: 16px;
-  color: var(--md-sys-color-on-surface-variant, #9ca3af);
-}
-
-.am-topbar__search-placeholder {
-  font-size: 14px;
-  color: var(--md-sys-color-on-surface-variant, #9ca3af);
-  flex: 1;
-}
-
-.am-topbar__search-kbd {
-  font-size: 12px;
-  padding: 2px 6px;
-  background-color: var(--md-sys-color-surface-container-highest, #f3f4f6);
-  border-radius: 4px;
-  color: var(--md-sys-color-on-surface-variant, #6b7280);
-}
-
-.am-topbar__actions {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-shrink: 0;
-}
-
-.am-topbar__new-btn {
-  --md-filled-button-container-shape: 8px;
-  --md-filled-button-container-color: #635bff;
-  --md-filled-button-label-text-color: #fff;
-}
-
-.am-topbar__new-icon {
-  font-size: 16px;
-}
-
-.am-topbar__icon-btn {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: none;
-  background: transparent;
-  border-radius: 8px;
-  cursor: pointer;
-  color: var(--md-sys-color-on-surface-variant, #6b7280);
-  transition: background-color 150ms;
-}
-
-.am-topbar__icon-btn:hover {
-  background-color: var(--md-sys-color-surface-container-high, #f3f3f3);
-}
-
-.am-topbar__icon-btn .material-symbols-rounded {
-  font-size: 20px;
-}
-
-.am-topbar__badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 8px;
-  height: 8px;
-  background: #635bff;
-  border-radius: 50%;
-  border: 2px solid var(--md-sys-color-surface-container-lowest, #f8f9ff);
-}
-
-.am-topbar__avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: #fff;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.am-topbar__avatar .material-symbols-rounded {
-  font-size: 20px;
 }
 
 /* ======== 两栏布局 ======== */
@@ -1177,12 +1048,12 @@ function getReadTime(content) {
 }
 
 .am-subnav__item--active {
-  background-color: #f3f0ff;
-  color: #635bff;
+  background-color: var(--md-sys-color-primary-container, #f3f0ff);
+  color: var(--md-sys-color-primary, #635bff);
 }
 
 .am-subnav__item--active .am-subnav__item-count {
-  color: #635bff;
+  color: var(--md-sys-color-primary, #635bff);
 }
 
 .am-subnav__item-label {
@@ -1315,7 +1186,7 @@ function getReadTime(content) {
 }
 
 .am-dropdown:hover {
-  border-color: #635bff;
+  border-color: var(--md-sys-color-primary, #635bff);
 }
 
 .am-dropdown__chevron {
@@ -1340,8 +1211,8 @@ function getReadTime(content) {
 }
 
 .am-sort-btn:hover {
-  border-color: #635bff;
-  color: #635bff;
+  border-color: var(--md-sys-color-primary, #635bff);
+  color: var(--md-sys-color-primary, #635bff);
 }
 
 .am-sort-btn .material-symbols-rounded {
@@ -1374,8 +1245,8 @@ function getReadTime(content) {
 }
 
 .am-view-toggle__btn--active {
-  background-color: #f3f0ff;
-  color: #635bff;
+  background-color: var(--md-sys-color-primary-container, #f3f0ff);
+  color: var(--md-sys-color-primary, #635bff);
 }
 
 .am-view-toggle__btn .material-symbols-rounded {
@@ -1413,11 +1284,11 @@ function getReadTime(content) {
 }
 
 .am-article-row--selected {
-  background-color: #f3f0ff;
+  background-color: var(--md-sys-color-primary-container, #f3f0ff);
 }
 
 .am-article-row--selected:hover {
-  background-color: #e8e3ff;
+  background-color: var(--md-sys-color-primary-container, #e8e3ff);
 }
 
 /* Article column with thumbnail + title/desc */
@@ -1542,7 +1413,7 @@ function getReadTime(content) {
   height: 18px;
   border: 1px solid var(--md-sys-color-outline-variant, #d1d5db);
   border-radius: 4px;
-  background-color: #fff;
+  background-color: var(--md-sys-color-surface-container-lowest, #fff);
   transition: all 150ms;
 }
 
@@ -1550,7 +1421,7 @@ function getReadTime(content) {
   content: '';
   width: 10px;
   height: 10px;
-  background-color: #fff;
+  background-color: var(--md-sys-color-on-primary, #fff);
   border-radius: 1px;
   opacity: 0;
   transform: scale(0);
@@ -1559,8 +1430,8 @@ function getReadTime(content) {
 }
 
 .am-checkbox input:checked ~ .am-checkbox__box {
-  background-color: #635bff;
-  border-color: #635bff;
+  background-color: var(--md-sys-color-primary, #635bff);
+  border-color: var(--md-sys-color-primary, #635bff);
 }
 
 .am-checkbox input:checked ~ .am-checkbox__box::after {
@@ -1693,8 +1564,8 @@ function getReadTime(content) {
 }
 
 .am-pagination__btn:hover:not(:disabled) {
-  border-color: #635bff;
-  color: #635bff;
+  border-color: var(--md-sys-color-primary, #635bff);
+  color: var(--md-sys-color-primary, #635bff);
 }
 
 .am-pagination__btn:disabled {
@@ -1725,19 +1596,19 @@ function getReadTime(content) {
 }
 
 .am-pagination__page:hover {
-  border-color: #635bff;
-  color: #635bff;
+  border-color: var(--md-sys-color-primary, #635bff);
+  color: var(--md-sys-color-primary, #635bff);
 }
 
 .am-pagination__page--active {
-  background-color: #635bff;
-  border-color: #635bff;
-  color: #fff;
+  background-color: var(--md-sys-color-primary, #635bff);
+  border-color: var(--md-sys-color-primary, #635bff);
+  color: var(--md-sys-color-on-primary, #fff);
 }
 
 .am-pagination__page--active:hover {
-  background-color: #635bff;
-  color: #fff;
+  background-color: var(--md-sys-color-primary, #635bff);
+  color: var(--md-sys-color-on-primary, #fff);
 }
 
 /* ======== 空状态 ======== */
@@ -2109,14 +1980,6 @@ function getReadTime(content) {
 }
 
 @media (max-width: 768px) {
-  .am-topbar {
-    padding: 0 16px;
-  }
-
-  .am-topbar__search {
-    max-width: none;
-  }
-
   .am-article-row {
     grid-template-columns: 32px 1fr 70px 40px;
     height: 64px;
@@ -2210,30 +2073,7 @@ function getReadTime(content) {
   color: #fbbf24;
 }
 
-/* ======== 暗色主题：accent 相关 ======== */
-[data-theme="dark"] .am-pagination__page--active {
-  background-color: #635bff;
-  border-color: #635bff;
-}
-
-[data-theme="dark"] .am-checkbox input:checked ~ .am-checkbox__box {
-  background-color: #635bff;
-  border-color: #635bff;
-}
-
-[data-theme="dark"] .am-view-toggle__btn--active {
-  background: #312e81;
-  color: #a5b4fc;
-}
-
-[data-theme="dark"] .am-subnav__item--active {
-  background: #312e81;
-  color: #a5b4fc;
-}
-
-[data-theme="dark"] .am-subnav__item--active .am-subnav__item-count {
-  color: #a5b4fc;
-}
+/* ======== 暗色主题：accent 相关（已通过 CSS 变量自动切换，无需额外覆盖）===== */
 
 [data-theme="dark"] .am-tag {
   background: #374151;
