@@ -217,7 +217,7 @@
                 </button>
               </div>
               <button
-                v-for="item in subnavCategories"
+                v-for="item in visibleCategories"
                 :key="item.value"
                 class="am-subnav__item"
                 :class="{ 'am-subnav__item--active': categoryFilter.toLowerCase() === item.value }"
@@ -226,6 +226,13 @@
                 <span class="am-subnav__cat-dot" :style="{ background: item.color }"></span>
                 <span class="am-subnav__item-label">{{ item.label }}</span>
                 <span class="am-subnav__item-count">{{ item.count }}</span>
+              </button>
+              <button
+                v-if="subnavCategories.length > 5"
+                class="am-subnav__expand"
+                @click="categoryLimit = categoryLimit === 5 ? subnavCategories.length : 5"
+              >
+                <span class="am-subnav__expand-dots">{{ categoryLimit === 5 ? '•••' : '收起' }}</span>
               </button>
             </div>
           </aside>
@@ -308,6 +315,7 @@
                     :label="tag"
                   />
                   <span v-if="art.tags && art.tags.length > 2" class="am-tag-overflow">+{{ art.tags.length - 2 }}</span>
+                  <span v-else-if="art.tags && art.tags.length === 0" class="am-article-row__col-tags-placeholder">—</span>
                 </span>
                 <button class="am-article-row__menu" @click.stop aria-label="More options">
                   <span class="material-symbols-rounded">more_vert</span>
@@ -466,6 +474,13 @@ const tagDropdownOpen = ref(false)
 
 // ===== 二级子导航状态 =====
 const activeSubnav = ref('all')
+
+// ===== Categories 折叠状态 =====
+const categoryLimit = ref(5)
+
+const visibleCategories = computed(() => {
+  return subnavCategories.value.slice(0, categoryLimit.value)
+})
 
 // ===== tag 颜色编辑对话框 =====
 const showTagColorDialog = ref(false)
@@ -1024,6 +1039,21 @@ function getReadTime(content) {
   position: sticky;
   top: 0;
   max-height: 100dvh;
+  scrollbar-width: thin;
+  scrollbar-color: var(--md-sys-color-outline-variant, #c4c0c8) transparent;
+}
+
+.am-subnav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.am-subnav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.am-subnav::-webkit-scrollbar-thumb {
+  background-color: var(--md-sys-color-outline-variant, #c4c0c8);
+  border-radius: 3px;
 }
 
 .am-subnav__group {
@@ -1118,6 +1148,33 @@ function getReadTime(content) {
   margin: 12px 16px;
 }
 
+.am-subnav__expand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 32px;
+  margin-top: 4px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 100ms;
+  font-family: inherit;
+  padding: 0;
+}
+
+.am-subnav__expand:hover {
+  background-color: var(--md-sys-color-surface-container-high, #f3f4f6);
+}
+
+.am-subnav__expand-dots {
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  user-select: none;
+}
+
 /* tag 颜色编辑对话框中的颜色点按钮 */
 .tag-color-dot-btn {
   width: 20px;
@@ -1142,6 +1199,21 @@ function getReadTime(content) {
   padding: 16px 24px;
   min-width: 0;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--md-sys-color-outline-variant, #c4c0c8) transparent;
+}
+
+.am-main::-webkit-scrollbar {
+  width: 6px;
+}
+
+.am-main::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.am-main::-webkit-scrollbar-thumb {
+  background-color: var(--md-sys-color-outline-variant, #c4c0c8);
+  border-radius: 3px;
 }
 
 /* ======== 页面标题 ======== */
@@ -1297,7 +1369,7 @@ function getReadTime(content) {
 /* ======== 文章列表表格 ======== */
 .am-table {
   background-color: var(--md-sys-color-surface-container-lowest, #fff);
-  border: 1px solid #f3f4f6;
+  border: 1px solid var(--md-sys-color-outline-variant, #f3f4f6);
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
@@ -1306,11 +1378,11 @@ function getReadTime(content) {
 /* ======== 文章行（无表头） ======== */
 .am-article-row {
   display: grid;
-  grid-template-columns: 40px 1fr 110px 110px 90px 150px 40px;
+  grid-template-columns: 40px 1fr 110px 110px 90px 180px 40px;
   align-items: center;
   height: 88px;
   padding: 0 16px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #f3f4f6);
   cursor: pointer;
   transition: background-color 100ms;
   gap: 12px;
@@ -1321,7 +1393,7 @@ function getReadTime(content) {
 }
 
 .am-article-row:hover {
-  background-color: #f9fafb;
+  background-color: var(--md-sys-color-surface-container, #f3edf7);
 }
 
 .am-article-row--selected {
@@ -1399,8 +1471,9 @@ function getReadTime(content) {
 .am-article-row__col-tags {
   display: flex;
   gap: 6px;
-  flex-wrap: wrap;
   align-items: center;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .am-tag-overflow {
@@ -1413,6 +1486,12 @@ function getReadTime(content) {
   color: var(--md-sys-color-on-surface-variant, #6b7280);
   background-color: var(--md-sys-color-surface-container-high, #f3f4f6);
   white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.am-article-row__col-tags-placeholder {
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant, #9ca3af);
 }
 
 .am-article-row__menu {
@@ -1517,7 +1596,7 @@ function getReadTime(content) {
   padding: 0 16px;
   margin-top: 12px;
   background-color: var(--md-sys-color-surface-container-lowest, #fff);
-  border: 1px solid #f3f4f6;
+  border: 1px solid var(--md-sys-color-outline-variant, #f3f4f6);
   border-radius: 12px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
   gap: 12px;
@@ -1660,7 +1739,7 @@ function getReadTime(content) {
   justify-content: center;
   padding: 64px 32px;
   background-color: var(--md-sys-color-surface-container-lowest, #fff);
-  border: 1px solid #f3f4f6;
+  border: 1px solid var(--md-sys-color-outline-variant, #f3f4f6);
   border-radius: 12px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
@@ -1996,7 +2075,7 @@ function getReadTime(content) {
   }
 
   .am-article-row {
-    grid-template-columns: 40px 1fr 100px 100px 80px 120px 40px;
+    grid-template-columns: 40px 1fr 100px 100px 80px 150px 40px;
     gap: 8px;
   }
 }
@@ -2114,10 +2193,30 @@ function getReadTime(content) {
   color: #fbbf24;
 }
 
+/* ======== 暗色主题：表格边框 ======== */
+[data-theme="dark"] .am-table {
+  border-color: var(--md-sys-color-outline-variant, #49454f);
+}
+
+/* ======== 暗色主题：滚动条 ======== */
+[data-theme="dark"] .am-subnav,
+[data-theme="dark"] .am-main {
+  scrollbar-color: var(--md-sys-color-outline-variant, #49454f) transparent;
+}
+
+[data-theme="dark"] .am-subnav::-webkit-scrollbar-thumb,
+[data-theme="dark"] .am-main::-webkit-scrollbar-thumb {
+  background-color: var(--md-sys-color-outline-variant, #49454f);
+}
+
 /* ======== 暗色主题：accent 相关（已通过 CSS 变量自动切换，无需额外覆盖）===== */
 
 [data-theme="dark"] .am-bottom-bar {
   background-color: var(--md-sys-color-surface-container-lowest, #141218);
+  border-color: var(--md-sys-color-outline-variant, #49454f);
+}
+
+[data-theme="dark"] .am-empty {
   border-color: var(--md-sys-color-outline-variant, #49454f);
 }
 
