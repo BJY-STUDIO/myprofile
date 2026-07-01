@@ -23,7 +23,7 @@
     <div v-else :class="{ 'content-fadein': loader.fadeInActive.value }">
 
       <!-- ======== 编辑器模式 ======== -->
-      <section v-if="editingIndex >= 0" class="ed">
+      <section v-if="editingIndex !== -1" class="ed">
         <!-- ======== 编辑器 Topbar ======== -->
         <header class="ed-topbar">
           <div class="ed-topbar__left">
@@ -94,39 +94,57 @@
             <!-- 格式化工具栏 -->
             <div class="ed-toolbar">
               <div class="ed-toolbar__left">
-                <button class="ed-toolbar__btn ed-toolbar__heading-btn" @click="insertMd('heading')">
-                  Heading 1 <span class="material-symbols-rounded">expand_more</span>
-                </button>
+                <div class="ed-toolbar__heading-wrap">
+                  <button class="ed-toolbar__btn ed-toolbar__heading-btn" @click="headingMenuOpen = !headingMenuOpen">
+                    {{ headingLabel }} <span class="material-symbols-rounded">expand_more</span>
+                  </button>
+                  <div v-if="headingMenuOpen" class="ed-toolbar__heading-menu">
+                    <button v-for="h in headingOptions" :key="h.key" @click="insertMd(h.key); headingMenuOpen = false"
+                      class="ed-toolbar__heading-option" :class="{ 'ed-toolbar__heading-option--active': headingLabel === h.label }">
+                      <span :class="'ed-toolbar__heading-preview ed-toolbar__heading-preview--' + h.key">{{ h.label }}</span>
+                    </button>
+                  </div>
+                </div>
                 <div class="ed-toolbar__divider"></div>
-                <button class="ed-toolbar__icon-btn" @click="insertMd('bold')" title="Bold"><strong>B</strong></button>
-                <button class="ed-toolbar__icon-btn" @click="insertMd('italic')" title="Italic"><em>I</em></button>
+                <button class="ed-toolbar__icon-btn" @click="insertMd('bold')" title="Bold (Ctrl+B)"><strong>B</strong></button>
+                <button class="ed-toolbar__icon-btn" @click="insertMd('italic')" title="Italic (Ctrl+I)"><em>I</em></button>
                 <button class="ed-toolbar__icon-btn" @click="insertMd('strikethrough')" title="Strikethrough"><s>S</s></button>
                 <div class="ed-toolbar__divider"></div>
-                <button class="ed-toolbar__icon-btn" @click="insertMd('link')" title="Link">
+                <button class="ed-toolbar__icon-btn" @click="insertMd('link')" title="Insert link">
                   <span class="material-symbols-rounded">link</span>
                 </button>
-                <button class="ed-toolbar__icon-btn" @click="insertMd('image')" title="Image">
+                <button class="ed-toolbar__icon-btn" @click="insertMd('image')" title="Insert image">
                   <span class="material-symbols-rounded">image</span>
                 </button>
-                <button class="ed-toolbar__icon-btn" @click="insertMd('ul')" title="Align left">
-                  <span class="material-symbols-rounded">format_align_left</span>
+                <div class="ed-toolbar__divider"></div>
+                <button class="ed-toolbar__icon-btn" @click="insertMd('ul')" title="Bullet list">
+                  <span class="material-symbols-rounded">format_list_bulleted</span>
                 </button>
-                <button class="ed-toolbar__icon-btn" @click="insertMd('ol')" title="Align center">
-                  <span class="material-symbols-rounded">format_align_center</span>
+                <button class="ed-toolbar__icon-btn" @click="insertMd('ol')" title="Numbered list">
+                  <span class="material-symbols-rounded">format_list_numbered</span>
                 </button>
                 <button class="ed-toolbar__icon-btn" @click="insertMd('quote')" title="Blockquote">
                   <span class="material-symbols-rounded">format_quote</span>
                 </button>
-                <button class="ed-toolbar__icon-btn" @click="insertMd('codeblock')" title="Code block">
+                <button class="ed-toolbar__icon-btn" @click="insertMd('code')" title="Inline code">
                   <span class="material-symbols-rounded">code</span>
                 </button>
-                <button class="ed-toolbar__icon-btn" @click="insertMd('table')" title="Table">
+                <button class="ed-toolbar__icon-btn" @click="insertMd('codeblock')" title="Code block">
+                  <span class="material-symbols-rounded">data_object</span>
+                </button>
+                <button class="ed-toolbar__icon-btn" @click="insertMd('table')" title="Insert table">
                   <span class="material-symbols-rounded">table_chart</span>
+                </button>
+                <button class="ed-toolbar__icon-btn" @click="insertMd('hr')" title="Horizontal rule">
+                  <span class="material-symbols-rounded">horizontal_rule</span>
                 </button>
               </div>
               <div class="ed-toolbar__right">
-                <button class="ed-toolbar__icon-btn" @click="insertMd('hr')" title="More">
-                  <span class="material-symbols-rounded">more_horiz</span>
+                <button class="ed-toolbar__icon-btn" :class="{ 'ed-toolbar__icon-btn--active': markdownTab === 'split' }" @click="markdownTab = markdownTab === 'split' ? 'edit' : 'split'" title="Split view">
+                  <span class="material-symbols-rounded">vertical_split</span>
+                </button>
+                <button class="ed-toolbar__icon-btn" :class="{ 'ed-toolbar__icon-btn--active': markdownTab === 'preview' }" @click="markdownTab = markdownTab === 'preview' ? 'edit' : 'preview'" title="Preview">
+                  <span class="material-symbols-rounded">visibility</span>
                 </button>
                 <button class="ed-toolbar__icon-btn" @click="toggleFullscreen" title="Fullscreen">
                   <span class="material-symbols-rounded">fullscreen</span>
@@ -228,17 +246,21 @@
               </div>
 
               <!-- Category -->
-              <div class="ed-settings__section">
+              <div class="ed-settings__section ed-settings__category-dropdown">
                 <h4 class="ed-settings__section-title">Category</h4>
-                <button class="ed-settings__dropdown">
+                <button class="ed-settings__dropdown" @click="categoryEditorOpen = !categoryEditorOpen">
                   <span class="material-symbols-rounded">folder</span>
-                  {{ form.tagsDisplay ? form.tagsDisplay.split(/[,，]/)[0].trim() : 'Select category' }}
+                  {{ form.tagsDisplay ? formTags[0] : 'Select category' }}
                   <span class="material-symbols-rounded ed-settings__dropdown-arrow">expand_more</span>
                 </button>
-                <button class="ed-settings__dropdown ed-settings__dropdown--sub">
-                  Add a subcategory (optional)
-                  <span class="material-symbols-rounded ed-settings__dropdown-arrow">expand_more</span>
-                </button>
+                <div v-if="categoryEditorOpen" class="ed-settings__dropdown-menu">
+                  <button v-for="cat in editorCategoryOptions" :key="cat" @click="setCategory(cat); categoryEditorOpen = false">
+                    <span class="material-symbols-rounded">folder</span> {{ cat }}
+                  </button>
+                  <button v-if="!editorCategoryOptions.length" disabled class="ed-settings__dropdown-empty">
+                    No categories available
+                  </button>
+                </div>
               </div>
 
               <!-- Tags -->
@@ -279,37 +301,64 @@
               <div class="ed-settings__section">
                 <h4 class="ed-settings__section-title">Featured Image</h4>
                 <div class="ed-settings__featured">
-                  <div class="ed-settings__featured-placeholder">
-                    <span class="material-symbols-rounded">image</span>
+                  <div v-if="form.featuredImage" class="ed-settings__featured-preview" @click="featuredImageExpanded = !featuredImageExpanded">
+                    <img :src="form.featuredImage" :alt="form.featuredImageAlt || 'Featured'" />
                   </div>
-                  <div class="ed-settings__featured-actions">
-                    <button class="ed-btn ed-btn--sm ed-btn--outlined">
-                      <span class="material-symbols-rounded">refresh</span>
-                      Change
-                    </button>
-                    <button class="ed-btn ed-btn--sm ed-btn--icon-only ed-btn--outlined" @click="onRemove(editingIndex)">
-                      <span class="material-symbols-rounded">delete</span>
-                    </button>
+                  <div v-else class="ed-settings__featured-placeholder" @click="featuredImageExpanded = !featuredImageExpanded">
+                    <span class="material-symbols-rounded">add_photo_alternate</span>
+                    <span>Click to add image URL</span>
                   </div>
-                  <label class="ed-settings__alt-label">Alt text</label>
-                  <input class="ed-settings__alt-input" placeholder="Describe the image..." />
+                  <div v-if="featuredImageExpanded" class="ed-settings__featured-form">
+                    <label class="ed-settings__alt-label">Image URL</label>
+                    <input class="ed-settings__alt-input" v-model="form.featuredImage" placeholder="https://example.com/image.png" />
+                    <label class="ed-settings__alt-label" style="margin-top:8px">Alt text</label>
+                    <input class="ed-settings__alt-input" v-model="form.featuredImageAlt" placeholder="Describe the image..." />
+                    <div class="ed-settings__featured-actions">
+                      <button v-if="form.featuredImage" class="ed-btn ed-btn--sm ed-btn--outlined" @click="form.featuredImage = ''; form.featuredImageAlt = ''">
+                        <span class="material-symbols-rounded">delete</span> Remove
+                      </button>
+                      <button class="ed-btn ed-btn--sm ed-btn--outlined" @click="featuredImageExpanded = false">
+                        Done
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <!-- SEO (collapsed) -->
+              <!-- SEO -->
               <div class="ed-settings__section ed-settings__section--collapsible" @click="seoExpanded = !seoExpanded">
                 <h4 class="ed-settings__section-title">
                   SEO
                   <span class="material-symbols-rounded ed-settings__section-arrow" :class="{ 'ed-settings__section-arrow--open': seoExpanded }">expand_more</span>
                 </h4>
               </div>
+              <div v-if="seoExpanded" class="ed-settings__section">
+                <label class="ed-settings__alt-label">Meta title</label>
+                <input class="ed-settings__alt-input" v-model="form.seoTitle" :placeholder="form.title || 'Article title'" />
+                <label class="ed-settings__alt-label" style="margin-top:8px">Meta description</label>
+                <textarea class="ed-settings__alt-input ed-settings__textarea-field" v-model="form.seoDescription" rows="2" :placeholder="form.description || 'Article description'"></textarea>
+                <label class="ed-settings__alt-label" style="margin-top:8px">Keywords</label>
+                <input class="ed-settings__alt-input" v-model="form.seoKeywords" placeholder="keyword1, keyword2" />
+                <p class="ed-settings__helper" style="margin-top:4px">
+                  {{ form.seoDescription ? form.seoDescription.length : 0 }}/160 characters recommended
+                </p>
+              </div>
 
-              <!-- More Options (collapsed) -->
+              <!-- More Options -->
               <div class="ed-settings__section ed-settings__section--collapsible" @click="moreExpanded = !moreExpanded">
                 <h4 class="ed-settings__section-title">
                   More Options
                   <span class="material-symbols-rounded ed-settings__section-arrow" :class="{ 'ed-settings__section-arrow--open': moreExpanded }">expand_more</span>
                 </h4>
+              </div>
+              <div v-if="moreExpanded" class="ed-settings__section">
+                <label class="ed-settings__alt-label">Slug (URL identifier)</label>
+                <input class="ed-settings__alt-input" v-model="form.slug" placeholder="auto-generated from title" />
+                <p class="ed-settings__helper">Leave empty to auto-generate from title</p>
+                <label class="ed-settings__alt-label" style="margin-top:8px">Custom date</label>
+                <input class="ed-settings__alt-input" type="date" v-model="form.date" />
+                <label class="ed-settings__alt-label" style="margin-top:8px">Sort order</label>
+                <input class="ed-settings__alt-input" type="number" v-model.number="form.sortOrder" placeholder="0" />
               </div>
 
               <!-- Delete -->
@@ -575,7 +624,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { cmCreate, cmUpdate, cmDelete } from '@/services/articleService'
 import { useAdminLoader } from '@/composables/useAdminLoader'
 import { marked } from 'marked'
@@ -609,11 +658,27 @@ const textareaRef = ref(null)
 // ===== 编辑器新增状态 =====
 const settingsTab = ref('document')
 const statusDropdownEditorOpen = ref(false)
+const categoryEditorOpen = ref(false)
 const seoExpanded = ref(false)
 const moreExpanded = ref(false)
+const featuredImageExpanded = ref(false)
 const showTagInput = ref(false)
 const newTagValue = ref('')
 const lastSavedAt = ref('')
+const headingMenuOpen = ref(false)
+
+// ===== Heading 选项 =====
+const headingOptions = [
+  { key: 'paragraph', label: 'Paragraph' },
+  { key: 'h1', label: 'Heading 1' },
+  { key: 'h2', label: 'Heading 2' },
+  { key: 'h3', label: 'Heading 3' },
+  { key: 'h4', label: 'Heading 4' },
+]
+const headingLabel = computed(() => {
+  // 检测当前光标所在行的 heading 级别
+  return 'Heading 2' // default
+})
 
 // ===== 列表视图状态 =====
 const searchQuery = ref('')
@@ -707,6 +772,11 @@ const form = ref({
   sortOrder: 0,
   tagsDisplay: '',
   isPublished: false,
+  featuredImage: '',
+  featuredImageAlt: '',
+  seoTitle: '',
+  seoDescription: '',
+  seoKeywords: '',
 })
 
 // ===== Markdown 渲染 =====
@@ -772,6 +842,27 @@ function addTag() {
   }
   newTagValue.value = ''
   showTagInput.value = false
+}
+
+// ===== Category 选项（从全部文章的 tags 去重获取） =====
+const editorCategoryOptions = computed(() => {
+  const tagSet = new Set()
+  articles.value.forEach(a => {
+    const tags = Array.isArray(a.tags) ? a.tags : []
+    tags.forEach(t => tagSet.add(t))
+  })
+  return [...tagSet].sort()
+})
+
+function setCategory(cat) {
+  const tags = [...formTags.value]
+  // 替换第一个 tag（主分类）
+  if (tags.length > 0) {
+    tags[0] = cat
+  } else {
+    tags.push(cat)
+  }
+  form.value.tagsDisplay = tags.join(', ')
 }
 
 function scrollToHeading(lineIdx) {
@@ -871,9 +962,33 @@ async function reloadArticles() {
 
 onMounted(loadArticles)
 
+// ===== Click-outside: 关闭所有下拉菜单 =====
+function handleClickOutside(e) {
+  if (headingMenuOpen.value && !e.target.closest('.ed-toolbar__heading-btn, .ed-toolbar__heading-menu')) {
+    headingMenuOpen.value = false
+  }
+  if (statusDropdownEditorOpen.value && !e.target.closest('.ed-settings__dropdown, .ed-settings__dropdown-menu')) {
+    statusDropdownEditorOpen.value = false
+  }
+  if (categoryEditorOpen.value && !e.target.closest('.ed-settings__category-dropdown')) {
+    categoryEditorOpen.value = false
+  }
+  if (statusDropdownOpen.value && !e.target.closest('.am-dropdown, .am-dropdown-menu')) {
+    statusDropdownOpen.value = false
+  }
+  if (categoryDropdownOpen.value && !e.target.closest('.am-dropdown, .am-dropdown-menu')) {
+    categoryDropdownOpen.value = false
+  }
+  if (tagDropdownOpen.value && !e.target.closest('.am-dropdown, .am-dropdown-menu')) {
+    tagDropdownOpen.value = false
+  }
+}
+document.addEventListener('click', handleClickOutside, true)
+onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside, true))
+
 // ===== 编辑操作 =====
 function onCreate() {
-  editingIndex.value = -1
+  editingIndex.value = -2  // -2 表示新建模式（<0 且 ≠ -1，触发编辑器 v-if）
   form.value = {
     title: '',
     slug: '',
@@ -883,8 +998,14 @@ function onCreate() {
     sortOrder: articles.value.length,
     tagsDisplay: '',
     isPublished: false,
+    featuredImage: '',
+    featuredImageAlt: '',
+    seoTitle: '',
+    seoDescription: '',
+    seoKeywords: '',
   }
   markdownTab.value = 'edit'
+  lastSavedAt.value = ''
 }
 
 function onEdit(i) {
@@ -901,8 +1022,14 @@ function onEdit(i) {
     sortOrder: art.sortOrder ?? 0,
     tagsDisplay: tags.join(', '),
     isPublished: !!art.publishedAt,
+    featuredImage: art.featuredImage || '',
+    featuredImageAlt: art.featuredImageAlt || '',
+    seoTitle: art.seoTitle || '',
+    seoDescription: art.seoDescription || '',
+    seoKeywords: art.seoKeywords || '',
   }
   markdownTab.value = 'edit'
+  lastSavedAt.value = ''
 }
 
 function closeEditor() {
@@ -911,17 +1038,17 @@ function closeEditor() {
 
 // ===== 保存 =====
 function collectFormData(publish) {
-  const title = document.getElementById('art-title')?.value?.trim() || form.value.title
-  const slug = document.getElementById('art-slug')?.value?.trim() || form.value.slug
-  const description = document.getElementById('art-description')?.value?.trim() || form.value.description
-  const date = document.getElementById('art-date')?.value || form.value.date
-  const sortOrder = parseInt(document.getElementById('art-sortOrder')?.value) || form.value.sortOrder
-  const tagsDisplay = document.getElementById('art-tags')?.value?.trim() || form.value.tagsDisplay
+  const title = form.value.title.trim()
+  const slug = form.value.slug.trim()
+  const description = form.value.description.trim()
   const content = form.value.content
+  const date = form.value.date
+  const sortOrder = form.value.sortOrder ?? 0
+  const tags = formTags.value
+  const featuredImage = form.value.featuredImage || undefined
+  const featuredImageAlt = form.value.featuredImageAlt || undefined
 
-  const tags = tagsDisplay.split(/[,，]/).map(t => t.trim()).filter(Boolean)
-
-  return { title, slug, description, content, date, sortOrder, tags, publishedAt: publish ? new Date().toISOString() : null }
+  return { title, slug, description, content, date, sortOrder, tags, featuredImage, featuredImageAlt, publishedAt: publish ? new Date().toISOString() : null }
 }
 
 async function onSaveDraft() {
@@ -933,7 +1060,7 @@ async function onSaveDraft() {
       await cmUpdate(props.token, UID, docId, data)
       showNotice('草稿已保存')
     } else {
-      await cmCreate(props.token, UID, data)
+      const result = await cmCreate(props.token, UID, data)
       showNotice('草稿已创建')
     }
     lastSavedAt.value = 'just now'
@@ -1008,9 +1135,30 @@ function insertMd(type) {
   let before = '', after = '', newCursorOffset = 0
 
   switch (type) {
+    case 'paragraph':
+      // 移除当前行的 heading 前缀
+      {
+        const lines = ta.value.split('\n')
+        let lineStart = ta.value.substring(0, start).lastIndexOf('\n') + 1
+        const currentLineIdx = ta.value.substring(0, lineStart).split('\n').length - 1
+        const currentLine = lines[currentLineIdx] || ''
+        const headingMatch = currentLine.match(/^(#{1,6}\s+)/)
+        if (headingMatch) {
+          lines[currentLineIdx] = currentLine.replace(/^#{1,6}\s+/, '')
+          form.value.content = lines.join('\n')
+          requestAnimationFrame(() => ta.focus())
+        }
+        return
+      }
+    case 'h1':
+      before = '# '; after = ''; newCursorOffset = before.length; break
+    case 'h2':
     case 'heading':
-      before = '## '; after = ''; newCursorOffset = before.length
-      break
+      before = '## '; after = ''; newCursorOffset = before.length; break
+    case 'h3':
+      before = '### '; after = ''; newCursorOffset = before.length; break
+    case 'h4':
+      before = '#### '; after = ''; newCursorOffset = before.length; break
     case 'bold':
       before = '**'; after = '**'; newCursorOffset = sel ? before.length + sel.length + after.length : before.length
       break
@@ -1045,7 +1193,7 @@ function insertMd(type) {
       before = '\n---\n'; after = ''; newCursorOffset = before.length
       break
     case 'table':
-      before = '\n| 列1 | 列2 | 列3 |\n| --- | --- | --- |\n| '; after = ' |  |  |\n'; newCursorOffset = before.length
+      before = '\n| Header 1 | Header 2 | Header 3 |\n| --- | --- | --- |\n| '; after = ' |  |  |\n'; newCursorOffset = before.length
       break
   }
 
@@ -2372,6 +2520,61 @@ function getReadTime(content) {
   font-size: 14px;
 }
 
+/* Heading dropdown */
+.ed-toolbar__heading-wrap {
+  position: relative;
+}
+
+.ed-toolbar__heading-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  min-width: 160px;
+  background: var(--md-sys-color-surface, #fff);
+  border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  z-index: 100;
+  overflow: hidden;
+  padding: 4px 0;
+}
+
+.ed-toolbar__heading-option {
+  display: block;
+  width: 100%;
+  padding: 6px 14px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--md-sys-color-on-surface, #111827);
+}
+
+.ed-toolbar__heading-option:hover {
+  background: var(--md-sys-color-surface-container, #f3f4f6);
+}
+
+.ed-toolbar__heading-option--active {
+  background: var(--md-sys-color-primary-container, #eef1ff);
+  color: var(--md-sys-color-primary, #635bff);
+}
+
+.ed-toolbar__heading-preview {
+  display: block;
+}
+
+.ed-toolbar__heading-preview--paragraph { font-size: 14px; font-weight: 400; }
+.ed-toolbar__heading-preview--h1 { font-size: 20px; font-weight: 700; }
+.ed-toolbar__heading-preview--h2 { font-size: 18px; font-weight: 600; }
+.ed-toolbar__heading-preview--h3 { font-size: 16px; font-weight: 600; }
+.ed-toolbar__heading-preview--h4 { font-size: 14px; font-weight: 600; }
+
+.ed-toolbar__icon-btn--active {
+  background: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
 .ed-toolbar__divider {
   width: 1px;
   height: 20px;
@@ -2418,6 +2621,7 @@ function getReadTime(content) {
   padding: 24px 48px 0;
   border: none;
   background: transparent;
+  font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
   font-size: 32px;
   font-weight: 700;
   color: var(--md-sys-color-on-surface, #111827);
@@ -2434,6 +2638,7 @@ function getReadTime(content) {
   padding: 8px 48px 0;
   border: none;
   background: transparent;
+  font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
   font-size: 16px;
   color: var(--md-sys-color-on-surface-variant, #6b7280);
   outline: none;
@@ -2490,6 +2695,10 @@ function getReadTime(content) {
   background: var(--md-sys-color-surface, #fff);
   overflow-y: auto;
   min-height: 400px;
+  font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
 /* 底部状态栏 */
@@ -3282,5 +3491,56 @@ function getReadTime(content) {
 
 [data-theme="dark"] .ed-settings__section--danger {
   border-top-color: var(--md-sys-color-outline-variant, #49454f);
+}
+
+/* ======== 暗色主题：编辑器面板滚动条 ======== */
+[data-theme="dark"] .ed-outline::-webkit-scrollbar-track,
+[data-theme="dark"] .ed-settings__body::-webkit-scrollbar-track,
+[data-theme="dark"] .ed-content::-webkit-scrollbar-track,
+[data-theme="dark"] .ed-content__preview::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-theme="dark"] .ed-outline::-webkit-scrollbar-thumb,
+[data-theme="dark"] .ed-settings__body::-webkit-scrollbar-thumb,
+[data-theme="dark"] .ed-content::-webkit-scrollbar-thumb,
+[data-theme="dark"] .ed-content__preview::-webkit-scrollbar-thumb {
+  background: var(--md-sys-color-outline-variant, #49454f);
+  border-radius: 4px;
+}
+
+[data-theme="dark"] .ed-outline::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] .ed-settings__body::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] .ed-content::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] .ed-content__preview::-webkit-scrollbar-thumb:hover {
+  background: var(--md-sys-color-on-surface-variant, #cac4d0);
+}
+
+/* 暗色主题：preview 文字颜色确保可读 */
+[data-theme="dark"] .ed-content__preview {
+  color: var(--md-sys-color-on-surface, #e6e1e5);
+}
+
+/* ======== 暗色主题：文章列表滚动条 ======== */
+[data-theme="dark"] .am-main::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-theme="dark"] .am-main::-webkit-scrollbar-thumb {
+  background: var(--md-sys-color-outline-variant, #49454f);
+  border-radius: 4px;
+}
+
+[data-theme="dark"] .am-main::-webkit-scrollbar-thumb:hover {
+  background: var(--md-sys-color-on-surface-variant, #cac4d0);
+}
+
+[data-theme="dark"] .am-subnav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-theme="dark"] .am-subnav::-webkit-scrollbar-thumb {
+  background: var(--md-sys-color-outline-variant, #49454f);
+  border-radius: 4px;
 }
 </style>

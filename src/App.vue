@@ -665,6 +665,8 @@ const bodyMarginLeft = computed(() => {
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--md-sys-color-outline-variant, #c4c0c8) transparent;
 }
 
 /* 页面切换 fadeIn 过渡

@@ -283,3 +283,17 @@ md-dialog {
   background-size: 200% 100%;
   animation: skeleton-shimmer-dark 1.5s ease-in-out infinite;
 }
+
+/* ======== 暗色主题：全局滚动条 ======== */
+[data-theme="dark"] .app-main::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-theme="dark"] .app-main::-webkit-scrollbar-thumb {
+  background: var(--md-sys-color-outline-variant, #49454f);
+  border-radius: 4px;
+}
+
+[data-theme="dark"] .app-main::-webkit-scrollbar-thumb:hover {
+  background: var(--md-sys-color-on-surface-variant, #cac4d0);
+}
