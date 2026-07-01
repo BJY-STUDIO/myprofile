@@ -23,161 +23,312 @@
     <div v-else :class="{ 'content-fadein': loader.fadeInActive.value }">
 
       <!-- ======== 编辑器模式 ======== -->
-      <section v-if="editingIndex >= 0" class="editor-section">
-        <!-- 顶部操作栏 -->
-        <div class="editor-topbar">
-          <div class="editor-topbar__left">
-            <md-icon-button @click="closeEditor" aria-label="返回列表">
+      <section v-if="editingIndex >= 0" class="ed">
+        <!-- ======== 编辑器 Topbar ======== -->
+        <header class="ed-topbar">
+          <div class="ed-topbar__left">
+            <button class="ed-topbar__back" @click="closeEditor" aria-label="返回列表">
               <span class="material-symbols-rounded">arrow_back</span>
-            </md-icon-button>
-            <h2 class="editor-topbar__title">{{ form.title || '未命名文章' }}</h2>
-            <span class="mio-icon-badge" :class="form.isPublished ? 'mio-icon-badge--published' : 'mio-icon-badge--draft'">
-              <span class="material-symbols-rounded mio-icon-badge__icon">{{ form.isPublished ? 'check_circle' : 'draft' }}</span>
-              {{ form.isPublished ? '已发布' : '草稿' }}
+            </button>
+            <span class="ed-topbar__crumb" @click="closeEditor">Articles</span>
+            <span class="material-symbols-rounded ed-topbar__chevron">chevron_right</span>
+            <span class="ed-topbar__current">{{ form.title || '未命名文章' }}</span>
+            <span class="ed-topbar__badge" :class="form.isPublished ? 'ed-topbar__badge--published' : 'ed-topbar__badge--draft'">
+              {{ form.isPublished ? 'Published' : 'Draft' }}
             </span>
           </div>
-          <div class="editor-topbar__right">
-            <md-outlined-button @click="onSaveDraft" :disabled="saving">
-              <span class="material-symbols-rounded" slot="icon">save</span>
-              {{ saving ? '保存中...' : '保存草稿' }}
-            </md-outlined-button>
-            <md-filled-button @click="onSavePublish" :disabled="saving">
-              <span class="material-symbols-rounded" slot="icon">publish</span>
-              {{ saving ? '保存中...' : '保存并发布' }}
-            </md-filled-button>
+          <div class="ed-topbar__center">
+            <span v-if="lastSavedAt" class="ed-topbar__save-status">
+              <span class="material-symbols-rounded ed-topbar__save-check">check_circle</span>
+              Last saved {{ lastSavedAt }}
+            </span>
           </div>
-        </div>
-
-        <!-- 编辑器主体：grid 左字段 + 右 markdown -->
-        <div class="editor-grid">
-          <!-- 左栏：元数据字段 -->
-          <div class="editor-fields">
-            <md-outlined-text-field label="标题" id="art-title" :value="form.title" class="field"></md-outlined-text-field>
-            <md-outlined-text-field label="Slug（URL标识）" id="art-slug" :value="form.slug" helper="留空则自动从标题生成" class="field"></md-outlined-text-field>
-            <md-outlined-text-field label="描述" id="art-description" :value="form.description" type="textarea" rows="2" class="field"></md-outlined-text-field>
-            <div class="field-row">
-              <md-outlined-text-field label="自定义日期" id="art-date" :value="form.date" type="date" helper="可选" class="field"></md-outlined-text-field>
-              <md-outlined-text-field label="排序序号" id="art-sortOrder" :value="String(form.sortOrder ?? 0)" type="number" class="field"></md-outlined-text-field>
-            </div>
-            <md-outlined-text-field label="标签（逗号分隔）" id="art-tags" :value="form.tagsDisplay" helper='如：技术, Vue, 前端' class="field"></md-outlined-text-field>
-            <div class="switch-field">
-              <md-switch :selected="form.isPublished" @change="form.isPublished = $event.target.selected"></md-switch>
-              <span class="switch-field__label">{{ form.isPublished ? '已发布' : '草稿' }}</span>
-            </div>
-            <div class="editor-fields__actions">
-              <md-text-button @click="onRemove(editingIndex)" class="editor-fields__delete-btn">
-                <span class="material-symbols-rounded" slot="icon">delete</span>
-                删除文章
-              </md-text-button>
-            </div>
+          <div class="ed-topbar__right">
+            <button class="ed-btn ed-btn--outlined" @click="onPreview" :disabled="saving">
+              <span class="material-symbols-rounded">visibility</span>
+              Preview
+            </button>
+            <button class="ed-btn ed-btn--outlined" @click="onSaveDraft" :disabled="saving">
+              <span class="material-symbols-rounded">save</span>
+              {{ saving ? 'Saving...' : 'Save' }}
+            </button>
+            <button class="ed-btn ed-btn--filled" @click="onSavePublish" :disabled="saving">
+              <span class="material-symbols-rounded">upload</span>
+              {{ saving ? 'Publishing...' : 'Publish' }}
+              <span class="material-symbols-rounded ed-btn__arrow">expand_more</span>
+            </button>
           </div>
+        </header>
 
-          <!-- 右栏：完整 Markdown 编辑器 -->
-          <div class="md-editor">
-            <!-- 工具栏 -->
-            <div class="md-editor__toolbar">
-              <div class="md-editor__toolbar-group">
-                <md-icon-button @click="insertMd('heading')" aria-label="标题" title="标题">
-                  <span class="material-symbols-rounded">title</span>
-                </md-icon-button>
-                <md-icon-button @click="insertMd('bold')" aria-label="加粗" title="加粗">
-                  <span class="material-symbols-rounded">format_bold</span>
-                </md-icon-button>
-                <md-icon-button @click="insertMd('italic')" aria-label="斜体" title="斜体">
-                  <span class="material-symbols-rounded">format_italic</span>
-                </md-icon-button>
-                <md-icon-button @click="insertMd('strikethrough')" aria-label="删除线" title="删除线">
-                  <span class="material-symbols-rounded">strikethrough_s</span>
-                </md-icon-button>
+        <!-- ======== 编辑器三栏主体 ======== -->
+        <div class="ed-body">
+          <!-- 左栏：大纲 Outline -->
+          <aside class="ed-outline">
+            <div class="ed-outline__header">
+              <span class="ed-outline__title">Outline</span>
+              <button class="ed-outline__add" aria-label="Add heading" @click="insertMd('heading')">
+                <span class="material-symbols-rounded">add</span>
+              </button>
+            </div>
+            <nav class="ed-outline__list">
+              <template v-for="(h, hi) in outlineHeadings" :key="hi">
+                <button
+                  class="ed-outline__item"
+                  :class="{ 'ed-outline__item--h3': h.level === 3 }"
+                  @click="scrollToHeading(h.line)"
+                >
+                  <span class="ed-outline__item-label">{{ h.text }}</span>
+                  <button class="ed-outline__item-remove" @click.stop="removeHeading(h.line)" aria-label="Remove heading">
+                    <span class="material-symbols-rounded">close</span>
+                  </button>
+                </button>
+              </template>
+              <div v-if="!outlineHeadings.length" class="ed-outline__empty">
+                Add headings to create an outline
               </div>
-              <div class="md-editor__toolbar-divider"></div>
-              <div class="md-editor__toolbar-group">
-                <md-icon-button @click="insertMd('link')" aria-label="链接" title="链接">
+            </nav>
+          </aside>
+
+          <!-- 中栏：主编辑区 -->
+          <main class="ed-main">
+            <!-- 格式化工具栏 -->
+            <div class="ed-toolbar">
+              <div class="ed-toolbar__left">
+                <button class="ed-toolbar__btn ed-toolbar__heading-btn" @click="insertMd('heading')">
+                  Heading 1 <span class="material-symbols-rounded">expand_more</span>
+                </button>
+                <div class="ed-toolbar__divider"></div>
+                <button class="ed-toolbar__icon-btn" @click="insertMd('bold')" title="Bold"><strong>B</strong></button>
+                <button class="ed-toolbar__icon-btn" @click="insertMd('italic')" title="Italic"><em>I</em></button>
+                <button class="ed-toolbar__icon-btn" @click="insertMd('strikethrough')" title="Strikethrough"><s>S</s></button>
+                <div class="ed-toolbar__divider"></div>
+                <button class="ed-toolbar__icon-btn" @click="insertMd('link')" title="Link">
                   <span class="material-symbols-rounded">link</span>
-                </md-icon-button>
-                <md-icon-button @click="insertMd('image')" aria-label="图片" title="图片">
+                </button>
+                <button class="ed-toolbar__icon-btn" @click="insertMd('image')" title="Image">
                   <span class="material-symbols-rounded">image</span>
-                </md-icon-button>
-                <md-icon-button @click="insertMd('code')" aria-label="行内代码" title="行内代码">
-                  <span class="material-symbols-rounded">code</span>
-                </md-icon-button>
-                <md-icon-button @click="insertMd('codeblock')" aria-label="代码块" title="代码块">
-                  <span class="material-symbols-rounded">data_object</span>
-                </md-icon-button>
-              </div>
-              <div class="md-editor__toolbar-divider"></div>
-              <div class="md-editor__toolbar-group">
-                <md-icon-button @click="insertMd('ul')" aria-label="无序列表" title="无序列表">
-                  <span class="material-symbols-rounded">format_list_bulleted</span>
-                </md-icon-button>
-                <md-icon-button @click="insertMd('ol')" aria-label="有序列表" title="有序列表">
-                  <span class="material-symbols-rounded">format_list_numbered</span>
-                </md-icon-button>
-                <md-icon-button @click="insertMd('quote')" aria-label="引用" title="引用">
+                </button>
+                <button class="ed-toolbar__icon-btn" @click="insertMd('ul')" title="Align left">
+                  <span class="material-symbols-rounded">format_align_left</span>
+                </button>
+                <button class="ed-toolbar__icon-btn" @click="insertMd('ol')" title="Align center">
+                  <span class="material-symbols-rounded">format_align_center</span>
+                </button>
+                <button class="ed-toolbar__icon-btn" @click="insertMd('quote')" title="Blockquote">
                   <span class="material-symbols-rounded">format_quote</span>
-                </md-icon-button>
-                <md-icon-button @click="insertMd('hr')" aria-label="分割线" title="分割线">
-                  <span class="material-symbols-rounded">horizontal_rule</span>
-                </md-icon-button>
-                <md-icon-button @click="insertMd('table')" aria-label="表格" title="表格">
+                </button>
+                <button class="ed-toolbar__icon-btn" @click="insertMd('codeblock')" title="Code block">
+                  <span class="material-symbols-rounded">code</span>
+                </button>
+                <button class="ed-toolbar__icon-btn" @click="insertMd('table')" title="Table">
                   <span class="material-symbols-rounded">table_chart</span>
-                </md-icon-button>
+                </button>
               </div>
-              <div class="md-editor__toolbar-spacer"></div>
-              <!-- 视图切换 -->
-              <div class="md-editor__view-toggle">
-                <md-icon-button
-                  :class="{ 'md-editor__view-btn--active': markdownTab === 'edit' }"
-                  @click="markdownTab = 'edit'"
-                  aria-label="编辑模式"
-                  title="编辑"
-                >
-                  <span class="material-symbols-rounded">edit</span>
-                </md-icon-button>
-                <md-icon-button
-                  :class="{ 'md-editor__view-btn--active': markdownTab === 'split' }"
-                  @click="markdownTab = 'split'"
-                  aria-label="分屏模式"
-                  title="分屏"
-                >
-                  <span class="material-symbols-rounded">vertical_split</span>
-                </md-icon-button>
-                <md-icon-button
-                  :class="{ 'md-editor__view-btn--active': markdownTab === 'preview' }"
-                  @click="markdownTab = 'preview'"
-                  aria-label="预览模式"
-                  title="预览"
-                >
+              <div class="ed-toolbar__right">
+                <button class="ed-toolbar__icon-btn" @click="insertMd('hr')" title="More">
+                  <span class="material-symbols-rounded">more_horiz</span>
+                </button>
+                <button class="ed-toolbar__icon-btn" @click="toggleFullscreen" title="Fullscreen">
+                  <span class="material-symbols-rounded">fullscreen</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 标题 / 摘要 / 内容 -->
+            <div class="ed-content">
+              <input
+                class="ed-content__title"
+                :value="form.title"
+                @input="form.title = $event.target.value"
+                placeholder="Article title..."
+              />
+              <input
+                class="ed-content__excerpt"
+                :value="form.description"
+                @input="form.description = $event.target.value"
+                placeholder="Add a short description or excerpt for your article..."
+              />
+              <div class="ed-content__editor-body" :class="'ed-content__editor-body--' + markdownTab">
+                <textarea
+                  v-show="markdownTab === 'edit' || markdownTab === 'split'"
+                  ref="textareaRef"
+                  class="ed-content__textarea"
+                  :value="form.content"
+                  @input="onTextareaInput"
+                  placeholder="Start writing your article..."
+                  spellcheck="false"
+                ></textarea>
+                <div
+                  v-show="markdownTab === 'preview' || markdownTab === 'split'"
+                  class="ed-content__preview markdown-body"
+                  v-html="renderedMarkdown"
+                ></div>
+              </div>
+            </div>
+
+            <!-- 底部状态栏 -->
+            <div class="ed-bottombar">
+              <div class="ed-bottombar__left">
+                <button class="ed-bottombar__mode-btn" @click="toggleMarkdownMode">
+                  Markdown <span class="material-symbols-rounded">expand_more</span>
+                </button>
+              </div>
+              <div class="ed-bottombar__right">
+                <span class="ed-bottombar__stat">{{ wordCount }} words</span>
+                <span class="ed-bottombar__stat">{{ charCount }} characters</span>
+                <span class="ed-bottombar__stat">{{ readTime }} min read</span>
+                <button class="ed-bottombar__icon-btn" title="Focus mode">
                   <span class="material-symbols-rounded">visibility</span>
-                </md-icon-button>
+                  Focus
+                </button>
+                <button class="ed-bottombar__icon-btn" title="Help">
+                  <span class="material-symbols-rounded">help</span>
+                </button>
+              </div>
+            </div>
+          </main>
+
+          <!-- 右栏：文档设置 -->
+          <aside class="ed-settings">
+            <!-- Tabs -->
+            <div class="ed-settings__tabs">
+              <button
+                class="ed-settings__tab"
+                :class="{ 'ed-settings__tab--active': settingsTab === 'document' }"
+                @click="settingsTab = 'document'"
+              >Document</button>
+              <button
+                class="ed-settings__tab"
+                :class="{ 'ed-settings__tab--active': settingsTab === 'history' }"
+                @click="settingsTab = 'history'"
+              >History</button>
+            </div>
+
+            <!-- Document Tab Content -->
+            <div v-if="settingsTab === 'document'" class="ed-settings__content">
+              <!-- Status -->
+              <div class="ed-settings__section">
+                <h4 class="ed-settings__section-title">Status</h4>
+                <button class="ed-settings__dropdown" @click="statusDropdownEditorOpen = !statusDropdownEditorOpen">
+                  <span class="ed-settings__status-dot" :class="form.isPublished ? 'ed-settings__status-dot--published' : 'ed-settings__status-dot--draft'"></span>
+                  {{ form.isPublished ? 'Published' : 'Draft' }}
+                  <span class="material-symbols-rounded ed-settings__dropdown-arrow">expand_more</span>
+                </button>
+                <div v-if="statusDropdownEditorOpen" class="ed-settings__dropdown-menu">
+                  <button @click="form.isPublished = false; statusDropdownEditorOpen = false">
+                    <span class="ed-settings__status-dot ed-settings__status-dot--draft"></span> Draft
+                  </button>
+                  <button @click="form.isPublished = true; statusDropdownEditorOpen = false">
+                    <span class="ed-settings__status-dot ed-settings__status-dot--published"></span> Published
+                  </button>
+                </div>
+                <p class="ed-settings__helper">
+                  {{ form.isPublished ? 'This article is published and visible to readers.' : 'This article is in draft mode and not visible to readers.' }}
+                </p>
+              </div>
+
+              <!-- Category -->
+              <div class="ed-settings__section">
+                <h4 class="ed-settings__section-title">Category</h4>
+                <button class="ed-settings__dropdown">
+                  <span class="material-symbols-rounded">folder</span>
+                  {{ form.tagsDisplay ? form.tagsDisplay.split(/[,，]/)[0].trim() : 'Select category' }}
+                  <span class="material-symbols-rounded ed-settings__dropdown-arrow">expand_more</span>
+                </button>
+                <button class="ed-settings__dropdown ed-settings__dropdown--sub">
+                  Add a subcategory (optional)
+                  <span class="material-symbols-rounded ed-settings__dropdown-arrow">expand_more</span>
+                </button>
+              </div>
+
+              <!-- Tags -->
+              <div class="ed-settings__section">
+                <h4 class="ed-settings__section-title">Tags</h4>
+                <div class="ed-settings__tags">
+                  <span
+                    v-for="(tag, ti) in formTags"
+                    :key="ti"
+                    class="ed-settings__tag"
+                  >
+                    {{ tag }}
+                    <button class="ed-settings__tag-remove" @click="removeTag(tag)">
+                      <span class="material-symbols-rounded">close</span>
+                    </button>
+                  </span>
+                  <button class="ed-settings__tag-add" @click="showTagInput = true">
+                    <span class="material-symbols-rounded">add</span>
+                    Add tag
+                  </button>
+                </div>
+                <div v-if="showTagInput" class="ed-settings__tag-input-row">
+                  <input
+                    class="ed-settings__tag-input"
+                    v-model="newTagValue"
+                    @keydown.enter="addTag"
+                    @keydown.escape="showTagInput = false; newTagValue = ''"
+                    placeholder="Tag name"
+                    autofocus
+                  />
+                  <button class="ed-settings__tag-input-confirm" @click="addTag">
+                    <span class="material-symbols-rounded">check</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Featured Image -->
+              <div class="ed-settings__section">
+                <h4 class="ed-settings__section-title">Featured Image</h4>
+                <div class="ed-settings__featured">
+                  <div class="ed-settings__featured-placeholder">
+                    <span class="material-symbols-rounded">image</span>
+                  </div>
+                  <div class="ed-settings__featured-actions">
+                    <button class="ed-btn ed-btn--sm ed-btn--outlined">
+                      <span class="material-symbols-rounded">refresh</span>
+                      Change
+                    </button>
+                    <button class="ed-btn ed-btn--sm ed-btn--icon-only ed-btn--outlined" @click="onRemove(editingIndex)">
+                      <span class="material-symbols-rounded">delete</span>
+                    </button>
+                  </div>
+                  <label class="ed-settings__alt-label">Alt text</label>
+                  <input class="ed-settings__alt-input" placeholder="Describe the image..." />
+                </div>
+              </div>
+
+              <!-- SEO (collapsed) -->
+              <div class="ed-settings__section ed-settings__section--collapsible" @click="seoExpanded = !seoExpanded">
+                <h4 class="ed-settings__section-title">
+                  SEO
+                  <span class="material-symbols-rounded ed-settings__section-arrow" :class="{ 'ed-settings__section-arrow--open': seoExpanded }">expand_more</span>
+                </h4>
+              </div>
+
+              <!-- More Options (collapsed) -->
+              <div class="ed-settings__section ed-settings__section--collapsible" @click="moreExpanded = !moreExpanded">
+                <h4 class="ed-settings__section-title">
+                  More Options
+                  <span class="material-symbols-rounded ed-settings__section-arrow" :class="{ 'ed-settings__section-arrow--open': moreExpanded }">expand_more</span>
+                </h4>
+              </div>
+
+              <!-- Delete -->
+              <div class="ed-settings__section ed-settings__section--danger">
+                <button class="ed-settings__delete-btn" @click="onRemove(editingIndex)">
+                  <span class="material-symbols-rounded">delete</span>
+                  Delete article
+                </button>
               </div>
             </div>
 
-            <!-- 编辑/预览区 -->
-            <div class="md-editor__body" :class="'md-editor__body--' + markdownTab">
-              <textarea
-                v-show="markdownTab === 'edit' || markdownTab === 'split'"
-                ref="textareaRef"
-                class="md-editor__textarea"
-                :value="form.content"
-                @input="onTextareaInput"
-                placeholder="在此输入 Markdown 内容..."
-                spellcheck="false"
-              ></textarea>
-              <div
-                v-show="markdownTab === 'preview' || markdownTab === 'split'"
-                class="md-editor__preview markdown-body"
-                v-html="renderedMarkdown"
-              ></div>
+            <!-- History Tab Content (placeholder) -->
+            <div v-if="settingsTab === 'history'" class="ed-settings__content">
+              <div class="ed-settings__empty-state">
+                <span class="material-symbols-rounded">history</span>
+                <p>Version history will appear here</p>
+              </div>
             </div>
-
-            <!-- 状态栏 -->
-            <div class="md-editor__statusbar">
-              <span>{{ charCount }} 字符</span>
-              <span>{{ lineCount }} 行</span>
-              <span>Markdown</span>
-            </div>
-          </div>
+          </aside>
         </div>
       </section>
 
@@ -455,6 +606,15 @@ const markdownTab = ref('edit')
 const showPublishedFilter = ref('all')
 const textareaRef = ref(null)
 
+// ===== 编辑器新增状态 =====
+const settingsTab = ref('document')
+const statusDropdownEditorOpen = ref(false)
+const seoExpanded = ref(false)
+const moreExpanded = ref(false)
+const showTagInput = ref(false)
+const newTagValue = ref('')
+const lastSavedAt = ref('')
+
 // ===== 列表视图状态 =====
 const searchQuery = ref('')
 const sortField = ref('Updated')
@@ -564,6 +724,91 @@ const lineCount = computed(() => {
   const c = form.value.content || ''
   return c ? c.split('\n').length : 0
 })
+const wordCount = computed(() => {
+  const c = form.value.content || ''
+  if (!c.trim()) return 0
+  // 中英文混合统计：CJK 字符单独计，英文按空格分词
+  const cjk = (c.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g) || []).length
+  const enWords = c.replace(/[\u4e00-\u9fff\u3400-\u4dbf]/g, ' ').trim().split(/\s+/).filter(Boolean).length
+  return cjk + enWords
+})
+const readTime = computed(() => {
+  const w = wordCount.value
+  return Math.max(1, Math.ceil(w / 250))
+})
+
+// ===== 大纲提取 =====
+const outlineHeadings = computed(() => {
+  const lines = (form.value.content || '').split('\n')
+  const headings = []
+  lines.forEach((line, idx) => {
+    const h2Match = line.match(/^##\s+(.+)/)
+    const h3Match = line.match(/^###\s+(.+)/)
+    if (h2Match) headings.push({ level: 2, text: h2Match[1].replace(/[*_`~]/g, '').trim(), line: idx })
+    else if (h3Match) headings.push({ level: 3, text: h3Match[1].replace(/[*_`~]/g, '').trim(), line: idx })
+  })
+  return headings
+})
+
+// ===== 编辑器 Tag 管理 =====
+const formTags = computed(() => {
+  return form.value.tagsDisplay
+    ? form.value.tagsDisplay.split(/[,，]/).map(t => t.trim()).filter(Boolean)
+    : []
+})
+
+function removeTag(tag) {
+  const tags = formTags.value.filter(t => t !== tag)
+  form.value.tagsDisplay = tags.join(', ')
+}
+
+function addTag() {
+  const val = newTagValue.value.trim()
+  if (!val) return
+  const tags = [...formTags.value]
+  if (!tags.includes(val)) {
+    tags.push(val)
+    form.value.tagsDisplay = tags.join(', ')
+  }
+  newTagValue.value = ''
+  showTagInput.value = false
+}
+
+function scrollToHeading(lineIdx) {
+  const ta = textareaRef.value
+  if (!ta) return
+  const lines = ta.value.split('\n')
+  let pos = 0
+  for (let i = 0; i < lineIdx; i++) pos += lines[i].length + 1
+  ta.focus()
+  ta.setSelectionRange(pos, pos)
+  ta.scrollTop = pos * 0.6
+}
+
+function removeHeading(lineIdx) {
+  const lines = (form.value.content || '').split('\n')
+  // 只移除 heading 标记前缀，保留内容
+  lines[lineIdx] = lines[lineIdx].replace(/^#{1,6}\s+/, '')
+  form.value.content = lines.join('\n')
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen()
+  } else {
+    document.exitFullscreen()
+  }
+}
+
+function toggleMarkdownMode() {
+  const modes = ['edit', 'split', 'preview']
+  const idx = modes.indexOf(markdownTab.value)
+  markdownTab.value = modes[(idx + 1) % modes.length]
+}
+
+function onPreview() {
+  markdownTab.value = 'preview'
+}
 
 // ===== 筛选 =====
 const filteredArticles = computed(() => {
@@ -691,6 +936,8 @@ async function onSaveDraft() {
       await cmCreate(props.token, UID, data)
       showNotice('草稿已创建')
     }
+    lastSavedAt.value = 'just now'
+    setTimeout(() => { lastSavedAt.value = '2 minutes ago' }, 120000)
     await reloadArticles()
   } catch (e) {
     showNotice('保存失败：' + (e.message || '未知错误'), true)
@@ -711,6 +958,9 @@ async function onSavePublish() {
       await cmCreate(props.token, UID, data)
       showNotice('文章已创建并发布')
     }
+    form.value.isPublished = true
+    lastSavedAt.value = 'just now'
+    setTimeout(() => { lastSavedAt.value = '2 minutes ago' }, 120000)
     await reloadArticles()
   } catch (e) {
     showNotice('保存失败：' + (e.message || '未知错误'), true)
@@ -1765,217 +2015,466 @@ function getReadTime(content) {
 }
 
 /* ======== 编辑器区域 ======== */
-.editor-section {
+.ed {
   flex: 1;
   display: flex;
   flex-direction: column;
-  max-width: 1400px;
-  margin: 0 8px 8px;
-  padding: 0;
-  min-height: calc(100dvh - 16px);
-  align-self: center;
+  height: calc(100dvh - 16px);
+  overflow: hidden;
 }
 
-.editor-topbar {
+/* ======== 编辑器 Topbar ======== */
+.ed-topbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 24px;
-  background-color: var(--md-sys-color-surface-container, #ece7e9);
-  border-radius: 28px 28px 0 0;
+  padding: 0 24px;
+  height: 56px;
+  background: var(--md-sys-color-surface, #fff);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
   gap: 16px;
-  flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
-.editor-topbar__left {
+.ed-topbar__left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   flex: 1;
   min-width: 0;
 }
 
-.editor-topbar__title {
-  font-family: var(--md-sys-typescale-title-l-font-family);
-  font-size: var(--md-sys-typescale-title-l-font-size);
-  font-weight: var(--md-sys-typescale-title-l-font-weight);
-  color: var(--md-sys-color-on-surface, #1c1b1f);
-  margin: 0;
+.ed-topbar__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: none;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  cursor: pointer;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.ed-topbar__back:hover {
+  background: var(--md-sys-color-surface-container, #f3f4f6);
+}
+
+.ed-topbar__back .material-symbols-rounded {
+  font-size: 20px;
+}
+
+.ed-topbar__crumb {
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ed-topbar__crumb:hover {
+  color: var(--md-sys-color-primary, #635bff);
+}
+
+.ed-topbar__chevron {
+  font-size: 16px;
+  color: var(--md-sys-color-outline, #9ca3af);
+}
+
+.ed-topbar__current {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #111827);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  flex: 1;
-  min-width: 0;
 }
 
-.editor-topbar__right {
+.ed-topbar__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ed-topbar__badge--draft {
+  background: #fff1e0;
+  color: #f59e0b;
+}
+
+.ed-topbar__badge--published {
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.ed-topbar__center {
   display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.ed-topbar__save-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+}
+
+.ed-topbar__save-check {
+  font-size: 12px;
+  color: #10b981;
+}
+
+.ed-topbar__right {
+  display: flex;
+  align-items: center;
   gap: 8px;
   flex-shrink: 0;
 }
 
-.editor-grid {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 0;
-  background-color: var(--md-sys-color-surface-container-low, #f8f1f6);
-  border-radius: 0 0 28px 28px;
-  overflow: hidden;
-  flex: 1;
-  min-height: 0;
-}
-
-.editor-fields {
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  border-right: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  overflow-y: auto;
-}
-
-.field {
-  width: 100%;
-}
-
-.field-row {
-  display: flex;
-  gap: 16px;
-}
-
-.field-row .field {
-  flex: 1;
-}
-
-.switch-field {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 0;
-  cursor: pointer;
-}
-
-.switch-field__label {
-  font-family: var(--md-sys-typescale-body-m-font-family);
-  font-size: var(--md-sys-typescale-body-m-font-size);
-  font-weight: var(--md-sys-typescale-body-m-font-weight);
-  color: var(--md-sys-color-on-surface, #1c1b1f);
-}
-
-.editor-fields__actions {
-  margin-top: 8px;
-  padding-top: 16px;
-  border-top: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-}
-
-.editor-fields__delete-btn {
-  --md-text-button-label-text-color: var(--md-sys-color-error, #b3261e);
-}
-
-/* 编辑器内的 icon badge */
-.mio-icon-badge {
+/* ======== 编辑器通用按钮 ======== */
+.ed-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 10px;
-  border-radius: 100px;
-  font-family: var(--md-sys-typescale-label-s-font-family);
-  font-size: var(--md-sys-typescale-label-s-font-size);
-  font-weight: var(--md-sys-typescale-label-s-font-weight);
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
   white-space: nowrap;
-  flex-shrink: 0;
+  transition: background 0.15s, box-shadow 0.15s;
 }
 
-.mio-icon-badge__icon {
+.ed-btn .material-symbols-rounded {
+  font-size: 16px;
+}
+
+.ed-btn--outlined {
+  background: var(--md-sys-color-surface, #fff);
+  border-color: var(--md-sys-color-outline-variant, #e5e7eb);
+  color: var(--md-sys-color-on-surface, #374151);
+}
+
+.ed-btn--outlined:hover {
+  background: var(--md-sys-color-surface-container, #f9fafb);
+}
+
+.ed-btn--filled {
+  background: var(--md-sys-color-primary, #635bff);
+  color: #fff;
+  border-color: transparent;
+}
+
+.ed-btn--filled:hover {
+  background: var(--md-sys-color-primary, #5548e8);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.ed-btn__arrow {
   font-size: 14px;
 }
 
-.mio-icon-badge--published {
-  background: var(--md-sys-color-primary-container, #e8def8);
-  color: var(--md-sys-color-on-primary-container, #1d192b);
+.ed-btn--sm {
+  padding: 6px 12px;
+  font-size: 13px;
 }
 
-.mio-icon-badge--draft {
-  background: var(--md-sys-color-secondary-container, #e8def8);
-  color: var(--md-sys-color-on-secondary-container, #1d192b);
+.ed-btn--icon-only {
+  padding: 6px;
+  width: 32px;
+  height: 32px;
+  justify-content: center;
 }
 
-/* ======== Markdown 编辑器 ======== */
-.md-editor {
+/* ======== 编辑器三栏主体 ======== */
+.ed-body {
+  display: grid;
+  grid-template-columns: 240px 1fr 320px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--md-sys-color-surface-container-low, #fafbfc);
+}
+
+/* ======== 左栏：大纲 Outline ======== */
+.ed-outline {
+  background: var(--md-sys-color-surface, #fff);
+  border-right: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.ed-outline__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 12px;
+  flex-shrink: 0;
+}
+
+.ed-outline__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #111827);
+}
+
+.ed-outline__add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.ed-outline__add:hover {
+  background: var(--md-sys-color-surface-container, #f3f4f6);
+}
+
+.ed-outline__add .material-symbols-rounded {
+  font-size: 18px;
+}
+
+.ed-outline__list {
+  padding: 0 8px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ed-outline__item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface, #111827);
+  text-align: left;
+  gap: 6px;
+  transition: background 0.12s;
+}
+
+.ed-outline__item:hover {
+  background: var(--md-sys-color-surface-container, #f3f4f6);
+}
+
+.ed-outline__item--h3 {
+  padding-left: 26px;
+  font-weight: 400;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+}
+
+.ed-outline__item-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ed-outline__item-remove {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: none;
+  color: var(--md-sys-color-on-surface-variant, #9ca3af);
+  cursor: pointer;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.ed-outline__item-remove .material-symbols-rounded {
+  font-size: 14px;
+}
+
+.ed-outline__item:hover .ed-outline__item-remove {
+  display: inline-flex;
+}
+
+.ed-outline__empty {
+  padding: 24px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface-variant, #9ca3af);
+}
+
+/* ======== 中栏：主编辑区 ======== */
+.ed-main {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
+  background: var(--md-sys-color-surface, #fff);
 }
 
-.md-editor__toolbar {
+/* 格式化工具栏 */
+.ed-toolbar {
   display: flex;
   align-items: center;
-  padding: 4px 8px;
-  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  background-color: var(--md-sys-color-surface-container, #ece7e9);
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
   gap: 2px;
   flex-shrink: 0;
-  flex-wrap: wrap;
 }
 
-.md-editor__toolbar-group {
+.ed-toolbar__left {
   display: flex;
-  gap: 0;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
 }
 
-.md-editor__toolbar-divider {
+.ed-toolbar__right {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.ed-toolbar__heading-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border: none;
+  background: none;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.ed-toolbar__heading-btn:hover {
+  background: var(--md-sys-color-surface-container, #f3f4f6);
+}
+
+.ed-toolbar__heading-btn .material-symbols-rounded {
+  font-size: 14px;
+}
+
+.ed-toolbar__divider {
   width: 1px;
-  height: 24px;
-  background-color: var(--md-sys-color-outline-variant, #cac4d0);
-  margin: 0 4px;
+  height: 20px;
+  background: var(--md-sys-color-outline-variant, #e5e7eb);
+  margin: 0 6px;
   align-self: center;
 }
 
-.md-editor__toolbar-spacer {
-  flex: 1;
+.ed-toolbar__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: none;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: background 0.12s;
 }
 
-.md-editor__view-toggle {
+.ed-toolbar__icon-btn:hover {
+  background: var(--md-sys-color-surface-container, #f3f4f6);
+  color: var(--md-sys-color-on-surface, #111827);
+}
+
+.ed-toolbar__icon-btn .material-symbols-rounded {
+  font-size: 18px;
+}
+
+/* 内容区 */
+.ed-content {
+  flex: 1;
+  min-height: 0;
   display: flex;
-  gap: 0;
+  flex-direction: column;
+  overflow-y: auto;
 }
 
-.md-editor__view-btn--active {
-  background-color: var(--md-sys-color-secondary-container, #e8def8);
-  border-radius: 20px;
+.ed-content__title {
+  width: 100%;
+  padding: 24px 48px 0;
+  border: none;
+  background: transparent;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #111827);
+  outline: none;
+  line-height: 1.3;
 }
 
-.md-editor__body {
+.ed-content__title::placeholder {
+  color: var(--md-sys-color-outline, #9ca3af);
+}
+
+.ed-content__excerpt {
+  width: 100%;
+  padding: 8px 48px 0;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  outline: none;
+  line-height: 1.5;
+}
+
+.ed-content__excerpt::placeholder {
+  color: var(--md-sys-color-outline, #c9cdd4);
+}
+
+.ed-content__editor-body {
   flex: 1;
-  min-height: 400px;
+  min-height: 300px;
   overflow: hidden;
+  display: flex;
 }
 
-.md-editor__body--edit {
+.ed-content__editor-body--edit {
   display: block;
 }
 
-.md-editor__body--preview {
+.ed-content__editor-body--preview {
   display: block;
 }
 
-.md-editor__body--split {
+.ed-content__editor-body--split {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  column-gap: 0;
 }
 
-.md-editor__body--split .md-editor__textarea {
-  border-right: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+.ed-content__editor-body--split .ed-content__textarea {
+  border-right: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
 }
 
-.md-editor__textarea {
+.ed-content__textarea {
   width: 100%;
   height: 100%;
   min-height: 400px;
-  padding: 16px 20px;
+  padding: 16px 48px 24px;
   border: none;
-  background-color: var(--md-sys-color-surface, #fffbfe);
+  background: var(--md-sys-color-surface, #fff);
   color: var(--md-sys-color-on-surface, #1c1b1f);
   font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
   font-size: 14px;
@@ -1986,31 +2485,450 @@ function getReadTime(content) {
   tab-size: 2;
 }
 
-.md-editor__textarea:focus {
-  outline: none;
-  background-color: var(--md-sys-color-surface, #fffbfe);
-}
-
-.md-editor__preview {
-  padding: 16px 20px;
-  background-color: var(--md-sys-color-surface, #fffbfe);
+.ed-content__preview {
+  padding: 16px 48px 24px;
+  background: var(--md-sys-color-surface, #fff);
   overflow-y: auto;
   min-height: 400px;
-  max-height: calc(100vh - 340px);
 }
 
-.md-editor__statusbar {
+/* 底部状态栏 */
+.ed-bottombar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 24px;
+  height: 40px;
+  border-top: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+  background: var(--md-sys-color-surface, #fff);
+  flex-shrink: 0;
+}
+
+.ed-bottombar__left {
+  display: flex;
+  align-items: center;
+}
+
+.ed-bottombar__mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: none;
+  background: none;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.ed-bottombar__mode-btn:hover {
+  background: var(--md-sys-color-surface-container, #f3f4f6);
+}
+
+.ed-bottombar__mode-btn .material-symbols-rounded {
+  font-size: 14px;
+}
+
+.ed-bottombar__right {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 4px 16px;
-  background-color: var(--md-sys-color-surface-container, #ece7e9);
-  border-top: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  font-family: var(--md-sys-typescale-label-s-font-family);
-  font-size: var(--md-sys-typescale-label-s-font-size);
-  font-weight: var(--md-sys-typescale-label-s-font-weight);
-  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.ed-bottombar__stat {
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  white-space: nowrap;
+}
+
+.ed-bottombar__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: none;
+  background: none;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.ed-bottombar__icon-btn:hover {
+  background: var(--md-sys-color-surface-container, #f3f4f6);
+}
+
+.ed-bottombar__icon-btn .material-symbols-rounded {
+  font-size: 14px;
+}
+
+/* ======== 右栏：文档设置 ======== */
+.ed-settings {
+  background: var(--md-sys-color-surface, #fff);
+  border-left: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.ed-settings__tabs {
+  display: flex;
+  gap: 4px;
+  padding: 16px 16px 0;
   flex-shrink: 0;
+}
+
+.ed-settings__tab {
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.12s, color 0.12s;
+}
+
+.ed-settings__tab:hover {
+  background: var(--md-sys-color-surface-container, #f3f4f6);
+}
+
+.ed-settings__tab--active {
+  background: var(--md-sys-color-primary-container, #eef1ff);
+  color: var(--md-sys-color-primary, #635bff);
+}
+
+.ed-settings__content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ed-settings__section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ed-settings__section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #111827);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ed-settings__section-arrow {
+  font-size: 18px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  transition: transform 0.2s;
+}
+
+.ed-settings__section-arrow--open {
+  transform: rotate(180deg);
+}
+
+.ed-settings__section--collapsible {
+  cursor: pointer;
+  padding: 12px 0;
+  border-top: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+}
+
+.ed-settings__section--collapsible:hover .ed-settings__section-title {
+  color: var(--md-sys-color-primary, #635bff);
+}
+
+.ed-settings__section--danger {
+  padding-top: 16px;
+  border-top: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+}
+
+/* Dropdown */
+.ed-settings__dropdown {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 12px;
+  height: 40px;
+  border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+  border-radius: 6px;
+  background: var(--md-sys-color-surface, #fff);
+  color: var(--md-sys-color-on-surface, #374151);
+  font-size: 14px;
+  cursor: pointer;
+  gap: 8px;
+}
+
+.ed-settings__dropdown:hover {
+  border-color: var(--md-sys-color-outline, #9ca3af);
+}
+
+.ed-settings__dropdown--sub {
+  color: var(--md-sys-color-on-surface-variant, #9ca3af);
+  margin-top: 8px;
+}
+
+.ed-settings__dropdown .material-symbols-rounded {
+  font-size: 16px;
+}
+
+.ed-settings__dropdown-arrow {
+  margin-left: auto;
+  font-size: 18px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+}
+
+/* Status dot */
+.ed-settings__status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ed-settings__status-dot--draft {
+  background: #f59e0b;
+}
+
+.ed-settings__status-dot--published {
+  background: #10b981;
+}
+
+/* Dropdown menu */
+.ed-settings__dropdown-menu {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+  border-radius: 6px;
+  background: var(--md-sys-color-surface, #fff);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  z-index: 10;
+  overflow: hidden;
+}
+
+.ed-settings__dropdown-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  color: var(--md-sys-color-on-surface, #374151);
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ed-settings__dropdown-menu button:hover {
+  background: var(--md-sys-color-surface-container, #f3f4f6);
+}
+
+.ed-settings__helper {
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  margin: 0;
+}
+
+/* Tags */
+.ed-settings__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ed-settings__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--md-sys-color-primary-container, #eef1ff);
+  color: var(--md-sys-color-primary, #635bff);
+}
+
+.ed-settings__tag-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: none;
+  color: var(--md-sys-color-primary, #635bff);
+  cursor: pointer;
+  border-radius: 2px;
+  padding: 0;
+}
+
+.ed-settings__tag-remove:hover {
+  background: rgba(99, 91, 255, 0.15);
+}
+
+.ed-settings__tag-remove .material-symbols-rounded {
+  font-size: 12px;
+}
+
+.ed-settings__tag-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: none;
+  background: var(--md-sys-color-surface-container, #f3f4f6);
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.ed-settings__tag-add:hover {
+  background: var(--md-sys-color-surface-container-high, #e5e7eb);
+}
+
+.ed-settings__tag-add .material-symbols-rounded {
+  font-size: 14px;
+}
+
+.ed-settings__tag-input-row {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.ed-settings__tag-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+  background: var(--md-sys-color-surface, #fff);
+  color: var(--md-sys-color-on-surface, #111827);
+}
+
+.ed-settings__tag-input:focus {
+  border-color: var(--md-sys-color-primary, #635bff);
+}
+
+.ed-settings__tag-input-confirm {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: var(--md-sys-color-primary, #635bff);
+  color: #fff;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.ed-settings__tag-input-confirm .material-symbols-rounded {
+  font-size: 16px;
+}
+
+/* Featured image */
+.ed-settings__featured {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ed-settings__featured-placeholder {
+  width: 100%;
+  height: 80px;
+  background: var(--md-sys-color-surface-container, #f3f4f6);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-on-surface-variant, #9ca3af);
+}
+
+.ed-settings__featured-placeholder .material-symbols-rounded {
+  font-size: 32px;
+}
+
+.ed-settings__featured-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ed-settings__alt-label {
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  margin-top: 4px;
+}
+
+.ed-settings__alt-input {
+  width: 100%;
+  padding: 8px 12px;
+  height: 36px;
+  border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+  background: var(--md-sys-color-surface, #fff);
+  color: var(--md-sys-color-on-surface, #111827);
+  box-sizing: border-box;
+}
+
+.ed-settings__alt-input:focus {
+  border-color: var(--md-sys-color-primary, #635bff);
+}
+
+.ed-settings__alt-input::placeholder {
+  color: var(--md-sys-color-outline, #9ca3af);
+}
+
+/* Delete button */
+.ed-settings__delete-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  color: #ef4444;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 6px;
+  width: 100%;
+}
+
+.ed-settings__delete-btn:hover {
+  background: #fef2f2;
+}
+
+.ed-settings__delete-btn .material-symbols-rounded {
+  font-size: 18px;
+}
+
+/* Empty state */
+.ed-settings__empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 16px;
+  color: var(--md-sys-color-on-surface-variant, #9ca3af);
+}
+
+.ed-settings__empty-state .material-symbols-rounded {
+  font-size: 40px;
+}
+
+.ed-settings__empty-state p {
+  margin: 0;
+  font-size: 13px;
 }
 
 /* ======== 操作提示 ======== */
@@ -2133,27 +3051,28 @@ function getReadTime(content) {
   }
 }
 
+@media (max-width: 1294px) {
+  .ed-body {
+    grid-template-columns: 1fr 320px;
+  }
+  .ed-outline {
+    display: none;
+  }
+}
+
 @media (max-width: 840px) {
-  .editor-grid {
+  .ed-body {
     grid-template-columns: 1fr;
   }
-
-  .editor-fields {
-    border-right: none;
-    border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-    max-height: none;
+  .ed-settings {
+    display: none;
   }
-
-  .field-row {
-    flex-direction: column;
-  }
-
-  .md-editor__toolbar {
-    padding: 4px 4px;
-  }
-
-  .md-editor__body--split {
-    grid-template-columns: 1fr;
+  .ed-content__title,
+  .ed-content__excerpt,
+  .ed-content__textarea,
+  .ed-content__preview {
+    padding-left: 24px;
+    padding-right: 24px;
   }
 }
 </style>
@@ -2221,52 +3140,147 @@ function getReadTime(content) {
 }
 
 /* ======== 暗色主题：编辑器 ======== */
-[data-theme="dark"] .editor-topbar {
-  background-color: var(--md-sys-color-surface-container, #211f26);
-}
-
-[data-theme="dark"] .editor-grid {
-  background-color: var(--md-sys-color-surface-container-low, #1d1b20);
-}
-
-[data-theme="dark"] .editor-fields {
-  border-right-color: var(--md-sys-color-outline-variant, #49454f);
-}
-
-[data-theme="dark"] .md-editor__textarea {
-  background-color: var(--md-sys-color-surface, #141218);
-  color: var(--md-sys-color-on-surface, #e6e1e5);
-}
-
-[data-theme="dark"] .md-editor__preview {
-  background-color: var(--md-sys-color-surface, #141218);
-}
-
-[data-theme="dark"] .md-editor__toolbar {
-  background-color: var(--md-sys-color-surface-container, #211f26);
+[data-theme="dark"] .ed-topbar {
+  background: var(--md-sys-color-surface, #1d1b20);
   border-bottom-color: var(--md-sys-color-outline-variant, #49454f);
 }
 
-[data-theme="dark"] .md-editor__statusbar {
-  background-color: var(--md-sys-color-surface-container, #211f26);
+[data-theme="dark"] .ed-topbar__badge--draft {
+  background: #422006;
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .ed-topbar__badge--published {
+  background: #064e3b;
+  color: #6ee7b7;
+}
+
+[data-theme="dark"] .ed-body {
+  background: var(--md-sys-color-surface-container-low, #141218);
+}
+
+[data-theme="dark"] .ed-outline {
+  background: var(--md-sys-color-surface, #1d1b20);
+  border-right-color: var(--md-sys-color-outline-variant, #49454f);
+}
+
+[data-theme="dark"] .ed-outline__item:hover {
+  background: var(--md-sys-color-surface-container, #2b2930);
+}
+
+[data-theme="dark"] .ed-main {
+  background: var(--md-sys-color-surface, #1d1b20);
+}
+
+[data-theme="dark"] .ed-toolbar {
+  border-bottom-color: var(--md-sys-color-outline-variant, #49454f);
+}
+
+[data-theme="dark"] .ed-toolbar__icon-btn:hover,
+[data-theme="dark"] .ed-toolbar__heading-btn:hover,
+[data-theme="dark"] .ed-bottombar__mode-btn:hover,
+[data-theme="dark"] .ed-bottombar__icon-btn:hover {
+  background: var(--md-sys-color-surface-container, #2b2930);
+}
+
+[data-theme="dark"] .ed-content__textarea {
+  background: var(--md-sys-color-surface, #141218);
+  color: var(--md-sys-color-on-surface, #e6e1e5);
+}
+
+[data-theme="dark"] .ed-content__preview {
+  background: var(--md-sys-color-surface, #141218);
+}
+
+[data-theme="dark"] .ed-content__title {
+  color: var(--md-sys-color-on-surface, #e6e1e5);
+}
+
+[data-theme="dark"] .ed-content__title::placeholder {
+  color: var(--md-sys-color-outline, #6b7280);
+}
+
+[data-theme="dark"] .ed-bottombar {
   border-top-color: var(--md-sys-color-outline-variant, #49454f);
 }
 
-[data-theme="dark"] .md-editor__view-btn--active {
-  background-color: var(--md-sys-color-secondary-container, #4a4458);
+[data-theme="dark"] .ed-settings {
+  background: var(--md-sys-color-surface, #1d1b20);
+  border-left-color: var(--md-sys-color-outline-variant, #49454f);
 }
 
-[data-theme="dark"] .editor-fields__delete-btn {
-  --md-text-button-label-text-color: var(--md-sys-color-error, #f2b8b5);
-}
-
-[data-theme="dark"] .mio-icon-badge--published {
+[data-theme="dark"] .ed-settings__tab--active {
   background: var(--md-sys-color-primary-container, #4a4458);
-  color: var(--md-sys-color-on-primary-container, #e8def8);
+  color: var(--md-sys-color-on-primary-container, #d0bcff);
 }
 
-[data-theme="dark"] .mio-icon-badge--draft {
-  background: var(--md-sys-color-secondary-container, #4a4458);
-  color: var(--md-sys-color-on-secondary-container, #e8def8);
+[data-theme="dark"] .ed-settings__dropdown {
+  background: var(--md-sys-color-surface-container, #2b2930);
+  border-color: var(--md-sys-color-outline-variant, #49454f);
+}
+
+[data-theme="dark"] .ed-settings__dropdown-menu {
+  background: var(--md-sys-color-surface-container, #2b2930);
+  border-color: var(--md-sys-color-outline-variant, #49454f);
+}
+
+[data-theme="dark"] .ed-settings__dropdown-menu button:hover {
+  background: var(--md-sys-color-surface-container-high, #36343b);
+}
+
+[data-theme="dark"] .ed-settings__tag {
+  background: var(--md-sys-color-primary-container, #4a4458);
+  color: var(--md-sys-color-on-primary-container, #d0bcff);
+}
+
+[data-theme="dark"] .ed-settings__tag-remove {
+  color: var(--md-sys-color-on-primary-container, #d0bcff);
+}
+
+[data-theme="dark"] .ed-settings__tag-add {
+  background: var(--md-sys-color-surface-container, #2b2930);
+  color: var(--md-sys-color-on-surface-variant, #cac4d0);
+}
+
+[data-theme="dark"] .ed-settings__tag-input {
+  background: var(--md-sys-color-surface-container, #2b2930);
+  border-color: var(--md-sys-color-outline-variant, #49454f);
+  color: var(--md-sys-color-on-surface, #e6e1e5);
+}
+
+[data-theme="dark"] .ed-settings__alt-input {
+  background: var(--md-sys-color-surface-container, #2b2930);
+  border-color: var(--md-sys-color-outline-variant, #49454f);
+  color: var(--md-sys-color-on-surface, #e6e1e5);
+}
+
+[data-theme="dark"] .ed-settings__featured-placeholder {
+  background: var(--md-sys-color-surface-container, #2b2930);
+}
+
+[data-theme="dark"] .ed-settings__delete-btn:hover {
+  background: #450a0a;
+}
+
+[data-theme="dark"] .ed-btn--outlined {
+  background: var(--md-sys-color-surface, #1d1b20);
+  border-color: var(--md-sys-color-outline-variant, #49454f);
+  color: var(--md-sys-color-on-surface, #e6e1e5);
+}
+
+[data-theme="dark"] .ed-btn--outlined:hover {
+  background: var(--md-sys-color-surface-container, #2b2930);
+}
+
+[data-theme="dark"] .ed-btn--filled {
+  background: var(--md-sys-color-primary, #7c6fff);
+}
+
+[data-theme="dark"] .ed-settings__section--collapsible {
+  border-top-color: var(--md-sys-color-outline-variant, #49454f);
+}
+
+[data-theme="dark"] .ed-settings__section--danger {
+  border-top-color: var(--md-sys-color-outline-variant, #49454f);
 }
 </style>
