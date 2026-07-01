@@ -47,9 +47,9 @@ function onThemeMobileClick() {
 const ADMIN_TOKEN_KEY = 'strapi-admin-token'
 const isAdminRoute = computed(() => route.path === '/admin' || route.path.startsWith('/admin/'))
 const adminNavItems = [
-  { id: 'dashboard', label: '首页', icon: 'home', route: '/admin?tab=dashboard' },
+  { id: 'dashboard', label: '管理', icon: 'dashboard', route: '/admin?tab=dashboard' },
   { id: 'articles', label: '文章', icon: 'article', route: '/admin?tab=articles' },
-  { id: 'cards', label: '卡片', icon: 'dashboard', route: '/admin?tab=cards' },
+  { id: 'cards', label: '卡片', icon: 'dashboard_customize', route: '/admin?tab=cards' },
   { id: 'navigation', label: '导航', icon: 'menu', route: '/admin?tab=navigation' },
 ]
 

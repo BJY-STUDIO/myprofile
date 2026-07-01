@@ -329,11 +329,11 @@
                 <span class="am-article-row__col-date">{{ formatDate(art.publishedAt || art.createdAt) }}</span>
                 <span class="am-article-row__col-readtime">{{ getReadTime(art.content) }}</span>
                 <span class="am-article-row__col-tags">
-                  <span
+                  <AdminTag
                     v-for="(tag, ti) in getVisibleTags(art.tags)"
                     :key="ti"
-                    class="am-tag"
-                  >{{ tag }}</span>
+                    :label="tag"
+                  />
                 </span>
                 <button class="am-article-row__menu" @click.stop aria-label="More options">
                   <span class="material-symbols-rounded">more_vert</span>
@@ -424,6 +424,7 @@ import '@material/web/textfield/outlined-text-field'
 import '@material/web/switch/switch'
 import '@material/web/progress/linear-progress'
 import AdminTopbar from './AdminTopbar.vue'
+import AdminTag from './AdminTag.vue'
 
 const UID = 'api::article.article'
 
@@ -857,13 +858,6 @@ function toggleSort() {
 }
 
 // ===== 辅助函数 =====
-const TAG_COLOR_MAP = {
-  primary: ['vue', 'strapi', 'changelog'],
-  blue: ['design', 'deployment', 'development', 'md3'],
-  green: ['ai', 'agent', 'rag'],
-  orange: ['cms', 'headless'],
-}
-
 function formatDate(isoStr) {
   if (!isoStr) return ''
   const d = new Date(isoStr)
@@ -874,10 +868,6 @@ function formatDate(isoStr) {
 function getVisibleTags(tags) {
   if (!tags || !tags.length) return []
   return tags.slice(0, 2)
-}
-
-function getTagClass(tag) {
-  return 'am-tag'
 }
 
 function getReadTime(content) {
@@ -1452,19 +1442,6 @@ function getReadTime(content) {
   font-size: 12px;
   font-weight: 500;
   white-space: nowrap;
-}
-
-/* ======== 分类标签（统一灰色） ======== */
-.am-tag {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 10px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-  background: #f3f4f6;
-  color: #374151;
 }
 
 /* ======== 底部批量操作栏 + 分页（独立容器） ======== */
@@ -2074,11 +2051,6 @@ function getReadTime(content) {
 }
 
 /* ======== 暗色主题：accent 相关（已通过 CSS 变量自动切换，无需额外覆盖）===== */
-
-[data-theme="dark"] .am-tag {
-  background: #374151;
-  color: #d1d5db;
-}
 
 [data-theme="dark"] .am-bottom-bar {
   background-color: var(--md-sys-color-surface-container-lowest, #141218);

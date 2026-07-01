@@ -109,14 +109,13 @@
               </span>
               <!-- 日期 — 固定宽度列对齐 -->
               <span class="recent-item__date">{{ formatDate(art.publishedAt || art.createdAt) }}</span>
-              <!-- 分类标签 — 固定宽度列对齐 -->
+              <!-- 分类标签 — 统一组件 -->
               <div class="recent-item__tags" v-if="art.tags && art.tags.length">
-                <span
+                <AdminTag
                   v-for="(tag, ti) in getVisibleTags(art.tags)"
                   :key="ti"
-                  class="recent-item__tag"
-                  :class="getTagClass(tag)"
-                >{{ tag }}</span>
+                  :label="tag"
+                />
               </div>
               <!-- 三点菜单 -->
               <button class="recent-item__menu" aria-label="More options" @click.stop>
@@ -186,6 +185,7 @@ import { useAdminLoader } from '@/composables/useAdminLoader'
 import '@material/web/progress/linear-progress'
 import '@material/web/button/filled-button'
 import AdminTopbar from './AdminTopbar.vue'
+import AdminTag from './AdminTag.vue'
 
 const UID = 'api::article.article'
 const router = useRouter()
@@ -316,21 +316,6 @@ function getArticleThumbClass(art) {
 function getVisibleTags(tags) {
   if (!tags || !tags.length) return []
   return tags.slice(0, 2)
-}
-
-// 标签颜色：根据文字内容分配不同色系
-const TAG_COLOR_MAP = {
-  primary: ['vue', 'strapi', 'changelog'],
-  blue: ['design', 'deployment', 'development', 'md3'],
-  green: ['ai', 'agent', 'rag'],
-  orange: ['cms', 'headless'],
-}
-function getTagClass(tag) {
-  const t = (tag || '').toLowerCase()
-  for (const [cls, keywords] of Object.entries(TAG_COLOR_MAP)) {
-    if (keywords.some(k => t.includes(k))) return `recent-item__tag--${cls}`
-  }
-  return 'recent-item__tag--primary'
 }
 </script>
 
@@ -697,32 +682,6 @@ function getTagClass(tag) {
   overflow: hidden;
   width: 180px;
 }
-.recent-item__tag {
-  font-size: 12px;
-  font-weight: 500;
-  padding: 4px 12px;
-  border-radius: 9999px;
-  white-space: nowrap;
-  height: 24px;
-  display: inline-flex;
-  align-items: center;
-}
-.recent-item__tag--primary {
-  background: #F5F3FF;
-  color: #635bff;
-}
-.recent-item__tag--blue {
-  background: #EFF8FF;
-  color: #2970CC;
-}
-.recent-item__tag--green {
-  background: #ECFDF3;
-  color: #039855;
-}
-.recent-item__tag--orange {
-  background: #FFF6ED;
-  color: #EC6C34;
-}
 
 /* 三点菜单 */
 .recent-item__menu {
@@ -927,12 +886,6 @@ function getTagClass(tag) {
 /* ---- 状态标签暗色 ---- */
 [data-theme="dark"] .recent-item__status--published { background: #06381f; color: #34d399; }
 [data-theme="dark"] .recent-item__status--draft { background: #3a2200; color: #fbbf24; }
-
-/* ---- 分类标签暗色 ---- */
-[data-theme="dark"] .recent-item__tag--primary { background: var(--md-sys-color-primary-container, #4f378b); color: var(--md-sys-color-on-primary-container, #eaddff); }
-[data-theme="dark"] .recent-item__tag--blue { background: #1e3a5f; color: #60a5fa; }
-[data-theme="dark"] .recent-item__tag--green { background: #06381f; color: #34d399; }
-[data-theme="dark"] .recent-item__tag--orange { background: #3a2200; color: #fbbf24; }
 
 /* ---- Quick actions 图标暗色 ---- */
 [data-theme="dark"] .quick-action-card__icon--primary { background: var(--md-sys-color-primary-container, #4f378b); }
