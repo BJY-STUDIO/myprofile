@@ -64,7 +64,7 @@
 
         <!-- 1. 问候模块 -->
         <section class="dashboard-greeting">
-          <h1 class="dashboard-greeting__title">{{ greetingText }}, {{ adminName || 'Bao' }} 👋</h1>
+          <h1 class="dashboard-greeting__title">{{ greetingText }}, {{ adminName || 'Administrator' }} 👋</h1>
           <p class="dashboard-greeting__subtitle">Here's what's happening with your blog today.</p>
         </section>
 
@@ -258,9 +258,15 @@ function loadArticles() {
 async function loadAdminName() {
   try {
     const user = await strapiAdminMe(props.token)
-    const name = user.firstname || user.username || user.email?.split('@')[0]
-    if (name) adminName.value = name
+    const first = user.firstname || ''
+    const last = user.lastname || ''
+    const full = `${first} ${last}`.trim()
+    if (full) adminName.value = full
+    else if (user.username) adminName.value = user.username
+    else if (user.email) adminName.value = user.email.split('@')[0]
+    else adminName.value = 'Administrator'
   } catch (e) {
+    adminName.value = 'Administrator'
     console.warn('[AdminDashboard] 获取管理员信息失败:', e.message)
   }
 }
@@ -828,11 +834,13 @@ function getTagClass(tag) {
   width: 120px;
 }
 
-/* 分类标签组 — 固定宽度 180px 实现列对齐, 药丸形 */
+/* 分类标签组 — 可收缩, 药丸形 */
 .recent-item__tags {
   display: flex;
   gap: 8px;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
   width: 180px;
 }
 .recent-item__tag {
@@ -1000,6 +1008,10 @@ function getTagClass(tag) {
   .recent-item__tags { width: 140px; }
 }
 
+@media (max-width: 1100px) {
+  .recent-item__tags { display: none; }
+}
+
 @media (max-width: 840px) {
   .dashboard-topbar__search { display: none; }
   .dashboard-topbar__search-kbd { display: none; }
@@ -1012,7 +1024,6 @@ function getTagClass(tag) {
   .continue-card__thumb { width: 140px; height: 94px; }
   .continue-card__thumb-icon { font-size: 28px; }
   .recent-item__date { display: none; }
-  .recent-item__tags { width: auto; }
 }
 
 @media (max-width: 600px) {

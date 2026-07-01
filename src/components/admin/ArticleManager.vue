@@ -9,216 +9,21 @@
       :buffer="loader.progressBuffer.value"
     ></md-linear-progress>
 
-    <!-- ======== 加载占位 ======== -->
+    <!-- ======== 骨架屏 ======== -->
     <div v-if="!loader.dataLoaded.value" class="skeleton-container">
-      <section class="hero">
-        <div class="hero__inner">
-          <h1 class="hero__title">文章管理</h1>
-          <p class="hero__desc">创建、编辑和发布博客文章。管理文章内容、排序和发布状态。</p>
-          <div class="hero__toc">
-            <button class="link-card" @click="onCreate" @pointerdown="onCardRipple">
-              <div class="link-card__text">
-                <span class="link-card__title">新建文章</span>
-                <span class="link-card__desc">创建一篇新文章</span>
-              </div>
-            </button>
-            <button class="link-card" @click="reloadArticles()" @pointerdown="onCardRipple">
-              <div class="link-card__text">
-                <span class="link-card__title">刷新</span>
-                <span class="link-card__desc">重新加载列表</span>
-              </div>
-            </button>
-            <button class="link-card" @click="showPublishedFilter = 'all'" @pointerdown="onCardRipple">
-              <div class="link-card__text">
-                <span class="link-card__title">全部文章</span>
-                <span class="link-card__desc">{{ articles.length }} 篇</span>
-              </div>
-            </button>
-            <button class="link-card" @click="showPublishedFilter = 'published'" @pointerdown="onCardRipple">
-              <div class="link-card__text">
-                <span class="link-card__title">已发布</span>
-                <span class="link-card__desc">{{ publishedCount }} 篇</span>
-              </div>
-            </button>
-            <button class="link-card" @click="showPublishedFilter = 'draft'" @pointerdown="onCardRipple">
-              <div class="link-card__text">
-                <span class="link-card__title">草稿</span>
-                <span class="link-card__desc">{{ draftCount }} 篇</span>
-              </div>
-            </button>
-          </div>
-        </div>
-      </section>
-      <!-- main-toc（≤1294px 时显示） -->
-      <div class="main-toc-container">
-        <div class="main-toc">
-          <button class="link-card" @click="onCreate" @pointerdown="onCardRipple">
-            <div class="link-card__text">
-              <span class="link-card__title">新建文章</span>
-              <span class="link-card__desc">创建一篇新文章</span>
-            </div>
-          </button>
-          <button class="link-card" @click="reloadArticles()" @pointerdown="onCardRipple">
-            <div class="link-card__text">
-              <span class="link-card__title">刷新</span>
-              <span class="link-card__desc">重新加载列表</span>
-            </div>
-          </button>
-          <button class="link-card" @click="showPublishedFilter = 'all'" @pointerdown="onCardRipple">
-            <div class="link-card__text">
-              <span class="link-card__title">全部文章</span>
-              <span class="link-card__desc">{{ articles.length }} 篇</span>
-            </div>
-          </button>
-          <button class="link-card" @click="showPublishedFilter = 'published'" @pointerdown="onCardRipple">
-            <div class="link-card__text">
-              <span class="link-card__title">已发布</span>
-              <span class="link-card__desc">{{ publishedCount }} 篇</span>
-            </div>
-          </button>
-          <button class="link-card" @click="showPublishedFilter = 'draft'" @pointerdown="onCardRipple">
-            <div class="link-card__text">
-              <span class="link-card__title">草稿</span>
-              <span class="link-card__desc">{{ draftCount }} 篇</span>
-            </div>
-          </button>
-        </div>
+      <div class="skeleton skeleton--topbar"></div>
+      <div class="skeleton-body">
+        <div class="skeleton skeleton--page-title"></div>
+        <div class="skeleton skeleton--filter-bar"></div>
+        <div class="skeleton skeleton--row" v-for="n in 5" :key="n"></div>
       </div>
-      <section class="content-section">
-        <div class="content-section__list">
-          <div class="article-list">
-            <span v-for="n in 3" :key="'list-sk-'+n" class="skeleton" style="height:80px;border-radius:24px;"></span>
-          </div>
-        </div>
-        <div class="content-section__detail">
-          <span class="skeleton" style="height:240px;border-radius:28px;width:100%;"></span>
-        </div>
-      </section>
     </div>
 
-    <!-- ======== 真实内容（fadeIn） ======== -->
+    <!-- ======== 真实内容 ======== -->
     <div v-else :class="{ 'content-fadein': loader.fadeInActive.value }">
 
-      <!-- ======== Hero ======== -->
-      <section class="hero">
-        <div class="hero__inner">
-          <h1 class="hero__title">文章管理</h1>
-          <p class="hero__desc">创建、编辑和发布博客文章。管理文章内容、排序和发布状态。</p>
-          <div class="hero__toc">
-            <button class="link-card" @click="onCreate" @pointerdown="onCardRipple">
-              <div class="link-card__text">
-                <span class="link-card__title">新建文章</span>
-                <span class="link-card__desc">创建一篇新文章</span>
-              </div>
-            </button>
-            <button class="link-card" @click="reloadArticles()" @pointerdown="onCardRipple">
-              <div class="link-card__text">
-                <span class="link-card__title">刷新</span>
-                <span class="link-card__desc">重新加载列表</span>
-              </div>
-            </button>
-            <button class="link-card" @click="showPublishedFilter = 'all'" @pointerdown="onCardRipple">
-              <div class="link-card__text">
-                <span class="link-card__title">全部文章</span>
-                <span class="link-card__desc">{{ articles.length }} 篇</span>
-              </div>
-            </button>
-            <button class="link-card" @click="showPublishedFilter = 'published'" @pointerdown="onCardRipple">
-              <div class="link-card__text">
-                <span class="link-card__title">已发布</span>
-                <span class="link-card__desc">{{ publishedCount }} 篇</span>
-              </div>
-            </button>
-            <button class="link-card" @click="showPublishedFilter = 'draft'" @pointerdown="onCardRipple">
-              <div class="link-card__text">
-                <span class="link-card__title">草稿</span>
-                <span class="link-card__desc">{{ draftCount }} 篇</span>
-              </div>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- ======== main-toc（≤1294px 时显示） ======== -->
-      <div class="main-toc-container">
-        <div class="main-toc">
-          <button class="link-card" @click="onCreate" @pointerdown="onCardRipple">
-            <div class="link-card__text">
-              <span class="link-card__title">新建文章</span>
-              <span class="link-card__desc">创建一篇新文章</span>
-            </div>
-          </button>
-          <button class="link-card" @click="reloadArticles()" @pointerdown="onCardRipple">
-            <div class="link-card__text">
-              <span class="link-card__title">刷新</span>
-              <span class="link-card__desc">重新加载列表</span>
-            </div>
-          </button>
-          <button class="link-card" @click="showPublishedFilter = 'all'" @pointerdown="onCardRipple">
-            <div class="link-card__text">
-              <span class="link-card__title">全部文章</span>
-              <span class="link-card__desc">{{ articles.length }} 篇</span>
-            </div>
-          </button>
-          <button class="link-card" @click="showPublishedFilter = 'published'" @pointerdown="onCardRipple">
-            <div class="link-card__text">
-              <span class="link-card__title">已发布</span>
-              <span class="link-card__desc">{{ publishedCount }} 篇</span>
-            </div>
-          </button>
-          <button class="link-card" @click="showPublishedFilter = 'draft'" @pointerdown="onCardRipple">
-            <div class="link-card__text">
-              <span class="link-card__title">草稿</span>
-              <span class="link-card__desc">{{ draftCount }} 篇</span>
-            </div>
-          </button>
-        </div>
-      </div>
-
-      <!-- ======== 内容区（对齐 m3 get-started：grid 两栏，左1.2fr 右1fr） ======== -->
-      <section v-if="editingIndex < 0" class="content-section">
-        <!-- 左栏：文章列表 -->
-        <div class="content-section__list">
-          <div v-if="filteredArticles.length" class="article-list">
-            <button
-              v-for="art in filteredArticles"
-              :key="art.documentId"
-              class="link-card article-card"
-              @click="onEdit(findOriginalIndex(art))"
-            >
-              <div class="link-card__text">
-                <span class="link-card__title">{{ art.title || '(无标题)' }}</span>
-                <span class="link-card__desc">
-                  {{ art.slug || '无slug' }}
-                  <template v-if="art.sortOrder != null"> · 排序 {{ art.sortOrder }}</template>
-                </span>
-              </div>
-              <span class="mio-icon-badge" :class="art.publishedAt ? 'mio-icon-badge--published' : 'mio-icon-badge--draft'">
-                <svg class="mio-icon-badge__clover" width="100%" height="100%" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M.887 14.467C-2.845 5.875 5.875-2.845 14.467.887l1.42.617a10.323 10.323 0 0 0 8.225 0l1.42-.617c8.593-3.732 17.313 4.988 13.581 13.58l-.617 1.42a10.323 10.323 0 0 0 0 8.225l.617 1.42c3.732 8.593-4.989 17.313-13.58 13.581l-1.42-.617a10.323 10.323 0 0 0-8.225 0l-1.42.617C5.874 42.845-2.846 34.125.886 25.533l.617-1.42a10.323 10.323 0 0 0 0-8.225l-.617-1.42Z" />
-                </svg>
-                <span class="mio-icon-badge__symbol material-symbols-rounded">{{ art.publishedAt ? 'check_circle' : 'draft' }}</span>
-              </span>
-            </button>
-          </div>
-          <div v-else class="empty-state">
-            <span class="material-symbols-rounded empty-state__icon">article</span>
-            <p class="empty-state__text">暂无文章</p>
-          </div>
-        </div>
-
-        <!-- 右栏：占位提示 -->
-        <div class="content-section__detail">
-          <div class="placeholder-card">
-            <span class="material-symbols-rounded placeholder-card__icon">edit_note</span>
-            <p class="placeholder-card__title">选择一篇文章开始编辑</p>
-            <p class="placeholder-card__desc">点击左侧列表中的文章，或新建一篇文章</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- ======== 编辑器区（全宽，grid 两栏：字段 + markdown） ======== -->
-      <section v-else class="editor-section">
+      <!-- ======== 编辑器模式 ======== -->
+      <section v-if="editingIndex >= 0" class="editor-section">
         <!-- 顶部操作栏 -->
         <div class="editor-topbar">
           <div class="editor-topbar__left">
@@ -376,6 +181,171 @@
         </div>
       </section>
 
+      <!-- ======== 列表模式 ======== -->
+      <template v-else>
+        <!-- 顶部栏 -->
+        <header class="am-topbar">
+          <div class="am-topbar__search">
+            <span class="material-symbols-rounded am-topbar__search-icon">search</span>
+            <span class="am-topbar__search-placeholder">Search articles...</span>
+            <span class="am-topbar__search-kbd">⌘K</span>
+          </div>
+          <div class="am-topbar__actions">
+            <md-filled-button class="am-topbar__new-btn" @click="onCreate">
+              <span class="material-symbols-rounded am-topbar__new-icon" slot="icon">add</span>
+              New Article
+            </md-filled-button>
+            <button class="am-topbar__icon-btn" aria-label="Notifications">
+              <span class="material-symbols-rounded">notifications</span>
+              <span class="am-topbar__badge"></span>
+            </button>
+            <div class="am-topbar__avatar">
+              <span class="material-symbols-rounded">person</span>
+            </div>
+          </div>
+        </header>
+
+        <div class="am-body">
+          <!-- 页面标题 -->
+          <div class="am-page-header">
+            <h1 class="am-page-header__title">All Articles</h1>
+            <p class="am-page-header__subtitle">{{ filteredArticles.length }} articles found</p>
+          </div>
+
+          <!-- 筛选栏 -->
+          <div class="am-filter-bar">
+            <div class="am-filter-bar__left">
+              <button
+                v-for="opt in filterOptions"
+                :key="opt.value"
+                class="am-filter-tab"
+                :class="{ 'am-filter-tab--active': showPublishedFilter === opt.value }"
+                @click="showPublishedFilter = opt.value"
+              >
+                {{ opt.label }}
+                <span class="am-filter-tab__count">{{ opt.count }}</span>
+              </button>
+            </div>
+            <div class="am-filter-bar__right">
+              <div class="am-filter-bar__search">
+                <span class="material-symbols-rounded">search</span>
+                <input v-model="searchQuery" type="text" placeholder="Search..." class="am-filter-bar__search-input" />
+              </div>
+              <button class="am-sort-btn" @click="toggleSort">
+                <span class="material-symbols-rounded">{{ sortAsc ? 'arrow_upward' : 'arrow_downward' }}</span>
+                <span>Sort: {{ sortField }}</span>
+              </button>
+              <div class="am-view-toggle">
+                <button class="am-view-toggle__btn" :class="{ 'am-view-toggle__btn--active': viewMode === 'list' }" @click="viewMode = 'list'" aria-label="List view">
+                  <span class="material-symbols-rounded">view_list</span>
+                </button>
+                <button class="am-view-toggle__btn" :class="{ 'am-view-toggle__btn--active': viewMode === 'grid' }" @click="viewMode = 'grid'" aria-label="Grid view">
+                  <span class="material-symbols-rounded">grid_view</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 批量操作栏 -->
+          <Transition name="am-bulk">
+            <div v-if="selectedIds.size > 0" class="am-bulk-bar">
+              <span class="am-bulk-bar__count">{{ selectedIds.size }} selected</span>
+              <div class="am-bulk-bar__actions">
+                <button class="am-bulk-bar__btn" @click="bulkPublish">
+                  <span class="material-symbols-rounded">publish</span>
+                  Publish
+                </button>
+                <button class="am-bulk-bar__btn am-bulk-bar__btn--danger" @click="bulkDelete">
+                  <span class="material-symbols-rounded">delete</span>
+                  Delete
+                </button>
+              </div>
+              <button class="am-bulk-bar__clear" @click="selectedIds.clear()">Clear</button>
+            </div>
+          </Transition>
+
+          <!-- 文章列表 -->
+          <div v-if="filteredArticles.length" class="am-article-list">
+            <!-- 表头 -->
+            <div class="am-article-row am-article-row--header">
+              <label class="am-checkbox">
+                <input type="checkbox" :checked="allSelected" @change="toggleSelectAll($event)" />
+                <span class="am-checkbox__box"></span>
+              </label>
+              <span class="am-article-row__col-title">Article</span>
+              <span class="am-article-row__col-status">Status</span>
+              <span class="am-article-row__col-date">Date</span>
+              <span class="am-article-row__col-tags">Tags</span>
+              <span class="am-article-row__col-menu"></span>
+            </div>
+
+            <!-- 文章行 -->
+            <div
+              v-for="art in paginatedArticles"
+              :key="art.documentId"
+              class="am-article-row"
+              :class="{ 'am-article-row--selected': selectedIds.has(art.documentId) }"
+              @click="onEdit(findOriginalIndex(art))"
+            >
+              <label class="am-checkbox" @click.stop>
+                <input type="checkbox" :checked="selectedIds.has(art.documentId)" @change="toggleSelect(art.documentId)" />
+                <span class="am-checkbox__box"></span>
+              </label>
+              <div class="am-article-row__col-article">
+                <div class="am-article-row__thumb" :class="art.publishedAt ? 'am-article-row__thumb--published' : 'am-article-row__thumb--draft'">
+                  <span class="material-symbols-rounded">{{ art.publishedAt ? 'article' : 'edit_note' }}</span>
+                </div>
+                <div class="am-article-row__info">
+                  <span class="am-article-row__title">{{ art.title || '(无标题)' }}</span>
+                  <span class="am-article-row__desc">{{ art.description || '暂无描述' }}</span>
+                </div>
+              </div>
+              <span class="am-article-row__col-status">
+                <span class="am-status-tag" :class="art.publishedAt ? 'am-status-tag--published' : 'am-status-tag--draft'">
+                  {{ art.publishedAt ? 'Published' : 'Draft' }}
+                </span>
+              </span>
+              <span class="am-article-row__col-date">{{ formatDate(art.publishedAt || art.createdAt) }}</span>
+              <span class="am-article-row__col-tags">
+                <span
+                  v-for="(tag, ti) in getVisibleTags(art.tags)"
+                  :key="ti"
+                  class="am-tag"
+                  :class="getTagClass(tag)"
+                >{{ tag }}</span>
+              </span>
+              <button class="am-article-row__menu" @click.stop aria-label="More options">
+                <span class="material-symbols-rounded">more_vert</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 空状态 -->
+          <div v-else class="am-empty">
+            <span class="material-symbols-rounded am-empty__icon">article</span>
+            <p class="am-empty__title">暂无文章</p>
+            <p class="am-empty__desc">点击右上角 New Article 创建第一篇文章</p>
+          </div>
+
+          <!-- 分页 -->
+          <div v-if="totalPages > 1" class="am-pagination">
+            <button class="am-pagination__btn" :disabled="currentPage <= 1" @click="currentPage--">
+              <span class="material-symbols-rounded">chevron_left</span>
+            </button>
+            <button
+              v-for="p in pageNumbers"
+              :key="p"
+              class="am-pagination__page"
+              :class="{ 'am-pagination__page--active': p === currentPage }"
+              @click="currentPage = p"
+            >{{ p }}</button>
+            <button class="am-pagination__btn" :disabled="currentPage >= totalPages" @click="currentPage++">
+              <span class="material-symbols-rounded">chevron_right</span>
+            </button>
+          </div>
+        </div>
+      </template>
+
       <!-- 删除确认 -->
       <md-dialog :open="showDeleteConfirm" @close="showDeleteConfirm = false">
         <div slot="headline">确认删除</div>
@@ -425,6 +395,15 @@ const markdownTab = ref('edit')
 const showPublishedFilter = ref('all')
 const textareaRef = ref(null)
 
+// ===== 列表视图状态 =====
+const searchQuery = ref('')
+const sortField = ref('Updated')
+const sortAsc = ref(false)
+const viewMode = ref('list')
+const currentPage = ref(1)
+const pageSize = 10
+const selectedIds = ref(new Set())
+
 // ===== 操作提示 =====
 const operationMessage = ref('')
 const operationError = ref(false)
@@ -465,9 +444,22 @@ const lineCount = computed(() => {
 
 // ===== 筛选 =====
 const filteredArticles = computed(() => {
-  if (showPublishedFilter.value === 'published') return articles.value.filter(a => a.publishedAt)
-  if (showPublishedFilter.value === 'draft') return articles.value.filter(a => !a.publishedAt)
-  return articles.value
+  let result = articles.value
+  if (showPublishedFilter.value === 'published') result = result.filter(a => a.publishedAt)
+  if (showPublishedFilter.value === 'draft') result = result.filter(a => !a.publishedAt)
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase()
+    result = result.filter(a =>
+      (a.title || '').toLowerCase().includes(q) ||
+      (a.description || '').toLowerCase().includes(q)
+    )
+  }
+  result = [...result].sort((a, b) => {
+    const da = new Date(a.updatedAt || a.createdAt || 0).getTime()
+    const db = new Date(b.updatedAt || b.createdAt || 0).getTime()
+    return sortAsc.value ? da - db : db - da
+  })
+  return result
 })
 
 const publishedCount = computed(() => articles.value.filter(a => a.publishedAt).length)
@@ -680,41 +672,118 @@ function insertMd(type) {
   })
 }
 
-// ===== M3 Ripple 交互动画 =====
-// 严格遵循 m3 mioripple 实现：position:absolute; border-radius:50%; filter:blur(4px)
-// 初始尺寸 = 容器最大维度 × 20%, softEdgeSize = max(0.35 × maxDim, 75)
-// rippleScale = (maxRadius + softEdgeSize) / initialSize
-// 动画时长 450ms，缓动 cubic-bezier(0.2, 0, 0, 1)
-// 颜色硬编码 #001d35（M3 官方一致）
-function onCardRipple(e) {
-  const card = e.currentTarget
-  const rect = card.getBoundingClientRect()
-  const x = e.clientX - rect.left
-  const y = e.clientY - rect.top
-  const maxDim = Math.max(rect.width, rect.height)
-  const initialSize = maxDim * 0.2
-  const softEdgeSize = Math.max(0.35 * maxDim, 75)
-  const maxRadius = maxDim / 2
-  const rippleScale = (maxRadius + softEdgeSize) / initialSize
+// ===== 列表视图：筛选选项 =====
+const filterOptions = computed(() => [
+  { label: 'All', value: 'all', count: articles.value.length },
+  { label: 'Published', value: 'published', count: publishedCount.value },
+  { label: 'Draft', value: 'draft', count: draftCount.value },
+])
 
-  const ripple = document.createElement('span')
-  ripple.className = 'card-ripple'
-  const startX = x - initialSize / 2
-  const startY = y - initialSize / 2
-  ripple.style.cssText = `
-    width:${initialSize}px; height:${initialSize}px;
-    left:${startX}px; top:${startY}px;
-  `
-  card.appendChild(ripple)
+// ===== 分页 =====
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredArticles.value.length / pageSize)))
+const paginatedArticles = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return filteredArticles.value.slice(start, start + pageSize)
+})
+const pageNumbers = computed(() => {
+  const pages = []
+  for (let i = 1; i <= totalPages.value; i++) pages.push(i)
+  return pages
+})
 
-  ripple.animate([
-    { transform: 'scale(0)', opacity: 0.28 },
-    { transform: `scale(${rippleScale})`, opacity: 0 },
-  ], {
-    duration: 450,
-    easing: 'cubic-bezier(0.2, 0, 0, 1)',
-    fill: 'forwards',
-  }).onfinish = () => ripple.remove()
+// ===== 选择 =====
+const allSelected = computed(() => {
+  if (!paginatedArticles.value.length) return false
+  return paginatedArticles.value.every(a => selectedIds.value.has(a.documentId))
+})
+
+function toggleSelectAll(event) {
+  const checked = event.target.checked
+  if (checked) {
+    paginatedArticles.value.forEach(a => selectedIds.value.add(a.documentId))
+  } else {
+    paginatedArticles.value.forEach(a => selectedIds.value.delete(a.documentId))
+  }
+  selectedIds.value = new Set(selectedIds.value)
+}
+
+function toggleSelect(documentId) {
+  if (selectedIds.value.has(documentId)) {
+    selectedIds.value.delete(documentId)
+  } else {
+    selectedIds.value.add(documentId)
+  }
+  selectedIds.value = new Set(selectedIds.value)
+}
+
+// ===== 批量操作 =====
+async function bulkPublish() {
+  saving.value = true
+  try {
+    const ids = [...selectedIds.value]
+    for (const id of ids) {
+      const art = articles.value.find(a => a.documentId === id)
+      if (art && !art.publishedAt) {
+        await cmUpdate(props.token, UID, id, { publishedAt: new Date().toISOString() })
+      }
+    }
+    showNotice(`已批量发布 ${ids.length} 篇文章`)
+    selectedIds.value = new Set()
+    await reloadArticles()
+  } catch (e) {
+    showNotice('批量发布失败：' + (e.message || '未知错误'), true)
+  } finally {
+    saving.value = false
+  }
+}
+
+async function bulkDelete() {
+  saving.value = true
+  try {
+    const ids = [...selectedIds.value]
+    for (const id of ids) {
+      await cmDelete(props.token, UID, id)
+    }
+    showNotice(`已删除 ${ids.length} 篇文章`)
+    selectedIds.value = new Set()
+    await reloadArticles()
+  } catch (e) {
+    showNotice('批量删除失败：' + (e.message || '未知错误'), true)
+  } finally {
+    saving.value = false
+  }
+}
+
+function toggleSort() {
+  sortAsc.value = !sortAsc.value
+}
+
+// ===== 辅助函数 =====
+const TAG_COLOR_MAP = {
+  primary: ['vue', 'strapi', 'changelog'],
+  blue: ['design', 'deployment', 'development', 'md3'],
+  green: ['ai', 'agent', 'rag'],
+  orange: ['cms', 'headless'],
+}
+
+function formatDate(isoStr) {
+  if (!isoStr) return ''
+  const d = new Date(isoStr)
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`
+}
+
+function getVisibleTags(tags) {
+  if (!tags || !tags.length) return []
+  return tags.slice(0, 2)
+}
+
+function getTagClass(tag) {
+  const t = (tag || '').toLowerCase()
+  for (const [cls, keywords] of Object.entries(TAG_COLOR_MAP)) {
+    if (keywords.some(k => t.includes(k))) return `am-tag--${cls}`
+  }
+  return 'am-tag--primary'
 }
 </script>
 
@@ -726,8 +795,6 @@ function onCardRipple(e) {
   min-height: 100%;
   min-height: 100dvh;
 }
-
-/* ======== 骨架屏容器 ======== */
 
 /* ======== 缓冲进度条 ======== */
 .loading-progress {
@@ -744,454 +811,750 @@ function onCardRipple(e) {
   opacity: 0;
 }
 
-/* ======== Hero（严格对标 m3 get-started） ======== */
-/* m3 .hero: display:flex; align-items:center; justify-content:center; border-radius:24px */
-/* M3: mio-guide-page margin:8px 8px 0 + hero margin:0 0 8px → 四周 8px 间距 */
-.hero {
+/* ======== 骨架屏 ======== */
+.skeleton-container {
+  padding: 0;
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--md-sys-color-surface-container-high, #ece7e9) 0%,
+    var(--md-sys-color-surface-container-highest, #e6e0e9) 50%,
+    var(--md-sys-color-surface-container-high, #ece7e9) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton--topbar {
+  height: 56px;
+  margin-bottom: 0;
+  border-radius: 0;
+}
+
+.skeleton-body {
+  padding: 24px 32px;
+}
+
+.skeleton--page-title {
+  height: 28px;
+  width: 200px;
+  margin-bottom: 24px;
+}
+
+.skeleton--filter-bar {
+  height: 40px;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.skeleton--row {
+  height: 72px;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+/* ======== 顶部栏 ======== */
+.am-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background-color: var(--md-sys-color-surface-container-lowest, #fefbff);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.am-topbar__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  max-width: 400px;
+  padding: 8px 16px;
+  background-color: var(--md-sys-color-surface-container-high, #f3f3f3);
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+}
+
+.am-topbar__search-icon {
+  font-size: 20px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+}
+
+.am-topbar__search-placeholder {
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant, #9ca3af);
+  flex: 1;
+}
+
+.am-topbar__search-kbd {
+  font-size: 12px;
+  padding: 2px 6px;
+  background-color: var(--md-sys-color-surface-container-highest, #e5e7eb);
+  border-radius: 4px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+}
+
+.am-topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.am-topbar__new-btn {
+  --md-filled-button-container-shape: 8px;
+}
+
+.am-topbar__new-icon {
+  font-size: 18px;
+}
+
+.am-topbar__icon-btn {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(
-    135deg,
-    var(--md-sys-color-primary-container, #eaddff) 0%,
-    var(--md-sys-color-secondary-container, #e8def8) 50%,
-    var(--md-sys-color-tertiary-container, #ffd8e4) 100%
-  );
-  border-radius: 24px;
-  margin: 8px;
-  padding: 0;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  transition: background-color 150ms;
 }
 
-/* m3 .hero .content: display:flex; flex-direction:column; align-items:center; max-width:1200px; margin:56px */
-/* 关键: width:100% 让 flex 子元素撑满父容器（受 max-width:1200px 限制），hero-toc 才能正确展开 */
-.hero__inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  max-width: 1200px;
-  margin: 56px;
-  padding: 0;
+.am-topbar__icon-btn:hover {
+  background-color: var(--md-sys-color-surface-container-high, #f3f3f3);
 }
 
-/* m3 h1: font-size:96px; font-weight:475; line-height:96px; font-family:"Google Sans"; text-align:center */
-/* 注意: 不能用 token 变量（在窄屏解析为 57px），必须硬编码 M3 实际值，响应式由下方 @media 断点处理 */
-.hero__title {
-  font-family: var(--md-sys-typescale-display-l-font-family);
-  font-size: 96px;
-  font-weight: 475;
-  line-height: 96px;
-  letter-spacing: normal;
-  color: var(--md-sys-color-on-surface, #1c1b1f);
-  margin: 0;
-  text-align: center;
-  font-variation-settings: "GRAD" 0, "opsz" 18;
-}
-
-/* m3 .hero-description: font-size:22px; font-weight:400; line-height:30px; max-width:760px; text-align:center; margin:0 0 24px */
-.hero__desc {
-  font-family: var(--md-sys-typescale-body-l-font-family);
+.am-topbar__icon-btn .material-symbols-rounded {
   font-size: 22px;
-  font-weight: 400;
-  line-height: 30px;
-  color: var(--md-sys-color-on-surface, #1c1b1f);
-  margin: 0 0 24px;
-  max-width: 760px;
-  text-align: center;
-  font-variation-settings: "GRAD" 0, "opsz" 17;
 }
 
-/* m3 .hero-toc: display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin:32px 0 0 */
-/* M3 hero-toc cards = size="medium" → grid-column: span 3 (2 cards per row) */
-.hero__toc {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  grid-auto-flow: row;
-  grid-auto-rows: auto;
-  gap: 8px;
-  margin-top: 32px;
-  width: 100%;
+.am-topbar__badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+  border: 2px solid var(--md-sys-color-surface-container-lowest, #fefbff);
 }
 
-.hero__toc .link-card {
-  grid-column: span 3;
-}
-
-/* ======== main-toc（≤1294px 时在 hero 下方显示，2列卡片；≥1295px 隐藏） ======== */
-/* M3: .main-toc-conatiner { display:flex; flex-direction:column; align-items:center; width:100% } */
-/* M3 @min-width:1295px → display:none */
-.main-toc-container {
+.am-topbar__avatar {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  width: 100%;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
-/* M3: .main-toc = mio-card-set: 默认6列grid; ≤1294px→2列; ≤600px→1列 */
-/* 页面覆盖: main-toc cards grid-column: span 2 */
-/* 效果: ≥1295px→3/row, ≤1294px→1/row(2列×span2), ≤600px→1/row */
-.main-toc {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  grid-auto-flow: row;
-  grid-auto-rows: auto;
-  gap: 8px;
-  margin-top: 24px;
-  width: 100%;
-  max-width: 1200px;
-  padding: 0 56px;
+.am-topbar__avatar .material-symbols-rounded {
+  font-size: 20px;
 }
 
-.main-toc .link-card {
-  grid-column: span 2;
+/* ======== 主体区域 ======== */
+.am-body {
+  padding: 24px 32px;
+  flex: 1;
 }
 
-/* ======== link-card（严格对标 m3 mio-card <a>） ======== */
-/* M3: inline-flex; column-reverse; align-items:center; justify-content:space-between;
-   bg:var(--mio-theme-color-surface-1)→surface-container-low; border-radius:24px;
-   height:100%(from grid-auto-rows); overflow:hidden; color:on-surface;
-   font-variation-settings:"GRAD" 0;
-   transition: border-radius 0.3s + background-color 0.3s (cubic-bezier(0.2,0,0,1)) */
-.link-card {
-  display: inline-flex;
-  flex-direction: column-reverse;
+/* ======== 页面标题 ======== */
+.am-page-header {
+  margin-bottom: 24px;
+}
+
+.am-page-header__title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #111827);
+  margin: 0 0 4px;
+}
+
+.am-page-header__subtitle {
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  margin: 0;
+}
+
+/* ======== 筛选栏 ======== */
+.am-filter-bar {
+  display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0;
-  border-radius: 24px;
-  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
-  color: var(--md-sys-color-on-surface, #1c1b1f);
-  text-decoration: none;
-  text-align: left;
-  font-family: inherit;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.am-filter-bar__left {
+  display: flex;
+  gap: 4px;
+  background-color: var(--md-sys-color-surface-container-high, #f3f3f3);
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.am-filter-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
   border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
   cursor: pointer;
-  overflow: hidden;
-  position: relative;
-  width: 100%;
-  height: 100%;
-  font-variation-settings: "GRAD" 0;
-  transition: border-radius 0.3s cubic-bezier(0.2, 0, 0, 1),
-              background-color 0.3s cubic-bezier(0.2, 0, 0, 1);
-  -webkit-tap-highlight-color: transparent;
+  transition: all 150ms;
+  font-family: inherit;
 }
 
-/* M3 active filter card: selected state = secondary-container bg (matches hover/selected pattern) */
-.link-card--active {
-  background-color: var(--md-sys-color-secondary-container, #e8def8);
-  color: var(--md-sys-color-on-secondary-container, #1d192b);
+.am-filter-tab:hover {
+  color: var(--md-sys-color-on-surface, #111827);
 }
 
-.link-card--active .link-card__title {
-  font-variation-settings: "GRAD" 50, "opsz" 18;
+.am-filter-tab--active {
+  background-color: var(--md-sys-color-surface-container-lowest, #fff);
+  color: var(--md-sys-color-on-surface, #111827);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
-/* Active card hover: maintain selected bg, allow ripple */
-.link-card--active:hover {
-  background-color: var(--md-sys-color-secondary-container, #e8def8);
+.am-filter-tab__count {
+  font-size: 11px;
+  padding: 1px 6px;
+  background-color: var(--md-sys-color-surface-container-highest, #e5e7eb);
+  border-radius: 999px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  font-weight: 600;
 }
 
-/* M3 hover/focus/active: background=secondary-container, color=on-secondary-container */
-.link-card:hover,
-.link-card:focus,
-.link-card:active {
-  background-color: var(--md-sys-color-secondary-container, #e8def8);
-  color: var(--md-sys-color-on-secondary-container, #1d192b);
+.am-filter-tab--active .am-filter-tab__count {
+  background-color: #eef2ff;
+  color: #6366f1;
 }
 
-/* M3 hover: title GRAD 50 */
-.link-card:hover .link-card__title {
-  font-variation-settings: "GRAD" 50, "opsz" 18;
-}
-
-/* M3 focus: border-radius 48px + outline */
-.link-card:focus {
-  margin: initial;
-  border: initial;
-  border-radius: 48px;
-  outline: 2px solid var(--md-sys-color-on-surface, #1c1b1f);
-  box-shadow: initial;
-}
-
-/* M3 active: border-radius 48px */
-.link-card:active {
-  border-radius: 48px;
-  outline: initial;
-}
-
-/* M3 active: title GRAD -50 */
-.link-card:active .link-card__title {
-  font-variation-settings: "GRAD" -50, "opsz" 18;
-}
-
-/* M3 .content-container: display:grid; position:relative; align-self:start; min-width:calc(100% - 48px); margin:24px; gap:8px */
-.link-card__text {
-  display: grid;
-  position: relative;
-  align-self: start;
-  min-width: calc(100% - 48px);
-  margin: 24px;
+.am-filter-bar__right {
+  display: flex;
+  align-items: center;
   gap: 8px;
 }
 
-/* M3 .title: headline-s 24px/475/32px + font-variation-settings GRAD 0 opsz 18 + transition */
-.link-card__title {
-  font-family: var(--md-sys-typescale-headline-s-font-family);
-  font-size: 24px;
-  font-weight: var(--md-sys-typescale-headline-s-font-weight, 475);
-  line-height: 32px;
-  letter-spacing: var(--md-sys-typescale-headline-s-letter-spacing, 0);
-  color: var(--md-sys-color-on-surface, #1c1b1f);
-  font-variation-settings: "GRAD" 0, "opsz" 18;
-  transition: font-variation-settings 0.3s cubic-bezier(0.2, 0, 0, 1);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* M3 .description: body-l 16px/400/24px + font-variation-settings GRAD 0 opsz 17; color:on-surface */
-.link-card__desc {
-  font-family: var(--md-sys-typescale-body-l-font-family);
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 24px;
-  letter-spacing: var(--md-sys-typescale-body-l-letter-spacing, 0);
-  color: var(--md-sys-color-on-surface, #1c1b1f);
-  font-variation-settings: "GRAD" 0, "opsz" 17;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Icon in hero-toc card: positioned at top of card via column-reverse */
-.link-card__icon {
-  font-size: 24px;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  margin: 24px 24px 0;
-  flex-shrink: 0;
-}
-
-/* Arrow indicator (not in M3 original, but useful for admin UX) */
-.link-card__arrow {
-  font-size: 20px;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  opacity: 0;
-  transition: opacity 200ms;
-  flex-shrink: 0;
-  align-self: center;
-  margin-right: 24px;
-}
-
-.link-card:hover .link-card__arrow {
-  opacity: 1;
-}
-
-/* ======== M3 Ripple 交互动画 ======== */
-/* 严格对标 m3 mioripple: position:absolute; border-radius:50%; filter:blur(4px) */
-/* 颜色 #001d35（M3 官方一致） */
-/* 注意: .card-ripple 是 JS 动态创建的元素，没有 Vue scoped 属性，必须用 :global() */
-:global(.article-manager .card-ripple) {
-  position: absolute;
-  top: 0;
-  left: 0;
-  border-radius: 50%;
-  filter: blur(4px);
-  pointer-events: none;
-  background-color: #001d35;
-}
-
-/* ======== 内容区（对标 m3 scroll-show-container: flex row, 左50% + 右50% sticky） ======== */
-/* M3: .scroll-show-container = display:flex; flex-direction:row */
-.content-section {
+.am-filter-bar__search {
   display: flex;
-  flex-direction: row;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 24px 24px 48px;
-  align-items: flex-start;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background-color: var(--md-sys-color-surface-container-high, #f3f3f3);
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
 }
 
-/* 左栏：对标 M3 .slides = flex-direction:column; width:50% */
-.content-section__list {
-  flex: 0 0 50%;
-  max-width: 50%;
+.am-filter-bar__search .material-symbols-rounded {
+  font-size: 18px;
+  color: var(--md-sys-color-on-surface-variant, #9ca3af);
 }
 
-/* 右栏：对标 M3 .scroll-show = position:sticky; top:0; width:50% */
-.content-section__detail {
-  flex: 0 0 50%;
-  max-width: 50%;
-  position: sticky;
-  top: 0;
+.am-filter-bar__search-input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface, #111827);
+  width: 140px;
+  font-family: inherit;
 }
 
-/* 左栏文章列表 */
-.article-list {
+.am-filter-bar__search-input::placeholder {
+  color: var(--md-sys-color-on-surface-variant, #9ca3af);
+}
+
+.am-sort-btn {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-right: 0;
-}
-
-/* 列表中的文章卡片：M3 mio-card size="small" = flex-direction:row; align-items:center; justify-content:space-between */
-.article-card {
-  flex-direction: row;
-  height: auto;
-  min-height: 80px;
-}
-
-/* article-card content-container: align-self:end (M3 size=small) */
-.article-card .link-card__text {
-  align-self: end;
-}
-
-/* ======== mio-icon-badge（严格对标 M3 mio-icon-badge 组件） ======== */
-/* 默认 pill 样式（用于编辑器顶栏等非卡片场景） */
-.mio-icon-badge {
-  display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 10px;
-  border-radius: 100px;
-  font-family: var(--md-sys-typescale-label-s-font-family);
-  font-size: var(--md-sys-typescale-label-s-font-size);
-  font-weight: var(--md-sys-typescale-label-s-font-weight);
-  white-space: nowrap;
+  padding: 6px 12px;
+  border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+  background-color: var(--md-sys-color-surface-container-lowest, #fff);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  cursor: pointer;
+  transition: all 150ms;
+  font-family: inherit;
+}
+
+.am-sort-btn:hover {
+  border-color: #6366f1;
+  color: #6366f1;
+}
+
+.am-sort-btn .material-symbols-rounded {
+  font-size: 16px;
+}
+
+.am-view-toggle {
+  display: flex;
+  border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.am-view-toggle__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: var(--md-sys-color-surface-container-lowest, #fff);
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  cursor: pointer;
+  transition: all 150ms;
+}
+
+.am-view-toggle__btn--active {
+  background-color: #eef2ff;
+  color: #6366f1;
+}
+
+.am-view-toggle__btn .material-symbols-rounded {
+  font-size: 18px;
+}
+
+/* ======== 批量操作栏 ======== */
+.am-bulk-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  background-color: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  gap: 12px;
+}
+
+.am-bulk-bar__count {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4f46e5;
+}
+
+.am-bulk-bar__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.am-bulk-bar__btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border: 1px solid var(--md-sys-color-outline-variant, #d1d5db);
+  background: var(--md-sys-color-surface-container-lowest, #fff);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface, #374151);
+  cursor: pointer;
+  transition: all 150ms;
+  font-family: inherit;
+}
+
+.am-bulk-bar__btn:hover {
+  background-color: var(--md-sys-color-surface-container-high, #f3f3f3);
+}
+
+.am-bulk-bar__btn .material-symbols-rounded {
+  font-size: 16px;
+}
+
+.am-bulk-bar__btn--danger {
+  color: #ef4444;
+}
+
+.am-bulk-bar__btn--danger:hover {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+}
+
+.am-bulk-bar__clear {
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: inherit;
+}
+
+.am-bulk-bar__clear:hover {
+  color: var(--md-sys-color-on-surface, #111827);
+}
+
+.am-bulk-enter-active,
+.am-bulk-leave-active {
+  transition: all 200ms ease;
+}
+
+.am-bulk-enter-from,
+.am-bulk-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* ======== 文章列表 ======== */
+.am-article-list {
+  background-color: var(--md-sys-color-surface-container-lowest, #fff);
+  border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* ======== 文章行 ======== */
+.am-article-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 120px 120px 180px 40px;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #f0f0f0);
+  cursor: pointer;
+  transition: background-color 100ms;
+  gap: 12px;
+}
+
+.am-article-row:last-child {
+  border-bottom: none;
+}
+
+.am-article-row:not(.am-article-row--header):hover {
+  background-color: var(--md-sys-color-surface-container-high, #f9fafb);
+}
+
+.am-article-row--selected {
+  background-color: #eef2ff;
+}
+
+.am-article-row--selected:hover {
+  background-color: #e0e7ff;
+}
+
+.am-article-row--header {
+  cursor: default;
+  background-color: var(--md-sys-color-surface-container-high, #f9fafb);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.am-article-row--header:hover {
+  background-color: var(--md-sys-color-surface-container-high, #f9fafb);
+}
+
+.am-article-row__col-title,
+.am-article-row__col-status,
+.am-article-row__col-date,
+.am-article-row__col-tags,
+.am-article-row__col-menu {
+  overflow: hidden;
+}
+
+/* Article column with thumbnail + title/desc */
+.am-article-row__col-article {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.am-article-row__thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
   flex-shrink: 0;
 }
 
-.mio-icon-badge__icon {
+.am-article-row__thumb--published {
+  background-color: #ecfdf5;
+  color: #059669;
+}
+
+.am-article-row__thumb--draft {
+  background-color: #fff7ed;
+  color: #d97706;
+}
+
+.am-article-row__thumb .material-symbols-rounded {
+  font-size: 22px;
+}
+
+.am-article-row__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.am-article-row__title {
   font-size: 14px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface, #111827);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.mio-icon-badge--published {
-  background: var(--md-sys-color-primary-container, #e8def8);
-  color: var(--md-sys-color-on-primary-container, #1d192b);
+.am-article-row__desc {
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-variant, #9ca3af);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.mio-icon-badge--draft {
-  background: var(--md-sys-color-secondary-container, #e8def8);
-  color: var(--md-sys-color-on-secondary-container, #1d192b);
+.am-article-row__col-date {
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
 }
 
-/* M3 mio-icon-badge 在 article-card 内：
-   display:grid; grid-template-columns:40px; grid-template-rows:40px; place-items:center;
-   position:absolute; margin:24px; color:on-primary-container; overflow:visible */
-.article-card .mio-icon-badge {
-  display: grid;
-  grid-template-columns: 40px;
-  grid-template-rows: 40px;
-  place-items: center;
+.am-article-row__col-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.am-article-row__menu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  color: var(--md-sys-color-on-surface-variant, #9ca3af);
+  cursor: pointer;
+  transition: all 150ms;
+}
+
+.am-article-row__menu:hover {
+  background-color: var(--md-sys-color-surface-container-highest, #f3f3f3);
+  color: var(--md-sys-color-on-surface, #111827);
+}
+
+.am-article-row__menu .material-symbols-rounded {
+  font-size: 18px;
+}
+
+/* ======== 自定义复选框 ======== */
+.am-checkbox {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.am-checkbox input {
   position: absolute;
-  right: 0;
-  top: 0;
-  width: 40px;
-  height: 40px;
-  margin: 24px;
-  padding: 0;
-  border-radius: 0;
-  background: none;
-  color: var(--md-sys-color-on-primary-container, #21005d);
-  overflow: visible;
-  flex-shrink: 1;
-}
-
-/* M3 .mask: clover SVG (grid-row:1; grid-column:1 with symbol) */
-.article-card .mio-icon-badge__clover {
-  grid-row: 1;
-  grid-column: 1;
-  width: 40px;
-  height: 40px;
-  overflow: visible;
-}
-
-/* 已发布: clover fill = #D3E3FD (M3 亮色) */
-.mio-icon-badge--published .mio-icon-badge__clover path {
-  fill: #D3E3FD;
-}
-
-/* 草稿: clover fill = #FFD8E3 (M3 亮色) */
-.mio-icon-badge--draft .mio-icon-badge__clover path {
-  fill: #FFD8E3;
-}
-
-/* M3 .symbol: grid-row:1; grid-column:1; z-index:1; 24px icon centered on the clover */
-.article-card .mio-icon-badge__symbol {
-  grid-row: 1;
-  grid-column: 1;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  margin: 0;
   z-index: 1;
-  display: block;
-  font-size: 24px;
-  font-weight: 400;
-  line-height: 24px;
-  width: 24px;
-  height: 24px;
+}
+
+.am-checkbox__box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--md-sys-color-outline-variant, #d1d5db);
+  border-radius: 4px;
+  background-color: transparent;
+  transition: all 150ms;
+}
+
+.am-checkbox__box::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background-color: #fff;
+  border-radius: 1px;
+  opacity: 0;
+  transform: scale(0);
+  transition: all 100ms;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0, 43% 62%);
+}
+
+.am-checkbox input:checked ~ .am-checkbox__box {
+  background-color: #6366f1;
+  border-color: #6366f1;
+}
+
+.am-checkbox input:checked ~ .am-checkbox__box::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.am-checkbox input:focus-visible ~ .am-checkbox__box {
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+/* ======== 状态标签 ======== */
+.am-status-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ======== 分类标签 ======== */
+.am-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 /* ======== 空状态 ======== */
-.empty-state {
+.am-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 64px 32px;
-  background-color: var(--md-sys-color-surface-container-low, #f8f1f6);
-  border-radius: 28px;
+  background-color: var(--md-sys-color-surface-container-lowest, #fff);
+  border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+  border-radius: 8px;
 }
 
-.empty-state__icon {
+.am-empty__icon {
   font-size: 48px;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
+  color: var(--md-sys-color-on-surface-variant, #9ca3af);
   opacity: 0.5;
   margin-bottom: 16px;
 }
 
-.empty-state__text {
-  font-family: var(--md-sys-typescale-body-l-font-family);
-  font-size: var(--md-sys-typescale-body-l-font-size);
-  font-weight: var(--md-sys-typescale-body-l-font-weight);
-  color: var(--md-sys-color-on-surface-variant, #49454f);
+.am-empty__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #111827);
+  margin: 0 0 4px;
+}
+
+.am-empty__desc {
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
   margin: 0;
 }
 
-/* ======== 占位卡片（右栏空状态） ======== */
-.placeholder-card {
+/* ======== 分页 ======== */
+.am-pagination {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 80px 32px;
-  background-color: var(--md-sys-color-surface-container-low, #f8f1f6);
-  border-radius: 28px;
-  position: sticky;
-  top: 24px;
+  gap: 4px;
+  margin-top: 24px;
 }
 
-.placeholder-card__icon {
-  font-size: 64px;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  opacity: 0.35;
-  margin-bottom: 16px;
+.am-pagination__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+  background: var(--md-sys-color-surface-container-lowest, #fff);
+  border-radius: 6px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  cursor: pointer;
+  transition: all 150ms;
 }
 
-.placeholder-card__title {
-  font-family: var(--md-sys-typescale-title-l-font-family);
-  font-size: var(--md-sys-typescale-title-l-font-size);
-  font-weight: var(--md-sys-typescale-title-l-font-weight);
-  color: var(--md-sys-color-on-surface, #1c1b1f);
-  margin: 0 0 8px;
+.am-pagination__btn:hover:not(:disabled) {
+  border-color: #6366f1;
+  color: #6366f1;
 }
 
-.placeholder-card__desc {
-  font-family: var(--md-sys-typescale-body-m-font-family);
-  font-size: var(--md-sys-typescale-body-m-font-size);
-  font-weight: var(--md-sys-typescale-body-m-font-weight);
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  margin: 0;
+.am-pagination__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.am-pagination__btn .material-symbols-rounded {
+  font-size: 18px;
+}
+
+.am-pagination__page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  cursor: pointer;
+  transition: all 150ms;
+  font-family: inherit;
+}
+
+.am-pagination__page:hover {
+  background-color: var(--md-sys-color-surface-container-high, #f3f3f3);
+  color: var(--md-sys-color-on-surface, #111827);
+}
+
+.am-pagination__page--active {
+  background-color: #6366f1;
+  color: #fff;
+}
+
+.am-pagination__page--active:hover {
+  background-color: #6366f1;
+  color: #fff;
 }
 
 /* ======== 编辑器区域 ======== */
-/* 紧跟 hero 下方，自动填满视口剩余高度（滚到编辑器时占满视口），上下 margin 8px */
 .editor-section {
   flex: 1;
   display: flex;
@@ -1203,7 +1566,6 @@ function onCardRipple(e) {
   align-self: center;
 }
 
-/* 顶部操作栏 */
 .editor-topbar {
   display: flex;
   align-items: center;
@@ -1242,7 +1604,6 @@ function onCardRipple(e) {
   flex-shrink: 0;
 }
 
-/* 编辑器主体 grid */
 .editor-grid {
   display: grid;
   grid-template-columns: 320px 1fr;
@@ -1254,7 +1615,6 @@ function onCardRipple(e) {
   min-height: 0;
 }
 
-/* 左栏字段 */
 .editor-fields {
   padding: 24px;
   display: flex;
@@ -1302,6 +1662,34 @@ function onCardRipple(e) {
   --md-text-button-label-text-color: var(--md-sys-color-error, #b3261e);
 }
 
+/* 编辑器内的 icon badge */
+.mio-icon-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 100px;
+  font-family: var(--md-sys-typescale-label-s-font-family);
+  font-size: var(--md-sys-typescale-label-s-font-size);
+  font-weight: var(--md-sys-typescale-label-s-font-weight);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.mio-icon-badge__icon {
+  font-size: 14px;
+}
+
+.mio-icon-badge--published {
+  background: var(--md-sys-color-primary-container, #e8def8);
+  color: var(--md-sys-color-on-primary-container, #1d192b);
+}
+
+.mio-icon-badge--draft {
+  background: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
 /* ======== Markdown 编辑器 ======== */
 .md-editor {
   display: flex;
@@ -1309,7 +1697,6 @@ function onCardRipple(e) {
   min-height: 0;
 }
 
-/* 工具栏 */
 .md-editor__toolbar {
   display: flex;
   align-items: center;
@@ -1338,7 +1725,6 @@ function onCardRipple(e) {
   flex: 1;
 }
 
-/* 视图切换按钮 */
 .md-editor__view-toggle {
   display: flex;
   gap: 0;
@@ -1349,7 +1735,6 @@ function onCardRipple(e) {
   border-radius: 20px;
 }
 
-/* 编辑/预览区 */
 .md-editor__body {
   flex: 1;
   min-height: 400px;
@@ -1367,7 +1752,6 @@ function onCardRipple(e) {
 .md-editor__body--split {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  /* 分屏分隔线 */
   column-gap: 0;
 }
 
@@ -1375,7 +1759,6 @@ function onCardRipple(e) {
   border-right: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
 }
 
-/* Textarea */
 .md-editor__textarea {
   width: 100%;
   height: 100%;
@@ -1398,7 +1781,6 @@ function onCardRipple(e) {
   background-color: var(--md-sys-color-surface, #fffbfe);
 }
 
-/* 预览区 */
 .md-editor__preview {
   padding: 16px 20px;
   background-color: var(--md-sys-color-surface, #fffbfe);
@@ -1407,7 +1789,6 @@ function onCardRipple(e) {
   max-height: calc(100vh - 340px);
 }
 
-/* 状态栏 */
 .md-editor__statusbar {
   display: flex;
   align-items: center;
@@ -1468,212 +1849,85 @@ function onCardRipple(e) {
 }
 
 /* ======== fadeIn 动画 ======== */
-/* 仅用纯 opacity，不用 transform:translateY 避免与 sticky 右栏交互导致布局抖动 */
 .content-fadein {
   animation: admin-fadein 200ms linear 200ms both;
 }
 
 @keyframes admin-fadein {
-  from {
-    opacity: 0;
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ======== 响应式 ======== */
+@media (max-width: 1024px) {
+  .am-article-row {
+    grid-template-columns: 40px 1fr 100px 100px 140px 40px;
+    gap: 8px;
+    padding: 10px 12px;
   }
-  to {
-    opacity: 1;
-  }
-}
 
-/* ======== 暗色主题 ======== */
-:global([data-theme="dark"]) .hero {
-  background: linear-gradient(
-    135deg,
-    var(--md-sys-color-primary-container, #21005d) 0%,
-    var(--md-sys-color-secondary-container, #4a4458) 50%,
-    var(--md-sys-color-tertiary-container, #633b48) 100%
-  );
-}
-
-:global([data-theme="dark"]) .link-card {
-  background-color: var(--md-sys-color-surface-container-low, #1d1b20);
-}
-
-:global([data-theme="dark"]) .link-card--active {
-  background-color: var(--md-sys-color-secondary-container, #4a4458);
-  color: var(--md-sys-color-on-secondary-container, #e8def8);
-}
-
-:global([data-theme="dark"]) .link-card:hover,
-:global([data-theme="dark"]) .link-card:focus,
-:global([data-theme="dark"]) .link-card:active {
-  background-color: var(--md-sys-color-secondary-container, #4a4458);
-  color: var(--md-sys-color-on-secondary-container, #e8def8);
-}
-
-:global([data-theme="dark"]) .link-card:focus {
-  outline-color: var(--md-sys-color-on-surface, #e6e1e5);
-}
-
-:global([data-theme="dark"]) .main-toc-container {
-  background-color: transparent;
-}
-
-:global([data-theme="dark"]) .empty-state {
-  background-color: var(--md-sys-color-surface-container-low, #1d1b20);
-}
-
-:global([data-theme="dark"]) .placeholder-card {
-  background-color: var(--md-sys-color-surface-container-low, #1d1b20);
-}
-
-:global([data-theme="dark"]) .editor-topbar {
-  background-color: var(--md-sys-color-surface-container, #211f26);
-}
-
-:global([data-theme="dark"]) .editor-grid {
-  background-color: var(--md-sys-color-surface-container-low, #1d1b20);
-}
-
-:global([data-theme="dark"]) .editor-fields {
-  border-right-color: var(--md-sys-color-outline-variant, #49454f);
-}
-
-:global([data-theme="dark"]) .md-editor__textarea {
-  background-color: var(--md-sys-color-surface, #141218);
-  color: var(--md-sys-color-on-surface, #e6e1e5);
-}
-
-:global([data-theme="dark"]) .md-editor__preview {
-  background-color: var(--md-sys-color-surface, #141218);
-}
-
-:global([data-theme="dark"]) .md-editor__toolbar {
-  background-color: var(--md-sys-color-surface-container, #211f26);
-  border-bottom-color: var(--md-sys-color-outline-variant, #49454f);
-}
-
-:global([data-theme="dark"]) .md-editor__statusbar {
-  background-color: var(--md-sys-color-surface-container, #211f26);
-  border-top-color: var(--md-sys-color-outline-variant, #49454f);
-}
-
-:global([data-theme="dark"]) .md-editor__view-btn--active {
-  background-color: var(--md-sys-color-secondary-container, #4a4458);
-}
-
-:global([data-theme="dark"]) .editor-fields__delete-btn {
-  --md-text-button-label-text-color: var(--md-sys-color-error, #f2b8b5);
-}
-
-/* 暗色主题: article-card badge clover 深色调 + icon 高对比色 */
-:global([data-theme="dark"]) .article-card .mio-icon-badge {
-  color: var(--md-sys-color-on-primary-container, #e8def8);
-}
-
-:global([data-theme="dark"]) .mio-icon-badge--published .mio-icon-badge__clover path {
-  fill: #1a1a2e;
-}
-
-:global([data-theme="dark"]) .mio-icon-badge--draft .mio-icon-badge__clover path {
-  fill: #2a1a1e;
-}
-
-/* ======== 响应式（严格对标 m3 get-started hero 断点） ======== */
-
-/* ===== M3 切换断点（1295px）：
-   ≥1295px: hero-toc 可见, main-toc 隐藏
-   ≤1294px: hero-toc 隐藏, main-toc 可见 ===== */
-
-/* ≥1295px：main-toc 隐藏 */
-@media (min-width: 1295px) {
-  .main-toc-container {
-    display: none;
+  .am-body {
+    padding: 16px 20px;
   }
 }
 
-/* ≤1294px：hero-toc 隐藏, main-toc 可见 + h1/desc 缩小 */
-@media (max-width: 1294px) {
-  .hero__title {
-    font-size: 88px;
-    line-height: 96px;
+@media (max-width: 768px) {
+  .am-topbar {
+    padding: 8px 16px;
   }
 
-  .hero__desc {
-    margin: 0;
-  }
-
-  .hero__toc {
-    display: none;
-  }
-
-  /* 骨架屏同步隐藏 */
-  .skeleton-container .hero__toc {
-    display: none;
-  }
-
-  /* M3: ≤1294px mio-card-set grid 变为 repeat(2, 1fr)，cards span 2 → 1 card/row */
-  .main-toc {
-    grid-template-columns: repeat(2, 1fr);
-    padding: 0 56px;
-  }
-
-  .main-toc .link-card {
-    grid-column: span 2;
-  }
-}
-
-/* M3 小断点（≤600px）：
-   .hero .content margin: 32px, h1: 57px/64px lh, desc: 16px/24px margin:0,
-   main-toc 变为 1 列 */
-@media (max-width: 600px) {
-  .hero__inner {
-    margin: 32px;
-  }
-
-  .hero__title {
-    font-size: 57px;
-    line-height: 64px;
-  }
-
-  .hero__desc {
-    font-size: 16px;
-    line-height: 24px;
-    margin: 0;
-  }
-
-  /* M3: ≤600px mio-card-set grid 变为 1fr，1 column */
-  .main-toc {
-    grid-template-columns: 1fr;
-    padding: 0 32px;
-  }
-
-  /* M3: ≤600px cards span 1 (only column) */
-  .main-toc .link-card {
-    grid-column: span 1;
-  }
-}
-
-/* ======== 移动端布局（≤840px） ======== */
-@media (max-width: 840px) {
-  .content-section {
-    flex-direction: column;
-    padding: 24px 16px;
-    gap: 24px;
-  }
-
-  .content-section__list,
-  .content-section__detail {
-    flex: none;
+  .am-topbar__search {
     max-width: none;
   }
 
-  .content-section__detail {
-    position: static;
+  .am-topbar__new-btn {
+    --md-filled-button-label-text-size: 13px;
   }
 
-  .placeholder-card {
-    position: static;
-    padding: 48px 24px;
+  .am-body {
+    padding: 16px;
   }
 
+  .am-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .am-filter-bar__right {
+    flex-wrap: wrap;
+  }
+
+  .am-filter-bar__search-input {
+    width: 100px;
+  }
+
+  .am-article-row {
+    grid-template-columns: 32px 1fr 80px 32px;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .am-article-row__col-status,
+  .am-article-row__col-tags {
+    display: none;
+  }
+
+  .am-article-row--header .am-article-row__col-status,
+  .am-article-row--header .am-article-row__col-tags {
+    display: none;
+  }
+
+  .am-article-row__thumb {
+    width: 32px;
+    height: 32px;
+  }
+
+  .am-article-row__thumb .material-symbols-rounded {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 840px) {
   .editor-grid {
     grid-template-columns: 1fr;
   }
@@ -1695,5 +1949,163 @@ function onCardRipple(e) {
   .md-editor__body--split {
     grid-template-columns: 1fr;
   }
+}
+</style>
+
+<!-- 非scoped样式：硬编码颜色 + 暗色主题覆盖 -->
+<style>
+/* ======== 状态标签颜色 ======== */
+.am-status-tag--published {
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.am-status-tag--draft {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+/* ======== 分类标签颜色 ======== */
+.am-tag--primary {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.am-tag--blue {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.am-tag--green {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.am-tag--orange {
+  background: #fff6ed;
+  color: #c2410c;
+}
+
+/* ======== 暗色主题：状态标签 ======== */
+[data-theme="dark"] .am-status-tag--published {
+  background: #06381f;
+  color: #34d399;
+}
+
+[data-theme="dark"] .am-status-tag--draft {
+  background: #3a2200;
+  color: #fbbf24;
+}
+
+/* ======== 暗色主题：分类标签 ======== */
+[data-theme="dark"] .am-tag--primary {
+  background: #2a1a4a;
+  color: #a78bfa;
+}
+
+[data-theme="dark"] .am-tag--blue {
+  background: #1e3a5f;
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .am-tag--green {
+  background: #06381f;
+  color: #34d399;
+}
+
+[data-theme="dark"] .am-tag--orange {
+  background: #3a2200;
+  color: #fbbf24;
+}
+
+/* ======== 暗色主题：缩略图 ======== */
+[data-theme="dark"] .am-article-row__thumb--published {
+  background: #06381f;
+  color: #34d399;
+}
+
+[data-theme="dark"] .am-article-row__thumb--draft {
+  background: #3a2200;
+  color: #fbbf24;
+}
+
+/* ======== 暗色主题：筛选标签激活态 ======== */
+[data-theme="dark"] .am-filter-tab--active .am-filter-tab__count {
+  background: #312e81;
+  color: #a5b4fc;
+}
+
+/* ======== 暗色主题：accent 相关 ======== */
+[data-theme="dark"] .am-pagination__page--active {
+  background-color: #6366f1;
+}
+
+[data-theme="dark"] .am-checkbox input:checked ~ .am-checkbox__box {
+  background-color: #6366f1;
+  border-color: #6366f1;
+}
+
+[data-theme="dark"] .am-view-toggle__btn--active {
+  background: #312e81;
+  color: #a5b4fc;
+}
+
+[data-theme="dark"] .am-bulk-bar {
+  background: #1e1b4b;
+  border-color: #3730a3;
+}
+
+[data-theme="dark"] .am-bulk-bar__count {
+  color: #a5b4fc;
+}
+
+/* ======== 暗色主题：编辑器 ======== */
+[data-theme="dark"] .editor-topbar {
+  background-color: var(--md-sys-color-surface-container, #211f26);
+}
+
+[data-theme="dark"] .editor-grid {
+  background-color: var(--md-sys-color-surface-container-low, #1d1b20);
+}
+
+[data-theme="dark"] .editor-fields {
+  border-right-color: var(--md-sys-color-outline-variant, #49454f);
+}
+
+[data-theme="dark"] .md-editor__textarea {
+  background-color: var(--md-sys-color-surface, #141218);
+  color: var(--md-sys-color-on-surface, #e6e1e5);
+}
+
+[data-theme="dark"] .md-editor__preview {
+  background-color: var(--md-sys-color-surface, #141218);
+}
+
+[data-theme="dark"] .md-editor__toolbar {
+  background-color: var(--md-sys-color-surface-container, #211f26);
+  border-bottom-color: var(--md-sys-color-outline-variant, #49454f);
+}
+
+[data-theme="dark"] .md-editor__statusbar {
+  background-color: var(--md-sys-color-surface-container, #211f26);
+  border-top-color: var(--md-sys-color-outline-variant, #49454f);
+}
+
+[data-theme="dark"] .md-editor__view-btn--active {
+  background-color: var(--md-sys-color-secondary-container, #4a4458);
+}
+
+[data-theme="dark"] .editor-fields__delete-btn {
+  --md-text-button-label-text-color: var(--md-sys-color-error, #f2b8b5);
+}
+
+[data-theme="dark"] .mio-icon-badge--published {
+  background: var(--md-sys-color-primary-container, #4a4458);
+  color: var(--md-sys-color-on-primary-container, #e8def8);
+}
+
+[data-theme="dark"] .mio-icon-badge--draft {
+  background: var(--md-sys-color-secondary-container, #4a4458);
+  color: var(--md-sys-color-on-secondary-container, #e8def8);
 }
 </style>
