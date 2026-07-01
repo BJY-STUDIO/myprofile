@@ -1,64 +1,63 @@
 <template>
-  <span class="admin-tag" :class="colorClass" :style="cssVars">{{ label }}</span>
+  <span class="admin-tag" :style="cssVars">{{ label }}</span>
 </template>
 
 <script setup>
 /**
  * 统一管理后台分类标签组件
  *
- * 基于 CATEGORY_MAP 将 tag 文本映射到对应分类颜色，
- * 颜色体系与 ArticleManager 侧边栏 Categories 圆点一致。
- *
- * Props:
- *   label - 标签文字（如 "Vue", "Design", "AI"）
- *
- * 颜色匹配逻辑：
- *   1. 精确匹配 CATEGORY_MAP 中的 value（不区分大小写）
- *   2. 关键词包含匹配
- *   3. 兜底：primary 色系
+ * 颜色体系与 ArticleManager subnavCategories 一致：
+ * 1. 优先读取 localStorage 中用户自定义颜色映射
+ * 2. 回退到 tag 文字哈希分配预设颜色
+ * 3. 兜底：development 色系
  */
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 const props = defineProps({
   label: { type: String, required: true }
 })
 
-// ====== 分类颜色定义（与 ArticleManager subnavCategories 一致） ======
-const CATEGORY_MAP = {
-  design:      { bg: '#EFF8FF', text: '#3b82f6', darkBg: '#1e3a5f', darkText: '#60a5fa' },
-  development: { bg: '#F5F3FF', text: '#4f46e5', darkBg: '#312e81', darkText: '#a5b4fc' },
-  ai:          { bg: '#ECFDF3', text: '#10b981', darkBg: '#06381f', darkText: '#34d399' },
-  product:     { bg: '#F5F3FF', text: '#8b5cf6', darkBg: '#312e81', darkText: '#c4b5fd' },
-  travel:      { bg: '#FFF6ED', text: '#f59e0b', darkBg: '#3a2200', darkText: '#fbbf24' },
+// 预设颜色池（与 ArticleManager PRESET_COLORS 同步）
+const PRESET_COLORS = [
+  { bg: '#EFF8FF', text: '#3b82f6', darkBg: '#1e3a5f', darkText: '#60a5fa' },
+  { bg: '#F5F3FF', text: '#4f46e5', darkBg: '#312e81', darkText: '#a5b4fc' },
+  { bg: '#ECFDF3', text: '#10b981', darkBg: '#06381f', darkText: '#34d399' },
+  { bg: '#F5F3FF', text: '#8b5cf6', darkBg: '#312e81', darkText: '#c4b5fd' },
+  { bg: '#FFF6ED', text: '#f59e0b', darkBg: '#3a2200', darkText: '#fbbf24' },
+  { bg: '#FEF2F2', text: '#ef4444', darkBg: '#450a0a', darkText: '#fca5a5' },
+  { bg: '#ECFEFF', text: '#06b6d4', darkBg: '#083344', darkText: '#67e8f9' },
+  { bg: '#FDF2F8', text: '#ec4899', darkBg: '#500724', darkText: '#f9a8d4' },
+]
+
+// 全局响应式颜色版本号，任何组件修改自定义颜色时递增
+const colorVersion = ref(0)
+
+// 监听 localStorage 变化（跨组件同步）与自定义事件（同页面即时响应）
+window.addEventListener('admin-tag-colors-changed', () => {
+  colorVersion.value++
+})
+
+function getColorIndex(tagLabel) {
+  // 触发响应式依赖（读取 colorVersion 但不使用它的值）
+  void colorVersion.value
+  // 尝试读取自定义颜色
+  try {
+    const stored = localStorage.getItem('admin-tag-colors')
+    if (stored) {
+      const custom = JSON.parse(stored)
+      const key = tagLabel.toLowerCase()
+      if (custom[key] !== undefined) return custom[key]
+    }
+  } catch {}
+  // 哈希分配
+  const key = tagLabel.toLowerCase()
+  let hash = 0
+  for (let i = 0; i < key.length; i++) hash = key.charCodeAt(i) + ((hash << 5) - hash)
+  return Math.abs(hash) % PRESET_COLORS.length
 }
 
-// 关键词映射：tag 文本 → 分类 key
-const TAG_KEYWORD_MAP = {
-  design:      ['design', 'ui', 'css'],
-  development: ['vue', 'strapi', 'deployment', 'development', 'vite', 'cloudflare', 'web components', 'md3', 'expressive', 'cms', 'headless'],
-  ai:          ['ai', 'agent', 'rag', 'dynamic-color'],
-  product:     ['product', 'project', 'changelog'],
-  travel:      ['travel'],
-}
-
-// 匹配 tag 到分类 key
-function matchCategory(tagText) {
-  const t = (tagText || '').toLowerCase()
-  // 精确匹配
-  if (CATEGORY_MAP[t]) return t
-  // 关键词包含
-  for (const [key, keywords] of Object.entries(TAG_KEYWORD_MAP)) {
-    if (keywords.some(k => t.includes(k))) return key
-  }
-  return 'development' // 兜底：primary 色系
-}
-
-const matchedKey = computed(() => matchCategory(props.label))
-const colorClass = computed(() => `admin-tag--${matchedKey.value}`)
-
-// 使用 CSS 变量传递颜色，dark mode 通过 HTML 属性选择器切换
 const cssVars = computed(() => {
-  const cat = CATEGORY_MAP[matchedKey.value]
+  const cat = PRESET_COLORS[getColorIndex(props.label)]
   return {
     '--admin-tag-bg': cat.bg,
     '--admin-tag-text': cat.text,

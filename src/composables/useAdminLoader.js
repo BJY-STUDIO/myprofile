@@ -263,5 +263,6 @@ export function useAdminLoader() {
     silentReloadCustom,
     startProgressAnimation,
     transitionToLoaded,
+    onRetryAttempt,
   }
 }

@@ -194,37 +194,13 @@
             <div class="am-subnav__group">
               <div class="am-subnav__group-header">
                 <span class="am-subnav__group-title">Articles</span>
-                <button class="am-subnav__group-edit" aria-label="Edit">
-                  <span class="material-symbols-rounded">edit</span>
-                </button>
               </div>
               <button
                 v-for="item in subnavArticles"
                 :key="item.value"
                 class="am-subnav__item"
                 :class="{ 'am-subnav__item--active': activeSubnav === item.value }"
-                @click="activeSubnav = item.value; showPublishedFilter = item.filter"
-              >
-                <span class="am-subnav__item-label">{{ item.label }}</span>
-                <span class="am-subnav__item-count">{{ item.count }}</span>
-              </button>
-            </div>
-
-            <!-- Collections 分组 -->
-            <div class="am-subnav__divider"></div>
-            <div class="am-subnav__group">
-              <div class="am-subnav__group-header">
-                <span class="am-subnav__group-title">Collections</span>
-                <button class="am-subnav__group-edit" aria-label="Add">
-                  <span class="material-symbols-rounded">add</span>
-                </button>
-              </div>
-              <button
-                v-for="item in subnavCollections"
-                :key="item.value"
-                class="am-subnav__item"
-                :class="{ 'am-subnav__item--active': activeSubnav === item.value }"
-                @click="activeSubnav = item.value"
+                @click="activeSubnav = item.value; showPublishedFilter = item.filter; categoryFilter = ''; currentPage = 1"
               >
                 <span class="am-subnav__item-label">{{ item.label }}</span>
                 <span class="am-subnav__item-count">{{ item.count }}</span>
@@ -236,23 +212,20 @@
             <div class="am-subnav__group">
               <div class="am-subnav__group-header">
                 <span class="am-subnav__group-title">Categories</span>
-                <button class="am-subnav__group-edit" aria-label="Add">
-                  <span class="material-symbols-rounded">add</span>
+                <button class="am-subnav__group-edit" aria-label="Edit categories" @click="showTagColorDialog = true">
+                  <span class="material-symbols-rounded">edit</span>
                 </button>
               </div>
               <button
                 v-for="item in subnavCategories"
                 :key="item.value"
                 class="am-subnav__item"
-                :class="{ 'am-subnav__item--active': activeSubnav === item.value }"
-                @click="activeSubnav = item.value; categoryFilter = item.value === 'all' ? '' : item.label"
+                :class="{ 'am-subnav__item--active': categoryFilter.toLowerCase() === item.value }"
+                @click="categoryFilter === item.label ? (categoryFilter = '') : (categoryFilter = item.label); activeSubnav = 'category-' + item.value; showPublishedFilter = 'all'; currentPage = 1"
               >
                 <span class="am-subnav__cat-dot" :style="{ background: item.color }"></span>
                 <span class="am-subnav__item-label">{{ item.label }}</span>
                 <span class="am-subnav__item-count">{{ item.count }}</span>
-              </button>
-              <button class="am-subnav__more" aria-label="More categories">
-                <span class="material-symbols-rounded">more_horiz</span>
               </button>
             </div>
           </aside>
@@ -334,6 +307,7 @@
                     :key="ti"
                     :label="tag"
                   />
+                  <span v-if="art.tags && art.tags.length > 2" class="am-tag-overflow">+{{ art.tags.length - 2 }}</span>
                 </span>
                 <button class="am-article-row__menu" @click.stop aria-label="More options">
                   <span class="material-symbols-rounded">more_vert</span>
@@ -401,6 +375,37 @@
         </div>
       </md-dialog>
 
+      <!-- Tag 颜色编辑对话框 -->
+      <md-dialog :open="showTagColorDialog" @close="showTagColorDialog = false" class="tag-color-dialog">
+        <div slot="headline">Edit Category Colors</div>
+        <div slot="content">
+          <div style="display:flex;flex-direction:column;gap:12px;min-width:320px;">
+            <div
+              v-for="cat in subnavCategories"
+              :key="cat.value"
+              style="display:flex;align-items:center;gap:12px;"
+            >
+              <span class="am-subnav__cat-dot" :style="{ background: PRESET_COLORS[customTagColors[cat.value] !== undefined ? customTagColors[cat.value] : getTagColorIndex(cat.label)].color }"></span>
+              <span style="flex:1;font-size:14px;">{{ cat.label }}</span>
+              <div style="display:flex;gap:4px;">
+                <button
+                  v-for="(preset, pi) in PRESET_COLORS"
+                  :key="pi"
+                  class="tag-color-dot-btn"
+                  :class="{ 'tag-color-dot-btn--active': (customTagColors[cat.value] !== undefined ? customTagColors[cat.value] : getTagColorIndex(cat.label)) === pi }"
+                  :style="{ background: preset.color }"
+                  @click="customTagColors[cat.value] = pi; saveCustomTagColors()"
+                  :aria-label="'Color ' + pi"
+                ></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div slot="actions">
+          <md-text-button @click="showTagColorDialog = false">Done</md-text-button>
+        </div>
+      </md-dialog>
+
       <!-- 操作提示 -->
       <div v-if="operationMessage" class="operation-notice" :class="{ 'operation-notice--error': operationError }">
         <span class="material-symbols-rounded operation-notice__icon">{{ operationError ? 'error' : 'check_circle' }}</span>
@@ -411,7 +416,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { cmCreate, cmUpdate, cmDelete } from '@/services/articleService'
 import { useAdminLoader } from '@/composables/useAdminLoader'
 import { marked } from 'marked'
@@ -448,7 +453,7 @@ const sortField = ref('Updated')
 const sortAsc = ref(true)
 const viewMode = ref('list')
 const currentPage = ref(1)
-const pageSize = 10
+const pageSize = 7
 const selectedIds = ref(new Set())
 
 // ===== 下拉筛选状态 =====
@@ -461,6 +466,51 @@ const tagDropdownOpen = ref(false)
 
 // ===== 二级子导航状态 =====
 const activeSubnav = ref('all')
+
+// ===== tag 颜色编辑对话框 =====
+const showTagColorDialog = ref(false)
+
+// ===== tag→分类颜色映射（从 AdminTag 逻辑同步） =====
+// 预设分类颜色池：每个 tag 从此池中轮转分配，或可通过编辑按钮自定义
+const PRESET_COLORS = [
+  { color: '#3b82f6', bg: '#EFF8FF', text: '#3b82f6', darkBg: '#1e3a5f', darkText: '#60a5fa' },
+  { color: '#4f46e5', bg: '#F5F3FF', text: '#4f46e5', darkBg: '#312e81', darkText: '#a5b4fc' },
+  { color: '#10b981', bg: '#ECFDF3', text: '#10b981', darkBg: '#06381f', darkText: '#34d399' },
+  { color: '#8b5cf6', bg: '#F5F3FF', text: '#8b5cf6', darkBg: '#312e81', darkText: '#c4b5fd' },
+  { color: '#f59e0b', bg: '#FFF6ED', text: '#f59e0b', darkBg: '#3a2200', darkText: '#fbbf24' },
+  { color: '#ef4444', bg: '#FEF2F2', text: '#ef4444', darkBg: '#450a0a', darkText: '#fca5a5' },
+  { color: '#06b6d4', bg: '#ECFEFF', text: '#06b6d4', darkBg: '#083344', darkText: '#67e8f9' },
+  { color: '#ec4899', bg: '#FDF2F8', text: '#ec4899', darkBg: '#500724', darkText: '#f9a8d4' },
+]
+
+// 用户自定义 tag 颜色（持久化到 localStorage）
+const customTagColors = ref({})
+try {
+  const stored = localStorage.getItem('admin-tag-colors')
+  if (stored) customTagColors.value = JSON.parse(stored)
+} catch {}
+
+function saveCustomTagColors() {
+  localStorage.setItem('admin-tag-colors', JSON.stringify(customTagColors.value))
+  window.dispatchEvent(new CustomEvent('admin-tag-colors-changed'))
+}
+
+function getTagColorSet(tagLabel) {
+  const key = tagLabel.toLowerCase()
+  if (customTagColors.value[key] !== undefined) return PRESET_COLORS[customTagColors.value[key]]
+  // 默认：根据 tag 文字哈希分配颜色
+  let hash = 0
+  for (let i = 0; i < key.length; i++) hash = key.charCodeAt(i) + ((hash << 5) - hash)
+  return PRESET_COLORS[Math.abs(hash) % PRESET_COLORS.length]
+}
+
+function getTagColorIndex(tagLabel) {
+  const key = tagLabel.toLowerCase()
+  if (customTagColors.value[key] !== undefined) return customTagColors.value[key]
+  let hash = 0
+  for (let i = 0; i < key.length; i++) hash = key.charCodeAt(i) + ((hash << 5) - hash)
+  return Math.abs(hash) % PRESET_COLORS.length
+}
 
 // ===== 操作提示 =====
 const operationMessage = ref('')
@@ -505,6 +555,7 @@ const filteredArticles = computed(() => {
   let result = articles.value
   if (showPublishedFilter.value === 'published') result = result.filter(a => a.publishedAt)
   if (showPublishedFilter.value === 'draft') result = result.filter(a => !a.publishedAt)
+  if (showPublishedFilter.value === 'scheduled') result = result.filter(a => a.date && new Date(a.date) > new Date())
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
     result = result.filter(a =>
@@ -516,7 +567,8 @@ const filteredArticles = computed(() => {
     const cat = categoryFilter.value.toLowerCase()
     result = result.filter(a => {
       const tags = Array.isArray(a.tags) ? a.tags : []
-      return tags.some(t => (t || '').toLowerCase().includes(cat))
+      // exact match on tag text
+      return tags.some(t => (t || '').toLowerCase() === cat)
     })
   }
   if (tagFilter.value) {
@@ -745,37 +797,30 @@ function insertMd(type) {
 }
 
 // ===== 二级子导航数据 =====
+const scheduledCount = computed(() => articles.value.filter(a => a.date && new Date(a.date) > new Date()).length)
+
 const subnavArticles = computed(() => [
   { label: 'All Articles', value: 'all', count: articles.value.length, filter: 'all' },
   { label: 'Drafts', value: 'drafts', count: draftCount.value, filter: 'draft' },
   { label: 'Published', value: 'published', count: publishedCount.value, filter: 'published' },
-  { label: 'Scheduled', value: 'scheduled', count: 0, filter: 'all' },
-  { label: 'Archived', value: 'archived', count: 0, filter: 'all' },
-  { label: 'Trash', value: 'trash', count: 0, filter: 'all' },
+  { label: 'Scheduled', value: 'scheduled', count: scheduledCount.value, filter: 'scheduled' },
 ])
 
-const subnavCollections = [
-  { label: 'Pinned', value: 'pinned', count: 5 },
-  { label: 'Favorites', value: 'favorites', count: 8 },
-  { label: 'Recently Edited', value: 'recent', count: 10 },
-]
-
+// 动态提取所有文章中的 tag 及其文章数量
 const subnavCategories = computed(() => {
-  const tagCounts = {}
+  const tagMap = {}
   articles.value.forEach(a => {
     const tags = Array.isArray(a.tags) ? a.tags : []
     tags.forEach(t => {
-      const key = t.toLowerCase()
-      tagCounts[key] = (tagCounts[key] || 0) + 1
+      const display = t.trim()
+      if (!display) return
+      const key = display.toLowerCase()
+      if (!tagMap[key]) tagMap[key] = { label: display, value: key, count: 0, color: getTagColorSet(display).color }
+      tagMap[key].count++
     })
   })
-  return [
-    { label: 'Design', value: 'design', color: '#3b82f6', count: tagCounts['design'] || 0 },
-    { label: 'Development', value: 'development', color: '#4f46e5', count: tagCounts['development'] || 0 },
-    { label: 'AI', value: 'ai', color: '#10b981', count: tagCounts['ai'] || 0 },
-    { label: 'Product', value: 'product', color: '#8b5cf6', count: tagCounts['product'] || 0 },
-    { label: 'Travel', value: 'travel', color: '#f59e0b', count: tagCounts['travel'] || 0 },
-  ]
+  // 按出现次数降序排列
+  return Object.values(tagMap).sort((a, b) => b.count - a.count)
 })
 
 // ===== 分页 =====
@@ -788,6 +833,11 @@ const pageNumbers = computed(() => {
   const pages = []
   for (let i = 1; i <= totalPages.value; i++) pages.push(i)
   return pages
+})
+
+// 筛选条件变化时重置到第 1 页
+watch([searchQuery, categoryFilter, tagFilter, showPublishedFilter], () => {
+  currentPage.value = 1
 })
 
 // ===== 选择 =====
@@ -966,7 +1016,7 @@ function getReadTime(content) {
   flex-shrink: 0;
   background-color: var(--md-sys-color-surface-container-lowest, #fff);
   border-radius: 12px;
-  margin: 0 0 0 16px;
+  margin: 16px 0 16px 16px;
   padding: 16px 0;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
   overflow-y: auto;
@@ -977,14 +1027,14 @@ function getReadTime(content) {
 }
 
 .am-subnav__group {
-  padding: 0 8px;
+  padding: 0 16px;
 }
 
 .am-subnav__group-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  padding: 4px 0 8px;
 }
 
 .am-subnav__group-title {
@@ -1020,7 +1070,7 @@ function getReadTime(content) {
   align-items: center;
   gap: 8px;
   height: 36px;
-  padding: 0 12px;
+  padding: 0 8px;
   border: none;
   background: transparent;
   border-radius: 8px;
@@ -1068,21 +1118,22 @@ function getReadTime(content) {
   margin: 12px 16px;
 }
 
-.am-subnav__more {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 32px;
-  border: none;
-  background: transparent;
-  color: var(--md-sys-color-on-surface-variant, #9ca3af);
+/* tag 颜色编辑对话框中的颜色点按钮 */
+.tag-color-dot-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid transparent;
   cursor: pointer;
-  font-family: inherit;
+  transition: all 150ms;
+  padding: 0;
 }
-
-.am-subnav__more .material-symbols-rounded {
-  font-size: 20px;
+.tag-color-dot-btn:hover {
+  transform: scale(1.2);
+}
+.tag-color-dot-btn--active {
+  border-color: var(--md-sys-color-on-surface, #111827);
+  box-shadow: 0 0 0 1px var(--md-sys-color-surface-container-lowest, #fff);
 }
 
 /* ======== 主内容区 ======== */
@@ -1257,7 +1308,7 @@ function getReadTime(content) {
   display: grid;
   grid-template-columns: 40px 1fr 110px 110px 90px 150px 40px;
   align-items: center;
-  height: 72px;
+  height: 88px;
   padding: 0 16px;
   border-bottom: 1px solid #f3f4f6;
   cursor: pointer;
@@ -1293,8 +1344,8 @@ function getReadTime(content) {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 64px;
+  height: 64px;
   border-radius: 8px;
   flex-shrink: 0;
 }
@@ -1310,7 +1361,7 @@ function getReadTime(content) {
 }
 
 .am-article-row__thumb .material-symbols-rounded {
-  font-size: 24px;
+  font-size: 28px;
 }
 
 .am-article-row__info {
@@ -1349,6 +1400,19 @@ function getReadTime(content) {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.am-tag-overflow {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  background-color: var(--md-sys-color-surface-container-high, #f3f4f6);
+  white-space: nowrap;
 }
 
 .am-article-row__menu {
