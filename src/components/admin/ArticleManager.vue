@@ -205,36 +205,108 @@
           </div>
         </header>
 
-        <div class="am-body">
-          <!-- 页面标题 -->
-          <div class="am-page-header">
-            <h1 class="am-page-header__title">All Articles</h1>
-            <p class="am-page-header__subtitle">{{ filteredArticles.length }} articles found</p>
-          </div>
-
-          <!-- 筛选栏 -->
-          <div class="am-filter-bar">
-            <div class="am-filter-bar__left">
+        <!-- 两栏布局：子导航 + 主内容 -->
+        <div class="am-layout">
+          <!-- ======== 二级子导航面板 ======== -->
+          <aside class="am-subnav">
+            <!-- Articles 分组 -->
+            <div class="am-subnav__group">
+              <div class="am-subnav__group-header">
+                <span class="am-subnav__group-title">Articles</span>
+                <button class="am-subnav__group-edit" aria-label="Edit">
+                  <span class="material-symbols-rounded">edit</span>
+                </button>
+              </div>
               <button
-                v-for="opt in filterOptions"
-                :key="opt.value"
-                class="am-filter-tab"
-                :class="{ 'am-filter-tab--active': showPublishedFilter === opt.value }"
-                @click="showPublishedFilter = opt.value"
+                v-for="item in subnavArticles"
+                :key="item.value"
+                class="am-subnav__item"
+                :class="{ 'am-subnav__item--active': activeSubnav === item.value }"
+                @click="activeSubnav = item.value; showPublishedFilter = item.filter"
               >
-                {{ opt.label }}
-                <span class="am-filter-tab__count">{{ opt.count }}</span>
+                <span class="am-subnav__item-label">{{ item.label }}</span>
+                <span class="am-subnav__item-count">{{ item.count }}</span>
               </button>
             </div>
-            <div class="am-filter-bar__right">
+
+            <!-- Collections 分组 -->
+            <div class="am-subnav__divider"></div>
+            <div class="am-subnav__group">
+              <div class="am-subnav__group-header">
+                <span class="am-subnav__group-title">Collections</span>
+                <button class="am-subnav__group-edit" aria-label="Add">
+                  <span class="material-symbols-rounded">add</span>
+                </button>
+              </div>
+              <button
+                v-for="item in subnavCollections"
+                :key="item.value"
+                class="am-subnav__item"
+                :class="{ 'am-subnav__item--active': activeSubnav === item.value }"
+                @click="activeSubnav = item.value"
+              >
+                <span class="am-subnav__item-label">{{ item.label }}</span>
+                <span class="am-subnav__item-count">{{ item.count }}</span>
+              </button>
+            </div>
+
+            <!-- Categories 分组 -->
+            <div class="am-subnav__divider"></div>
+            <div class="am-subnav__group">
+              <div class="am-subnav__group-header">
+                <span class="am-subnav__group-title">Categories</span>
+                <button class="am-subnav__group-edit" aria-label="Add">
+                  <span class="material-symbols-rounded">add</span>
+                </button>
+              </div>
+              <button
+                v-for="item in subnavCategories"
+                :key="item.value"
+                class="am-subnav__item"
+                :class="{ 'am-subnav__item--active': activeSubnav === item.value }"
+                @click="activeSubnav = item.value; categoryFilter = item.value === 'all' ? '' : item.label"
+              >
+                <span class="am-subnav__cat-dot" :style="{ background: item.color }"></span>
+                <span class="am-subnav__item-label">{{ item.label }}</span>
+                <span class="am-subnav__item-count">{{ item.count }}</span>
+              </button>
+              <button class="am-subnav__more" aria-label="More categories">
+                <span class="material-symbols-rounded">more_horiz</span>
+              </button>
+            </div>
+          </aside>
+
+          <!-- ======== 主内容区 ======== -->
+          <div class="am-main">
+            <!-- 页面标题 -->
+            <div class="am-page-header">
+              <h1 class="am-page-header__title">All Articles</h1>
+              <p class="am-page-header__subtitle">{{ filteredArticles.length }} articles found</p>
+            </div>
+
+            <!-- 筛选栏 -->
+            <div class="am-filter-bar">
               <div class="am-filter-bar__search">
                 <span class="material-symbols-rounded">search</span>
-                <input v-model="searchQuery" type="text" placeholder="Search..." class="am-filter-bar__search-input" />
+                <input v-model="searchQuery" type="text" placeholder="Search articles..." class="am-filter-bar__search-input" />
               </div>
+              <button class="am-dropdown" @click="statusDropdownOpen = !statusDropdownOpen">
+                <span>{{ statusFilter || 'Status' }}</span>
+                <span class="material-symbols-rounded am-dropdown__chevron">expand_more</span>
+              </button>
+              <button class="am-dropdown" @click="categoryDropdownOpen = !categoryDropdownOpen">
+                <span>{{ categoryFilter || 'Category' }}</span>
+                <span class="material-symbols-rounded am-dropdown__chevron">expand_more</span>
+              </button>
+              <button class="am-dropdown" @click="tagDropdownOpen = !tagDropdownOpen">
+                <span>{{ tagFilter || 'Tag' }}</span>
+                <span class="material-symbols-rounded am-dropdown__chevron">expand_more</span>
+              </button>
               <button class="am-sort-btn" @click="toggleSort">
                 <span class="material-symbols-rounded">{{ sortAsc ? 'arrow_upward' : 'arrow_downward' }}</span>
                 <span>Sort: {{ sortField }}</span>
               </button>
+              <div class="am-filter-bar__spacer"></div>
               <div class="am-view-toggle">
                 <button class="am-view-toggle__btn" :class="{ 'am-view-toggle__btn--active': viewMode === 'list' }" @click="viewMode = 'list'" aria-label="List view">
                   <span class="material-symbols-rounded">view_list</span>
@@ -244,104 +316,96 @@
                 </button>
               </div>
             </div>
-          </div>
 
-          <!-- 批量操作栏 -->
-          <Transition name="am-bulk">
-            <div v-if="selectedIds.size > 0" class="am-bulk-bar">
-              <span class="am-bulk-bar__count">{{ selectedIds.size }} selected</span>
-              <div class="am-bulk-bar__actions">
-                <button class="am-bulk-bar__btn" @click="bulkPublish">
-                  <span class="material-symbols-rounded">publish</span>
-                  Publish
-                </button>
-                <button class="am-bulk-bar__btn am-bulk-bar__btn--danger" @click="bulkDelete">
-                  <span class="material-symbols-rounded">delete</span>
-                  Delete
-                </button>
-              </div>
-              <button class="am-bulk-bar__clear" @click="selectedIds.clear()">Clear</button>
-            </div>
-          </Transition>
-
-          <!-- 文章列表 -->
-          <div v-if="filteredArticles.length" class="am-article-list">
-            <!-- 表头 -->
-            <div class="am-article-row am-article-row--header">
-              <label class="am-checkbox">
-                <input type="checkbox" :checked="allSelected" @change="toggleSelectAll($event)" />
-                <span class="am-checkbox__box"></span>
-              </label>
-              <span class="am-article-row__col-title">Article</span>
-              <span class="am-article-row__col-status">Status</span>
-              <span class="am-article-row__col-date">Date</span>
-              <span class="am-article-row__col-tags">Tags</span>
-              <span class="am-article-row__col-menu"></span>
-            </div>
-
-            <!-- 文章行 -->
-            <div
-              v-for="art in paginatedArticles"
-              :key="art.documentId"
-              class="am-article-row"
-              :class="{ 'am-article-row--selected': selectedIds.has(art.documentId) }"
-              @click="onEdit(findOriginalIndex(art))"
-            >
-              <label class="am-checkbox" @click.stop>
-                <input type="checkbox" :checked="selectedIds.has(art.documentId)" @change="toggleSelect(art.documentId)" />
-                <span class="am-checkbox__box"></span>
-              </label>
-              <div class="am-article-row__col-article">
-                <div class="am-article-row__thumb" :class="art.publishedAt ? 'am-article-row__thumb--published' : 'am-article-row__thumb--draft'">
-                  <span class="material-symbols-rounded">{{ art.publishedAt ? 'article' : 'edit_note' }}</span>
+            <!-- 文章列表表格 -->
+            <div v-if="filteredArticles.length" class="am-table">
+              <!-- 文章行 -->
+              <div
+                v-for="art in paginatedArticles"
+                :key="art.documentId"
+                class="am-article-row"
+                :class="{ 'am-article-row--selected': selectedIds.has(art.documentId) }"
+                @click="onEdit(findOriginalIndex(art))"
+              >
+                <label class="am-checkbox" @click.stop>
+                  <input type="checkbox" :checked="selectedIds.has(art.documentId)" @change="toggleSelect(art.documentId)" />
+                  <span class="am-checkbox__box"></span>
+                </label>
+                <div class="am-article-row__col-article">
+                  <div class="am-article-row__thumb" :class="art.publishedAt ? 'am-article-row__thumb--published' : 'am-article-row__thumb--draft'">
+                    <span class="material-symbols-rounded">{{ art.publishedAt ? 'article' : 'edit_note' }}</span>
+                  </div>
+                  <div class="am-article-row__info">
+                    <span class="am-article-row__title">{{ art.title || '(无标题)' }}</span>
+                    <span class="am-article-row__desc">{{ art.description || '暂无描述' }}</span>
+                  </div>
                 </div>
-                <div class="am-article-row__info">
-                  <span class="am-article-row__title">{{ art.title || '(无标题)' }}</span>
-                  <span class="am-article-row__desc">{{ art.description || '暂无描述' }}</span>
-                </div>
-              </div>
-              <span class="am-article-row__col-status">
-                <span class="am-status-tag" :class="art.publishedAt ? 'am-status-tag--published' : 'am-status-tag--draft'">
-                  {{ art.publishedAt ? 'Published' : 'Draft' }}
+                <span class="am-article-row__col-status">
+                  <span class="am-status-tag" :class="art.publishedAt ? 'am-status-tag--published' : 'am-status-tag--draft'">
+                    {{ art.publishedAt ? 'Published' : 'Draft' }}
+                  </span>
                 </span>
-              </span>
-              <span class="am-article-row__col-date">{{ formatDate(art.publishedAt || art.createdAt) }}</span>
-              <span class="am-article-row__col-tags">
-                <span
-                  v-for="(tag, ti) in getVisibleTags(art.tags)"
-                  :key="ti"
-                  class="am-tag"
-                  :class="getTagClass(tag)"
-                >{{ tag }}</span>
-              </span>
-              <button class="am-article-row__menu" @click.stop aria-label="More options">
-                <span class="material-symbols-rounded">more_vert</span>
-              </button>
+                <span class="am-article-row__col-date">{{ formatDate(art.publishedAt || art.createdAt) }}</span>
+                <span class="am-article-row__col-readtime">{{ getReadTime(art.content) }}</span>
+                <span class="am-article-row__col-tags">
+                  <span
+                    v-for="(tag, ti) in getVisibleTags(art.tags)"
+                    :key="ti"
+                    class="am-tag"
+                  >{{ tag }}</span>
+                </span>
+                <button class="am-article-row__menu" @click.stop aria-label="More options">
+                  <span class="material-symbols-rounded">more_vert</span>
+                </button>
+              </div>
+
+              <!-- 底部批量操作栏 + 分页 -->
+              <div class="am-bottom-bar">
+                <div class="am-bottom-bar__left">
+                  <label class="am-checkbox">
+                    <input type="checkbox" :checked="allSelected" @change="toggleSelectAll($event)" />
+                    <span class="am-checkbox__box"></span>
+                  </label>
+                  <span class="am-bottom-bar__count">{{ selectedIds.size }} selected</span>
+                  <div class="am-bottom-bar__actions">
+                    <button class="am-bottom-bar__btn" :disabled="selectedIds.size === 0" @click="bulkPublish">
+                      <span class="material-symbols-rounded">publish</span>
+                      Publish
+                    </button>
+                    <button class="am-bottom-bar__btn" :disabled="selectedIds.size === 0" @click="selectedIds.clear()">Archive</button>
+                    <button class="am-bottom-bar__btn am-bottom-bar__btn--danger" :disabled="selectedIds.size === 0" @click="bulkDelete">
+                      <span class="material-symbols-rounded">delete</span>
+                      Delete
+                    </button>
+                    <button class="am-bottom-bar__btn am-bottom-bar__btn--icon" :disabled="selectedIds.size === 0" aria-label="More actions">
+                      <span class="material-symbols-rounded">more_horiz</span>
+                    </button>
+                  </div>
+                </div>
+                <div v-if="totalPages > 1" class="am-pagination">
+                  <button class="am-pagination__btn" :disabled="currentPage <= 1" @click="currentPage--">
+                    <span class="material-symbols-rounded">chevron_left</span>
+                  </button>
+                  <button
+                    v-for="p in pageNumbers"
+                    :key="p"
+                    class="am-pagination__page"
+                    :class="{ 'am-pagination__page--active': p === currentPage }"
+                    @click="currentPage = p"
+                  >{{ p }}</button>
+                  <button class="am-pagination__btn" :disabled="currentPage >= totalPages" @click="currentPage++">
+                    <span class="material-symbols-rounded">chevron_right</span>
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <!-- 空状态 -->
-          <div v-else class="am-empty">
-            <span class="material-symbols-rounded am-empty__icon">article</span>
-            <p class="am-empty__title">暂无文章</p>
-            <p class="am-empty__desc">点击右上角 New Article 创建第一篇文章</p>
-          </div>
-
-          <!-- 分页 -->
-          <div v-if="totalPages > 1" class="am-pagination">
-            <button class="am-pagination__btn" :disabled="currentPage <= 1" @click="currentPage--">
-              <span class="material-symbols-rounded">chevron_left</span>
-            </button>
-            <button
-              v-for="p in pageNumbers"
-              :key="p"
-              class="am-pagination__page"
-              :class="{ 'am-pagination__page--active': p === currentPage }"
-              @click="currentPage = p"
-            >{{ p }}</button>
-            <button class="am-pagination__btn" :disabled="currentPage >= totalPages" @click="currentPage++">
-              <span class="material-symbols-rounded">chevron_right</span>
-            </button>
+            <!-- 空状态 -->
+            <div v-else class="am-empty">
+              <span class="material-symbols-rounded am-empty__icon">article</span>
+              <p class="am-empty__title">暂无文章</p>
+              <p class="am-empty__desc">点击右上角 New Article 创建第一篇文章</p>
+            </div>
           </div>
         </div>
       </template>
@@ -398,11 +462,22 @@ const textareaRef = ref(null)
 // ===== 列表视图状态 =====
 const searchQuery = ref('')
 const sortField = ref('Updated')
-const sortAsc = ref(false)
+const sortAsc = ref(true)
 const viewMode = ref('list')
 const currentPage = ref(1)
 const pageSize = 10
 const selectedIds = ref(new Set())
+
+// ===== 下拉筛选状态 =====
+const statusFilter = ref('')
+const categoryFilter = ref('')
+const tagFilter = ref('')
+const statusDropdownOpen = ref(false)
+const categoryDropdownOpen = ref(false)
+const tagDropdownOpen = ref(false)
+
+// ===== 二级子导航状态 =====
+const activeSubnav = ref('all')
 
 // ===== 操作提示 =====
 const operationMessage = ref('')
@@ -453,6 +528,20 @@ const filteredArticles = computed(() => {
       (a.title || '').toLowerCase().includes(q) ||
       (a.description || '').toLowerCase().includes(q)
     )
+  }
+  if (categoryFilter.value) {
+    const cat = categoryFilter.value.toLowerCase()
+    result = result.filter(a => {
+      const tags = Array.isArray(a.tags) ? a.tags : []
+      return tags.some(t => (t || '').toLowerCase().includes(cat))
+    })
+  }
+  if (tagFilter.value) {
+    const tg = tagFilter.value.toLowerCase()
+    result = result.filter(a => {
+      const tags = Array.isArray(a.tags) ? a.tags : []
+      return tags.some(t => (t || '').toLowerCase().includes(tg))
+    })
   }
   result = [...result].sort((a, b) => {
     const da = new Date(a.updatedAt || a.createdAt || 0).getTime()
@@ -672,12 +761,39 @@ function insertMd(type) {
   })
 }
 
-// ===== 列表视图：筛选选项 =====
-const filterOptions = computed(() => [
-  { label: 'All', value: 'all', count: articles.value.length },
-  { label: 'Published', value: 'published', count: publishedCount.value },
-  { label: 'Draft', value: 'draft', count: draftCount.value },
+// ===== 二级子导航数据 =====
+const subnavArticles = computed(() => [
+  { label: 'All Articles', value: 'all', count: articles.value.length, filter: 'all' },
+  { label: 'Drafts', value: 'drafts', count: draftCount.value, filter: 'draft' },
+  { label: 'Published', value: 'published', count: publishedCount.value, filter: 'published' },
+  { label: 'Scheduled', value: 'scheduled', count: 0, filter: 'all' },
+  { label: 'Archived', value: 'archived', count: 0, filter: 'all' },
+  { label: 'Trash', value: 'trash', count: 0, filter: 'all' },
 ])
+
+const subnavCollections = [
+  { label: 'Pinned', value: 'pinned', count: 5 },
+  { label: 'Favorites', value: 'favorites', count: 8 },
+  { label: 'Recently Edited', value: 'recent', count: 10 },
+]
+
+const subnavCategories = computed(() => {
+  const tagCounts = {}
+  articles.value.forEach(a => {
+    const tags = Array.isArray(a.tags) ? a.tags : []
+    tags.forEach(t => {
+      const key = t.toLowerCase()
+      tagCounts[key] = (tagCounts[key] || 0) + 1
+    })
+  })
+  return [
+    { label: 'Design', value: 'design', color: '#3b82f6', count: tagCounts['design'] || 0 },
+    { label: 'Development', value: 'development', color: '#4f46e5', count: tagCounts['development'] || 0 },
+    { label: 'AI', value: 'ai', color: '#10b981', count: tagCounts['ai'] || 0 },
+    { label: 'Product', value: 'product', color: '#8b5cf6', count: tagCounts['product'] || 0 },
+    { label: 'Travel', value: 'travel', color: '#f59e0b', count: tagCounts['travel'] || 0 },
+  ]
+})
 
 // ===== 分页 =====
 const totalPages = computed(() => Math.max(1, Math.ceil(filteredArticles.value.length / pageSize)))
@@ -779,11 +895,14 @@ function getVisibleTags(tags) {
 }
 
 function getTagClass(tag) {
-  const t = (tag || '').toLowerCase()
-  for (const [cls, keywords] of Object.entries(TAG_COLOR_MAP)) {
-    if (keywords.some(k => t.includes(k))) return `am-tag--${cls}`
-  }
-  return 'am-tag--primary'
+  return 'am-tag'
+}
+
+function getReadTime(content) {
+  if (!content) return '1 min read'
+  const words = content.trim().split(/\s+/).length
+  const minutes = Math.max(1, Math.ceil(words / 200))
+  return `${minutes} min read`
 }
 </script>
 
@@ -866,9 +985,9 @@ function getTagClass(tag) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 24px;
-  background-color: var(--md-sys-color-surface-container-lowest, #fefbff);
-  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+  padding: 0 24px;
+  height: 64px;
+  background-color: var(--md-sys-color-surface-container-lowest, #f8f9ff);
   gap: 16px;
   flex-shrink: 0;
 }
@@ -879,15 +998,16 @@ function getTagClass(tag) {
   gap: 8px;
   flex: 1;
   max-width: 400px;
-  padding: 8px 16px;
-  background-color: var(--md-sys-color-surface-container-high, #f3f3f3);
+  height: 40px;
+  padding: 0 16px;
+  background-color: var(--md-sys-color-surface-container-lowest, #fff);
   border-radius: 8px;
   border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
 }
 
 .am-topbar__search-icon {
-  font-size: 20px;
-  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  font-size: 16px;
+  color: var(--md-sys-color-on-surface-variant, #9ca3af);
 }
 
 .am-topbar__search-placeholder {
@@ -899,7 +1019,7 @@ function getTagClass(tag) {
 .am-topbar__search-kbd {
   font-size: 12px;
   padding: 2px 6px;
-  background-color: var(--md-sys-color-surface-container-highest, #e5e7eb);
+  background-color: var(--md-sys-color-surface-container-highest, #f3f4f6);
   border-radius: 4px;
   color: var(--md-sys-color-on-surface-variant, #6b7280);
 }
@@ -907,16 +1027,18 @@ function getTagClass(tag) {
 .am-topbar__actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   flex-shrink: 0;
 }
 
 .am-topbar__new-btn {
   --md-filled-button-container-shape: 8px;
+  --md-filled-button-container-color: #635bff;
+  --md-filled-button-label-text-color: #fff;
 }
 
 .am-topbar__new-icon {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .am-topbar__icon-btn {
@@ -939,7 +1061,7 @@ function getTagClass(tag) {
 }
 
 .am-topbar__icon-btn .material-symbols-rounded {
-  font-size: 22px;
+  font-size: 20px;
 }
 
 .am-topbar__badge {
@@ -948,9 +1070,9 @@ function getTagClass(tag) {
   right: 8px;
   width: 8px;
   height: 8px;
-  background: #ef4444;
+  background: #635bff;
   border-radius: 50%;
-  border: 2px solid var(--md-sys-color-surface-container-lowest, #fefbff);
+  border: 2px solid var(--md-sys-color-surface-container-lowest, #f8f9ff);
 }
 
 .am-topbar__avatar {
@@ -970,106 +1092,189 @@ function getTagClass(tag) {
   font-size: 20px;
 }
 
-/* ======== 主体区域 ======== */
-.am-body {
-  padding: 24px 32px;
+/* ======== 两栏布局 ======== */
+.am-layout {
+  display: flex;
   flex: 1;
+  min-height: 0;
+}
+
+/* ======== 二级子导航面板 ======== */
+.am-subnav {
+  width: 240px;
+  flex-shrink: 0;
+  background-color: var(--md-sys-color-surface-container-lowest, #fff);
+  border-radius: 12px;
+  margin: 0 0 0 16px;
+  padding: 16px 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  overflow-y: auto;
+  align-self: flex-start;
+  position: sticky;
+  top: 0;
+  max-height: 100dvh;
+}
+
+.am-subnav__group {
+  padding: 0 8px;
+}
+
+.am-subnav__group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+}
+
+.am-subnav__group-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #111827);
+}
+
+.am-subnav__group-edit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  cursor: pointer;
+  transition: all 150ms;
+}
+
+.am-subnav__group-edit:hover {
+  background-color: var(--md-sys-color-surface-container-high, #f3f4f6);
+}
+
+.am-subnav__group-edit .material-symbols-rounded {
+  font-size: 16px;
+}
+
+.am-subnav__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface, #374151);
+  cursor: pointer;
+  transition: all 100ms;
+  font-family: inherit;
+  width: 100%;
+  text-align: left;
+}
+
+.am-subnav__item:hover {
+  background-color: var(--md-sys-color-surface-container-high, #f9fafb);
+}
+
+.am-subnav__item--active {
+  background-color: #f3f0ff;
+  color: #635bff;
+}
+
+.am-subnav__item--active .am-subnav__item-count {
+  color: #635bff;
+}
+
+.am-subnav__item-label {
+  flex: 1;
+}
+
+.am-subnav__item-count {
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+}
+
+.am-subnav__cat-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.am-subnav__divider {
+  height: 1px;
+  background-color: var(--md-sys-color-outline-variant, #e5e7eb);
+  margin: 12px 16px;
+}
+
+.am-subnav__more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant, #9ca3af);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.am-subnav__more .material-symbols-rounded {
+  font-size: 20px;
+}
+
+/* ======== 主内容区 ======== */
+.am-main {
+  flex: 1;
+  padding: 16px 24px;
+  min-width: 0;
+  overflow-y: auto;
 }
 
 /* ======== 页面标题 ======== */
 .am-page-header {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .am-page-header__title {
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--md-sys-color-on-surface, #111827);
   margin: 0 0 4px;
+  line-height: 32px;
 }
 
 .am-page-header__subtitle {
   font-size: 14px;
   color: var(--md-sys-color-on-surface-variant, #6b7280);
   margin: 0;
+  line-height: 20px;
 }
 
 /* ======== 筛选栏 ======== */
 .am-filter-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   margin-bottom: 16px;
   flex-wrap: wrap;
 }
 
-.am-filter-bar__left {
-  display: flex;
-  gap: 4px;
-  background-color: var(--md-sys-color-surface-container-high, #f3f3f3);
-  border-radius: 8px;
-  padding: 4px;
-}
-
-.am-filter-tab {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border: none;
-  background: transparent;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--md-sys-color-on-surface-variant, #6b7280);
-  cursor: pointer;
-  transition: all 150ms;
-  font-family: inherit;
-}
-
-.am-filter-tab:hover {
-  color: var(--md-sys-color-on-surface, #111827);
-}
-
-.am-filter-tab--active {
-  background-color: var(--md-sys-color-surface-container-lowest, #fff);
-  color: var(--md-sys-color-on-surface, #111827);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-.am-filter-tab__count {
-  font-size: 11px;
-  padding: 1px 6px;
-  background-color: var(--md-sys-color-surface-container-highest, #e5e7eb);
-  border-radius: 999px;
-  color: var(--md-sys-color-on-surface-variant, #6b7280);
-  font-weight: 600;
-}
-
-.am-filter-tab--active .am-filter-tab__count {
-  background-color: #eef2ff;
-  color: #6366f1;
-}
-
-.am-filter-bar__right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .am-filter-bar__search {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background-color: var(--md-sys-color-surface-container-high, #f3f3f3);
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  background-color: var(--md-sys-color-surface-container-lowest, #fff);
   border-radius: 8px;
   border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+  flex: 0 1 320px;
 }
 
 .am-filter-bar__search .material-symbols-rounded {
-  font-size: 18px;
+  font-size: 16px;
   color: var(--md-sys-color-on-surface-variant, #9ca3af);
 }
 
@@ -1077,9 +1282,10 @@ function getTagClass(tag) {
   border: none;
   background: transparent;
   outline: none;
-  font-size: 13px;
-  color: var(--md-sys-color-on-surface, #111827);
-  width: 140px;
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface, #374151);
+  flex: 1;
+  min-width: 0;
   font-family: inherit;
 }
 
@@ -1087,34 +1293,67 @@ function getTagClass(tag) {
   color: var(--md-sys-color-on-surface-variant, #9ca3af);
 }
 
+.am-filter-bar__spacer {
+  flex: 1;
+}
+
+/* ======== 下拉选择器 ======== */
+.am-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+  background-color: var(--md-sys-color-surface-container-lowest, #fff);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface, #374151);
+  cursor: pointer;
+  transition: all 150ms;
+  font-family: inherit;
+}
+
+.am-dropdown:hover {
+  border-color: #635bff;
+}
+
+.am-dropdown__chevron {
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+}
+
 .am-sort-btn {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 12px;
+  height: 40px;
+  padding: 0 16px;
   border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
   background-color: var(--md-sys-color-surface-container-lowest, #fff);
   border-radius: 8px;
-  font-size: 13px;
-  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface, #374151);
   cursor: pointer;
   transition: all 150ms;
   font-family: inherit;
 }
 
 .am-sort-btn:hover {
-  border-color: #6366f1;
-  color: #6366f1;
+  border-color: #635bff;
+  color: #635bff;
 }
 
 .am-sort-btn .material-symbols-rounded {
   font-size: 16px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
 }
 
 .am-view-toggle {
   display: flex;
+  height: 40px;
   border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
 }
 
@@ -1122,163 +1361,63 @@ function getTagClass(tag) {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 40px;
   border: none;
   background: var(--md-sys-color-surface-container-lowest, #fff);
   color: var(--md-sys-color-on-surface-variant, #6b7280);
   cursor: pointer;
   transition: all 150ms;
+}
+
+.am-view-toggle__btn:first-child {
+  border-right: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
 }
 
 .am-view-toggle__btn--active {
-  background-color: #eef2ff;
-  color: #6366f1;
+  background-color: #f3f0ff;
+  color: #635bff;
 }
 
 .am-view-toggle__btn .material-symbols-rounded {
-  font-size: 18px;
-}
-
-/* ======== 批量操作栏 ======== */
-.am-bulk-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  margin-bottom: 12px;
-  background-color: #eef2ff;
-  border: 1px solid #c7d2fe;
-  border-radius: 8px;
-  gap: 12px;
-}
-
-.am-bulk-bar__count {
-  font-size: 13px;
-  font-weight: 600;
-  color: #4f46e5;
-}
-
-.am-bulk-bar__actions {
-  display: flex;
-  gap: 8px;
-}
-
-.am-bulk-bar__btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 14px;
-  border: 1px solid var(--md-sys-color-outline-variant, #d1d5db);
-  background: var(--md-sys-color-surface-container-lowest, #fff);
-  border-radius: 6px;
-  font-size: 13px;
-  color: var(--md-sys-color-on-surface, #374151);
-  cursor: pointer;
-  transition: all 150ms;
-  font-family: inherit;
-}
-
-.am-bulk-bar__btn:hover {
-  background-color: var(--md-sys-color-surface-container-high, #f3f3f3);
-}
-
-.am-bulk-bar__btn .material-symbols-rounded {
   font-size: 16px;
 }
 
-.am-bulk-bar__btn--danger {
-  color: #ef4444;
-}
-
-.am-bulk-bar__btn--danger:hover {
-  background-color: #fef2f2;
-  border-color: #fecaca;
-}
-
-.am-bulk-bar__clear {
-  border: none;
-  background: transparent;
-  font-size: 13px;
-  color: var(--md-sys-color-on-surface-variant, #6b7280);
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-family: inherit;
-}
-
-.am-bulk-bar__clear:hover {
-  color: var(--md-sys-color-on-surface, #111827);
-}
-
-.am-bulk-enter-active,
-.am-bulk-leave-active {
-  transition: all 200ms ease;
-}
-
-.am-bulk-enter-from,
-.am-bulk-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
-}
-
-/* ======== 文章列表 ======== */
-.am-article-list {
+/* ======== 文章列表表格 ======== */
+.am-table {
   background-color: var(--md-sys-color-surface-container-lowest, #fff);
-  border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
-  border-radius: 8px;
+  border: 1px solid #f3f4f6;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
-/* ======== 文章行 ======== */
+/* ======== 文章行（无表头） ======== */
 .am-article-row {
   display: grid;
-  grid-template-columns: 40px 1fr 120px 120px 180px 40px;
+  grid-template-columns: 40px 1fr 110px 110px 90px 150px 40px;
   align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--md-sys-color-outline-variant, #f0f0f0);
+  height: 72px;
+  padding: 0 16px;
+  border-bottom: 1px solid #f3f4f6;
   cursor: pointer;
   transition: background-color 100ms;
   gap: 12px;
 }
 
-.am-article-row:last-child {
+.am-article-row:last-of-type {
   border-bottom: none;
 }
 
-.am-article-row:not(.am-article-row--header):hover {
-  background-color: var(--md-sys-color-surface-container-high, #f9fafb);
+.am-article-row:hover {
+  background-color: #f9fafb;
 }
 
 .am-article-row--selected {
-  background-color: #eef2ff;
+  background-color: #f3f0ff;
 }
 
 .am-article-row--selected:hover {
-  background-color: #e0e7ff;
-}
-
-.am-article-row--header {
-  cursor: default;
-  background-color: var(--md-sys-color-surface-container-high, #f9fafb);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--md-sys-color-on-surface-variant, #6b7280);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.am-article-row--header:hover {
-  background-color: var(--md-sys-color-surface-container-high, #f9fafb);
-}
-
-.am-article-row__col-title,
-.am-article-row__col-status,
-.am-article-row__col-date,
-.am-article-row__col-tags,
-.am-article-row__col-menu {
-  overflow: hidden;
+  background-color: #e8e3ff;
 }
 
 /* Article column with thumbnail + title/desc */
@@ -1293,24 +1432,24 @@ function getTagClass(tag) {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 8px;
   flex-shrink: 0;
 }
 
 .am-article-row__thumb--published {
   background-color: #ecfdf5;
-  color: #059669;
+  color: #065f46;
 }
 
 .am-article-row__thumb--draft {
   background-color: #fff7ed;
-  color: #d97706;
+  color: #92400e;
 }
 
 .am-article-row__thumb .material-symbols-rounded {
-  font-size: 22px;
+  font-size: 24px;
 }
 
 .am-article-row__info {
@@ -1321,30 +1460,33 @@ function getTagClass(tag) {
 }
 
 .am-article-row__title {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
   color: var(--md-sys-color-on-surface, #111827);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 22px;
 }
 
 .am-article-row__desc {
-  font-size: 12px;
-  color: var(--md-sys-color-on-surface-variant, #9ca3af);
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 18px;
 }
 
-.am-article-row__col-date {
-  font-size: 13px;
+.am-article-row__col-date,
+.am-article-row__col-readtime {
+  font-size: 14px;
   color: var(--md-sys-color-on-surface-variant, #6b7280);
 }
 
 .am-article-row__col-tags {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
@@ -1363,12 +1505,12 @@ function getTagClass(tag) {
 }
 
 .am-article-row__menu:hover {
-  background-color: var(--md-sys-color-surface-container-highest, #f3f3f3);
-  color: var(--md-sys-color-on-surface, #111827);
+  background-color: var(--md-sys-color-surface-container-high, #f3f4f6);
+  color: var(--md-sys-color-on-surface, #374151);
 }
 
 .am-article-row__menu .material-symbols-rounded {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 /* ======== 自定义复选框 ======== */
@@ -1378,8 +1520,8 @@ function getTagClass(tag) {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
 }
 
 .am-checkbox input {
@@ -1396,18 +1538,18 @@ function getTagClass(tag) {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
-  border: 2px solid var(--md-sys-color-outline-variant, #d1d5db);
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--md-sys-color-outline-variant, #d1d5db);
   border-radius: 4px;
-  background-color: transparent;
+  background-color: #fff;
   transition: all 150ms;
 }
 
 .am-checkbox__box::after {
   content: '';
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   background-color: #fff;
   border-radius: 1px;
   opacity: 0;
@@ -1417,8 +1559,8 @@ function getTagClass(tag) {
 }
 
 .am-checkbox input:checked ~ .am-checkbox__box {
-  background-color: #6366f1;
-  border-color: #6366f1;
+  background-color: #635bff;
+  border-color: #635bff;
 }
 
 .am-checkbox input:checked ~ .am-checkbox__box::after {
@@ -1427,29 +1569,172 @@ function getTagClass(tag) {
 }
 
 .am-checkbox input:focus-visible ~ .am-checkbox__box {
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.2);
 }
 
 /* ======== 状态标签 ======== */
 .am-status-tag {
   display: inline-flex;
   align-items: center;
-  padding: 3px 10px;
-  border-radius: 999px;
+  padding: 4px 10px;
+  border-radius: 8px;
   font-size: 12px;
   font-weight: 500;
   white-space: nowrap;
 }
 
-/* ======== 分类标签 ======== */
+/* ======== 分类标签（统一灰色） ======== */
 .am-tag {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 8px;
+  font-size: 12px;
   font-weight: 500;
   white-space: nowrap;
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* ======== 底部批量操作栏 + 分页 ======== */
+.am-bottom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 16px;
+  background-color: #f9fafb;
+  border-top: 1px solid #f3f4f6;
+  gap: 12px;
+}
+
+.am-bottom-bar__left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.am-bottom-bar__count {
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+}
+
+.am-bottom-bar__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.am-bottom-bar__btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+  background: var(--md-sys-color-surface-container-lowest, #fff);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface, #374151);
+  cursor: pointer;
+  transition: all 150ms;
+  font-family: inherit;
+}
+
+.am-bottom-bar__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.am-bottom-bar__btn:not(:disabled):hover {
+  background-color: var(--md-sys-color-surface-container-high, #f3f4f6);
+}
+
+.am-bottom-bar__btn--icon {
+  padding: 0;
+  width: 32px;
+  justify-content: center;
+}
+
+.am-bottom-bar__btn .material-symbols-rounded {
+  font-size: 16px;
+}
+
+.am-bottom-bar__btn--danger {
+  color: #ef4444;
+}
+
+.am-bottom-bar__btn--danger:hover {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+}
+
+/* ======== 分页 ======== */
+.am-pagination {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.am-pagination__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+  background: var(--md-sys-color-surface-container-lowest, #fff);
+  border-radius: 8px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  cursor: pointer;
+  transition: all 150ms;
+}
+
+.am-pagination__btn:hover:not(:disabled) {
+  border-color: #635bff;
+  color: #635bff;
+}
+
+.am-pagination__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.am-pagination__btn .material-symbols-rounded {
+  font-size: 16px;
+}
+
+.am-pagination__page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+  background: var(--md-sys-color-surface-container-lowest, #fff);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface, #374151);
+  cursor: pointer;
+  transition: all 150ms;
+  font-family: inherit;
+}
+
+.am-pagination__page:hover {
+  border-color: #635bff;
+  color: #635bff;
+}
+
+.am-pagination__page--active {
+  background-color: #635bff;
+  border-color: #635bff;
+  color: #fff;
+}
+
+.am-pagination__page--active:hover {
+  background-color: #635bff;
+  color: #fff;
 }
 
 /* ======== 空状态 ======== */
@@ -1460,8 +1745,9 @@ function getTagClass(tag) {
   justify-content: center;
   padding: 64px 32px;
   background-color: var(--md-sys-color-surface-container-lowest, #fff);
-  border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
-  border-radius: 8px;
+  border: 1px solid #f3f4f6;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
 .am-empty__icon {
@@ -1482,76 +1768,6 @@ function getTagClass(tag) {
   font-size: 14px;
   color: var(--md-sys-color-on-surface-variant, #6b7280);
   margin: 0;
-}
-
-/* ======== 分页 ======== */
-.am-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  margin-top: 24px;
-}
-
-.am-pagination__btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
-  background: var(--md-sys-color-surface-container-lowest, #fff);
-  border-radius: 6px;
-  color: var(--md-sys-color-on-surface-variant, #6b7280);
-  cursor: pointer;
-  transition: all 150ms;
-}
-
-.am-pagination__btn:hover:not(:disabled) {
-  border-color: #6366f1;
-  color: #6366f1;
-}
-
-.am-pagination__btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.am-pagination__btn .material-symbols-rounded {
-  font-size: 18px;
-}
-
-.am-pagination__page {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 32px;
-  height: 32px;
-  padding: 0 8px;
-  border: 1px solid transparent;
-  background: transparent;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--md-sys-color-on-surface-variant, #6b7280);
-  cursor: pointer;
-  transition: all 150ms;
-  font-family: inherit;
-}
-
-.am-pagination__page:hover {
-  background-color: var(--md-sys-color-surface-container-high, #f3f3f3);
-  color: var(--md-sys-color-on-surface, #111827);
-}
-
-.am-pagination__page--active {
-  background-color: #6366f1;
-  color: #fff;
-}
-
-.am-pagination__page--active:hover {
-  background-color: #6366f1;
-  color: #fff;
 }
 
 /* ======== 编辑器区域 ======== */
@@ -1859,71 +2075,75 @@ function getTagClass(tag) {
 }
 
 /* ======== 响应式 ======== */
-@media (max-width: 1024px) {
-  .am-article-row {
-    grid-template-columns: 40px 1fr 100px 100px 140px 40px;
-    gap: 8px;
-    padding: 10px 12px;
+@media (max-width: 1280px) {
+  .am-subnav {
+    width: 200px;
   }
 
-  .am-body {
-    padding: 16px 20px;
+  .am-article-row {
+    grid-template-columns: 40px 1fr 100px 100px 80px 120px 40px;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .am-subnav {
+    display: none;
+  }
+
+  .am-article-row {
+    grid-template-columns: 40px 1fr 90px 80px 40px;
+  }
+
+  .am-article-row__col-readtime,
+  .am-article-row__col-tags {
+    display: none;
+  }
+
+  .am-main {
+    padding: 16px;
   }
 }
 
 @media (max-width: 768px) {
   .am-topbar {
-    padding: 8px 16px;
+    padding: 0 16px;
   }
 
   .am-topbar__search {
     max-width: none;
   }
 
-  .am-topbar__new-btn {
-    --md-filled-button-label-text-size: 13px;
-  }
-
-  .am-body {
-    padding: 16px;
-  }
-
-  .am-filter-bar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .am-filter-bar__right {
-    flex-wrap: wrap;
-  }
-
-  .am-filter-bar__search-input {
-    width: 100px;
-  }
-
   .am-article-row {
-    grid-template-columns: 32px 1fr 80px 32px;
+    grid-template-columns: 32px 1fr 70px 40px;
+    height: 64px;
     gap: 8px;
-    padding: 10px 12px;
   }
 
-  .am-article-row__col-status,
-  .am-article-row__col-tags {
-    display: none;
-  }
-
-  .am-article-row--header .am-article-row__col-status,
-  .am-article-row--header .am-article-row__col-tags {
+  .am-article-row__col-readtime,
+  .am-article-row__col-tags,
+  .am-article-row__col-status {
     display: none;
   }
 
   .am-article-row__thumb {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
   }
 
   .am-article-row__thumb .material-symbols-rounded {
     font-size: 18px;
+  }
+
+  .am-filter-bar {
+    flex-wrap: wrap;
+  }
+
+  .am-bottom-bar {
+    flex-direction: column;
+    height: auto;
+    padding: 8px 12px;
+    gap: 8px;
   }
 }
 
@@ -1962,28 +2182,7 @@ function getTagClass(tag) {
 
 .am-status-tag--draft {
   background: #fff7ed;
-  color: #c2410c;
-}
-
-/* ======== 分类标签颜色 ======== */
-.am-tag--primary {
-  background: #eef2ff;
-  color: #4f46e5;
-}
-
-.am-tag--blue {
-  background: #eff6ff;
-  color: #1d4ed8;
-}
-
-.am-tag--green {
-  background: #ecfdf5;
-  color: #047857;
-}
-
-.am-tag--orange {
-  background: #fff6ed;
-  color: #c2410c;
+  color: #92400e;
 }
 
 /* ======== 暗色主题：状态标签 ======== */
@@ -1993,27 +2192,6 @@ function getTagClass(tag) {
 }
 
 [data-theme="dark"] .am-status-tag--draft {
-  background: #3a2200;
-  color: #fbbf24;
-}
-
-/* ======== 暗色主题：分类标签 ======== */
-[data-theme="dark"] .am-tag--primary {
-  background: #2a1a4a;
-  color: #a78bfa;
-}
-
-[data-theme="dark"] .am-tag--blue {
-  background: #1e3a5f;
-  color: #60a5fa;
-}
-
-[data-theme="dark"] .am-tag--green {
-  background: #06381f;
-  color: #34d399;
-}
-
-[data-theme="dark"] .am-tag--orange {
   background: #3a2200;
   color: #fbbf24;
 }
@@ -2029,20 +2207,15 @@ function getTagClass(tag) {
   color: #fbbf24;
 }
 
-/* ======== 暗色主题：筛选标签激活态 ======== */
-[data-theme="dark"] .am-filter-tab--active .am-filter-tab__count {
-  background: #312e81;
-  color: #a5b4fc;
-}
-
 /* ======== 暗色主题：accent 相关 ======== */
 [data-theme="dark"] .am-pagination__page--active {
-  background-color: #6366f1;
+  background-color: #635bff;
+  border-color: #635bff;
 }
 
 [data-theme="dark"] .am-checkbox input:checked ~ .am-checkbox__box {
-  background-color: #6366f1;
-  border-color: #6366f1;
+  background-color: #635bff;
+  border-color: #635bff;
 }
 
 [data-theme="dark"] .am-view-toggle__btn--active {
@@ -2050,13 +2223,22 @@ function getTagClass(tag) {
   color: #a5b4fc;
 }
 
-[data-theme="dark"] .am-bulk-bar {
-  background: #1e1b4b;
-  border-color: #3730a3;
+[data-theme="dark"] .am-subnav__item--active {
+  background: #312e81;
+  color: #a5b4fc;
 }
 
-[data-theme="dark"] .am-bulk-bar__count {
+[data-theme="dark"] .am-subnav__item--active .am-subnav__item-count {
   color: #a5b4fc;
+}
+
+[data-theme="dark"] .am-tag {
+  background: #374151;
+  color: #d1d5db;
+}
+
+[data-theme="dark"] .am-bottom-bar {
+  background-color: #1f2937;
 }
 
 /* ======== 暗色主题：编辑器 ======== */
