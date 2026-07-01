@@ -358,45 +358,45 @@
                   <span class="material-symbols-rounded">more_vert</span>
                 </button>
               </div>
+            </div>
 
-              <!-- 底部批量操作栏 + 分页 -->
-              <div class="am-bottom-bar">
-                <div class="am-bottom-bar__left">
-                  <label class="am-checkbox">
-                    <input type="checkbox" :checked="allSelected" @change="toggleSelectAll($event)" />
-                    <span class="am-checkbox__box"></span>
-                  </label>
-                  <span class="am-bottom-bar__count">{{ selectedIds.size }} selected</span>
-                  <div class="am-bottom-bar__actions">
-                    <button class="am-bottom-bar__btn" :disabled="selectedIds.size === 0" @click="bulkPublish">
-                      <span class="material-symbols-rounded">publish</span>
-                      Publish
-                    </button>
-                    <button class="am-bottom-bar__btn" :disabled="selectedIds.size === 0" @click="selectedIds.clear()">Archive</button>
-                    <button class="am-bottom-bar__btn am-bottom-bar__btn--danger" :disabled="selectedIds.size === 0" @click="bulkDelete">
-                      <span class="material-symbols-rounded">delete</span>
-                      Delete
-                    </button>
-                    <button class="am-bottom-bar__btn am-bottom-bar__btn--icon" :disabled="selectedIds.size === 0" aria-label="More actions">
-                      <span class="material-symbols-rounded">more_horiz</span>
-                    </button>
-                  </div>
-                </div>
-                <div v-if="totalPages > 1" class="am-pagination">
-                  <button class="am-pagination__btn" :disabled="currentPage <= 1" @click="currentPage--">
-                    <span class="material-symbols-rounded">chevron_left</span>
+            <!-- 底部批量操作栏 + 分页（独立容器，位于表格外部） -->
+            <div v-if="filteredArticles.length" class="am-bottom-bar">
+              <div class="am-bottom-bar__left">
+                <label class="am-checkbox">
+                  <input type="checkbox" :checked="allSelected" @change="toggleSelectAll($event)" />
+                  <span class="am-checkbox__box"></span>
+                </label>
+                <span class="am-bottom-bar__count">{{ selectedIds.size }} selected</span>
+                <div class="am-bottom-bar__actions">
+                  <button class="am-bottom-bar__btn" :disabled="selectedIds.size === 0" @click="bulkPublish">
+                    <span class="material-symbols-rounded">publish</span>
+                    Publish
                   </button>
-                  <button
-                    v-for="p in pageNumbers"
-                    :key="p"
-                    class="am-pagination__page"
-                    :class="{ 'am-pagination__page--active': p === currentPage }"
-                    @click="currentPage = p"
-                  >{{ p }}</button>
-                  <button class="am-pagination__btn" :disabled="currentPage >= totalPages" @click="currentPage++">
-                    <span class="material-symbols-rounded">chevron_right</span>
+                  <button class="am-bottom-bar__btn" :disabled="selectedIds.size === 0" @click="selectedIds.clear()">Archive</button>
+                  <button class="am-bottom-bar__btn am-bottom-bar__btn--danger" :disabled="selectedIds.size === 0" @click="bulkDelete">
+                    <span class="material-symbols-rounded">delete</span>
+                    Delete
+                  </button>
+                  <button class="am-bottom-bar__btn am-bottom-bar__btn--icon" :disabled="selectedIds.size === 0" aria-label="More actions">
+                    <span class="material-symbols-rounded">more_horiz</span>
                   </button>
                 </div>
+              </div>
+              <div class="am-pagination">
+                <button class="am-pagination__btn" :disabled="currentPage <= 1" @click="currentPage--">
+                  <span class="material-symbols-rounded">chevron_left</span>
+                </button>
+                <button
+                  v-for="p in pageNumbers"
+                  :key="p"
+                  class="am-pagination__page"
+                  :class="{ 'am-pagination__page--active': p === currentPage }"
+                  @click="currentPage = p"
+                >{{ p }}</button>
+                <button class="am-pagination__btn" :disabled="currentPage >= totalPages" @click="currentPage++">
+                  <span class="material-symbols-rounded">chevron_right</span>
+                </button>
               </div>
             </div>
 
@@ -1596,15 +1596,18 @@ function getReadTime(content) {
   color: #374151;
 }
 
-/* ======== 底部批量操作栏 + 分页 ======== */
+/* ======== 底部批量操作栏 + 分页（独立容器） ======== */
 .am-bottom-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 56px;
+  height: 48px;
   padding: 0 16px;
-  background-color: #f9fafb;
-  border-top: 1px solid #f3f4f6;
+  margin-top: 12px;
+  background-color: var(--md-sys-color-surface-container-lowest, #fff);
+  border: 1px solid #f3f4f6;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
   gap: 12px;
 }
 
@@ -2238,7 +2241,8 @@ function getReadTime(content) {
 }
 
 [data-theme="dark"] .am-bottom-bar {
-  background-color: #1f2937;
+  background-color: var(--md-sys-color-surface-container-lowest, #141218);
+  border-color: var(--md-sys-color-outline-variant, #49454f);
 }
 
 /* ======== 暗色主题：编辑器 ======== */
