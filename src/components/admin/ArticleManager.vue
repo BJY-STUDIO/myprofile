@@ -621,7 +621,7 @@
       </div>
     </div>
 
-    <!-- ======== 博客预览弹窗 ======== -->
+    <!-- ======== 博客预览弹窗（完全复刻 BlogArticleView 发布页面布局）======== -->
     <Teleport to="body">
       <div v-if="showPreviewDialog" class="ed-preview-overlay" @click.self="closePreview" @keydown.esc="closePreview">
         <!-- 预览工具栏 -->
@@ -633,20 +633,51 @@
             </button>
           </div>
         </header>
-        <!-- 预览内容（博客风格） -->
-        <article class="ed-preview-body">
-          <h1 class="ed-preview-title">{{ form.title || 'Untitled Article' }}</h1>
-          <p v-if="form.description" class="ed-preview-excerpt">{{ form.description }}</p>
-          <div class="ed-preview-meta">
-            <span v-if="form.date">{{ form.date }}</span>
-            <span v-else>{{ new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span>
-            <span v-if="formTags.length" class="ed-preview-tags">
-              <AdminTag v-for="tag in formTags.slice(0, 5)" :key="tag" :text="tag" size="sm" />
-            </span>
+        <!-- 可滚动内容区 -->
+        <div class="ed-preview-scroll">
+          <!-- mio-header（对照 BlogArticleView：双列 grid，primary-container + split-asset-image）-->
+          <header class="ed-preview-mio-header">
+            <div class="ed-preview-primary-container">
+              <div class="ed-preview-wrapper">
+                <div class="ed-preview-date">
+                  <span v-if="form.date">{{ form.date }}</span>
+                  <span v-else>{{ new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span>
+                </div>
+                <div class="ed-preview-title-block">
+                  <h1>{{ form.title || 'Untitled Article' }}</h1>
+                  <div class="ed-preview-description" v-if="form.description">{{ form.description }}</div>
+                </div>
+              </div>
+            </div>
+            <!-- split-asset-image（渐变占位，对照 BlogArticleView 无头图时）-->
+            <div class="ed-preview-split-asset-image">
+              <div class="ed-preview-split-asset-image__foreground"></div>
+            </div>
+          </header>
+
+          <!-- content-container（对照 BlogArticleView：authors + separator + blog-content）-->
+          <div class="ed-preview-blog-content-container">
+            <article class="ed-preview-blog-section">
+              <!-- authors 区域 -->
+              <div class="ed-preview-authors">
+                <p class="ed-preview-overline">Posted by</p>
+                <div class="ed-preview-byline">
+                  <img class="ed-preview-author-avatar" src="/favicon.ico" alt="Kernel" />
+                  <div class="ed-preview-author-info">
+                    <span class="ed-preview-author-name">Kernel</span>
+                    <span class="ed-preview-author-role">Author</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- separator -->
+              <hr class="ed-preview-separator" />
+
+              <!-- blog-content -->
+              <div class="ed-preview-blog-content" v-html="previewHtml"></div>
+            </article>
           </div>
-          <hr class="ed-preview-separator" />
-          <div class="blog-content ed-preview-content" v-html="previewHtml"></div>
-        </article>
+        </div>
       </div>
     </Teleport>
   </div>
@@ -2711,6 +2742,7 @@ function getReadTime(content) {
 
 .ed-content__editor-body--preview {
   display: block;
+  overflow-y: auto;
 }
 
 .ed-content__editor-body--split {
@@ -2740,6 +2772,7 @@ function getReadTime(content) {
 }
 
 .ed-content__preview {
+  width: 100%;
   padding: 16px 48px 24px;
   background: var(--md-sys-color-surface, #fff);
   overflow-y: auto;
@@ -3593,7 +3626,7 @@ function getReadTime(content) {
   border-radius: 4px;
 }
 
-/* ======== 博客预览弹窗（样式完全对齐 BlogArticleView 的 .blog-content）===== */
+/* ======== 博客预览弹窗（完全复刻 BlogArticleView 发布页面布局）===== */
 .ed-preview-overlay {
   position: fixed;
   inset: 0;
@@ -3626,19 +3659,52 @@ function getReadTime(content) {
   gap: 8px;
 }
 
-/* 预览主体 — 对照 BlogArticleView .content-container > .blog-section */
-.ed-preview-body {
+/* 可滚动内容区 */
+.ed-preview-scroll {
   flex: 1;
   overflow-y: auto;
-  padding: 48px 24px 80px;
-  max-width: 800px;
-  margin: 0 auto;
-  width: 100%;
-  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
-/* ---- 标题区域（对齐 mio-header .wrapper--article）---- */
-.ed-preview-title {
+/* ---- mio-header（对照 BlogArticleView：双列 grid）---- */
+.ed-preview-mio-header {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+/* primary-container（对照 BlogArticleView：渐变背景 + padding）*/
+.ed-preview-primary-container {
+  display: flex;
+  margin: 0;
+  padding: 56px;
+  border-radius: 24px;
+  background: var(--md-sys-color-surface-container-low, #f8f1f6);
+  min-height: 544px;
+}
+
+.ed-preview-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 840px;
+  margin: 0;
+}
+
+/* date（对照 BlogArticleView .date）*/
+.ed-preview-date {
+  font-family: var(--md-sys-typescale-article-desc-font-family);
+  font-size: var(--md-sys-typescale-article-desc-font-size);
+  font-weight: var(--md-sys-typescale-article-desc-font-weight);
+  line-height: var(--md-sys-typescale-article-desc-line-height);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0 0 16px;
+  display: block;
+}
+
+/* title block（对照 BlogArticleView .title）*/
+.ed-preview-title-block h1 {
   font-family: var(--md-sys-typescale-article-hero-font-family);
   font-size: var(--md-sys-typescale-article-hero-font-size);
   font-weight: var(--md-sys-typescale-article-hero-font-weight);
@@ -3649,52 +3715,136 @@ function getReadTime(content) {
   font-variation-settings: "GRAD" var(--md-sys-typescale-article-hero-font-variation-GRAD), "opsz" var(--md-sys-typescale-article-hero-font-variation-opsz);
 }
 
-.ed-preview-excerpt {
+/* description（对照 BlogArticleView .description）*/
+.ed-preview-description {
   font-family: var(--md-sys-typescale-article-desc-font-family);
   font-size: var(--md-sys-typescale-article-desc-font-size);
   font-weight: var(--md-sys-typescale-article-desc-font-weight);
   line-height: var(--md-sys-typescale-article-desc-line-height);
   color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+/* split-asset-image（对照 BlogArticleView：渐变占位）*/
+.ed-preview-split-asset-image {
+  display: flex;
+  position: relative;
+  justify-content: center;
+  border: 1px solid var(--md-sys-color-surface-variant, #e8e0e8);
+  border-radius: 24px;
+  background-repeat: no-repeat;
+  background-size: cover;
+  overflow: hidden;
+  min-height: 544px;
+}
+
+.ed-preview-split-asset-image__foreground {
+  display: flex;
+  position: absolute;
+  align-self: stretch;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    135deg,
+    var(--md-sys-color-primary-container, #eaddff) 0%,
+    var(--md-sys-color-secondary-container, #e8def8) 50%,
+    var(--md-sys-color-tertiary-container, #ffd8e4) 100%
+  );
+  background-repeat: no-repeat;
+  background-position: 50% 50%;
+  background-size: contain;
+}
+
+/* ---- content-container（对照 BlogArticleView）---- */
+.ed-preview-blog-content-container {
+  display: flex;
+  flex-direction: row-reverse;
+  max-width: 1040px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.ed-preview-blog-section {
+  flex: 1;
+  min-width: 0;
+}
+
+/* authors（对照 BlogArticleView .authors）*/
+.ed-preview-authors {
+  margin: 80px 24px 0;
+}
+
+.ed-preview-overline {
+  font-family: var(--md-sys-typescale-label-s-font-family);
+  font-size: var(--md-sys-typescale-label-s-font-size);
+  font-weight: var(--md-sys-typescale-label-s-font-weight);
+  line-height: var(--md-sys-typescale-label-s-line-height);
+  letter-spacing: var(--md-sys-typescale-label-s-letter-spacing);
+  font-variation-settings: "GRAD" var(--md-sys-typescale-label-s-font-variation-GRAD), "opsz" var(--md-sys-typescale-label-s-font-variation-opsz);
+  color: var(--md-sys-color-on-surface-variant, #4d4256);
   margin: 0 0 16px;
 }
 
-.ed-preview-meta {
-  font-family: var(--md-sys-typescale-article-desc-font-family);
-  font-size: var(--md-sys-typescale-article-desc-font-size);
-  font-weight: var(--md-sys-typescale-article-desc-font-weight);
-  line-height: var(--md-sys-typescale-article-desc-line-height);
-  color: var(--md-sys-color-on-surface, #1c1b1f);
-  margin-bottom: 16px;
+.ed-preview-byline {
   display: flex;
   align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
+  gap: 0;
+  margin-top: 8px;
+  font-family: var(--md-sys-typescale-article-body-font-family);
 }
 
-.ed-preview-tags {
+.ed-preview-author-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.ed-preview-author-info {
   display: flex;
-  gap: 6px;
+  align-items: baseline;
   flex-wrap: wrap;
+  margin-left: 24px;
 }
 
-/* 分隔线（对齐 .separator） */
+.ed-preview-author-name {
+  font-family: var(--md-sys-typescale-title-m-font-family);
+  font-size: var(--md-sys-typescale-title-m-font-size);
+  font-weight: var(--md-sys-typescale-title-m-font-weight);
+  line-height: var(--md-sys-typescale-title-m-line-height);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.ed-preview-author-role {
+  font-size: var(--md-sys-typescale-article-body-font-size);
+  font-weight: var(--md-sys-typescale-article-body-font-weight);
+  line-height: var(--md-sys-typescale-article-body-line-height);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.ed-preview-author-role::before {
+  content: ', ';
+}
+
+/* separator（对照 BlogArticleView .separator）*/
 .ed-preview-separator {
   border: none;
-  border-top: 1px solid var(--md-sys-color-outline-variant, #e7e0ec);
-  margin: 32px 0 56px;
+  border-top: 1px solid var(--md-sys-color-outline-variant, #e8e0e8);
+  margin: 80px 24px 56px;
 }
 
 /* ================================================================
-   ed-preview-content — 完全复用 BlogArticleView .blog-content 样式
+   ed-preview-blog-content — 完全复用 BlogArticleView .blog-content 样式
    ================================================================ */
-.ed-preview-content {
+.ed-preview-blog-content {
   font-family: var(--md-sys-typescale-article-body-font-family);
-  padding: 0;
+  padding: 0 24px;
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
 /* h2.linkable（m3Renderer 输出的 h2 带 linkable class） */
-.ed-preview-content :deep(h2.linkable) {
+.ed-preview-blog-content h2.linkable {
   font-family: var(--md-sys-typescale-article-h2-font-family);
   font-size: var(--md-sys-typescale-article-h2-font-size);
   font-weight: var(--md-sys-typescale-article-h2-font-weight);
@@ -3705,7 +3855,7 @@ function getReadTime(content) {
 }
 
 /* 兜底：没有 linkable class 的 h2 */
-.ed-preview-content :deep(h2) {
+.ed-preview-blog-content h2 {
   font-family: var(--md-sys-typescale-article-h2-font-family);
   font-size: var(--md-sys-typescale-article-h2-font-size);
   font-weight: var(--md-sys-typescale-article-h2-font-weight);
@@ -3715,7 +3865,7 @@ function getReadTime(content) {
   font-variation-settings: "GRAD" var(--md-sys-typescale-article-h2-font-variation-GRAD), "opsz" var(--md-sys-typescale-article-h2-font-variation-opsz);
 }
 
-.ed-preview-content :deep(h3) {
+.ed-preview-blog-content h3 {
   font-family: var(--md-sys-typescale-article-h3-font-family);
   font-size: var(--md-sys-typescale-article-h3-font-size);
   font-weight: var(--md-sys-typescale-article-h3-font-weight);
@@ -3725,7 +3875,7 @@ function getReadTime(content) {
   font-variation-settings: "GRAD" var(--md-sys-typescale-article-h3-font-variation-GRAD), "opsz" var(--md-sys-typescale-article-h3-font-variation-opsz);
 }
 
-.ed-preview-content :deep(h4) {
+.ed-preview-blog-content h4 {
   font-family: var(--md-sys-typescale-article-h4-font-family);
   font-size: var(--md-sys-typescale-article-h4-font-size);
   font-weight: var(--md-sys-typescale-article-h4-font-weight);
@@ -3735,7 +3885,7 @@ function getReadTime(content) {
   font-variation-settings: "GRAD" var(--md-sys-typescale-article-h4-font-variation-GRAD), "opsz" var(--md-sys-typescale-article-h4-font-variation-opsz);
 }
 
-.ed-preview-content :deep(h5) {
+.ed-preview-blog-content h5 {
   font-family: var(--md-sys-typescale-article-h5-font-family);
   font-size: var(--md-sys-typescale-article-h5-font-size);
   font-weight: var(--md-sys-typescale-article-h5-font-weight);
@@ -3745,7 +3895,7 @@ function getReadTime(content) {
   font-variation-settings: "GRAD" var(--md-sys-typescale-article-h5-font-variation-GRAD), "opsz" var(--md-sys-typescale-article-h5-font-variation-opsz);
 }
 
-.ed-preview-content :deep(h6) {
+.ed-preview-blog-content h6 {
   font-family: var(--md-sys-typescale-article-h6-font-family);
   font-size: var(--md-sys-typescale-article-h6-font-size);
   font-weight: var(--md-sys-typescale-article-h6-font-weight);
@@ -3755,7 +3905,7 @@ function getReadTime(content) {
   font-variation-settings: "GRAD" var(--md-sys-typescale-article-h6-font-variation-GRAD), "opsz" var(--md-sys-typescale-article-h6-font-variation-opsz);
 }
 
-.ed-preview-content :deep(p) {
+.ed-preview-blog-content p {
   font-size: var(--md-sys-typescale-article-body-font-size);
   font-weight: var(--md-sys-typescale-article-body-font-weight);
   line-height: var(--md-sys-typescale-article-body-line-height);
@@ -3764,21 +3914,21 @@ function getReadTime(content) {
 }
 
 /* ol 药丸数字徽章 */
-.ed-preview-content :deep(ol) {
+.ed-preview-blog-content ol {
   padding-left: 0;
   list-style: none;
   counter-reset: item 0;
   margin-top: 16px;
 }
 
-.ed-preview-content :deep(ol > li) {
+.ed-preview-blog-content ol > li {
   margin-top: 4px;
   margin-bottom: 20px;
   margin-left: 36px;
   counter-increment: item 1;
 }
 
-.ed-preview-content :deep(ol > li::before) {
+.ed-preview-blog-content ol > li::before {
   font-family: var(--md-sys-typescale-article-ol-badge-font-family);
   font-size: var(--md-sys-typescale-article-ol-badge-font-size);
   font-weight: var(--md-sys-typescale-article-ol-badge-font-weight);
@@ -3800,19 +3950,19 @@ function getReadTime(content) {
 }
 
 /* ul 星形子弹 */
-.ed-preview-content :deep(ul) {
+.ed-preview-blog-content ul {
   list-style: none;
   padding-left: 0;
   margin-left: 22px;
   margin-top: 16px;
 }
 
-.ed-preview-content :deep(ul li) {
+.ed-preview-blog-content ul li {
   position: relative;
   margin-bottom: 16px;
 }
 
-.ed-preview-content :deep(ul li::before) {
+.ed-preview-blog-content ul li::before {
   display: inline-block;
   position: absolute;
   top: 8px;
@@ -3826,20 +3976,20 @@ function getReadTime(content) {
   content: "";
 }
 
-.ed-preview-content :deep(li) {
+.ed-preview-blog-content li {
   font-size: var(--md-sys-typescale-article-body-font-size);
   font-weight: var(--md-sys-typescale-article-body-font-weight);
   line-height: var(--md-sys-typescale-article-body-line-height);
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
-.ed-preview-content :deep(strong) {
+.ed-preview-blog-content strong {
   font-weight: 600;
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
 /* inline code */
-.ed-preview-content :deep(code) {
+.ed-preview-blog-content code {
   font-family: var(--md-sys-typescale-article-code-font-family);
   font-size: var(--md-sys-typescale-article-code-font-size);
   font-weight: var(--md-sys-typescale-article-code-font-weight);
@@ -3852,7 +4002,7 @@ function getReadTime(content) {
 }
 
 /* pre/code block */
-.ed-preview-content :deep(pre) {
+.ed-preview-blog-content pre {
   font-family: 'Google Sans Mono', monospace;
   font-size: 15px;
   font-weight: 500;
@@ -3865,7 +4015,7 @@ function getReadTime(content) {
   overflow-x: auto;
 }
 
-.ed-preview-content :deep(pre code) {
+.ed-preview-blog-content pre code {
   font-family: 'Google Sans Mono', monospace;
   font-size: 15px;
   font-weight: 500;
@@ -3880,7 +4030,7 @@ function getReadTime(content) {
 }
 
 /* blockquote */
-.ed-preview-content :deep(blockquote) {
+.ed-preview-blog-content blockquote {
   font-family: var(--md-sys-typescale-article-blockquote-font-family);
   font-size: var(--md-sys-typescale-article-blockquote-font-size);
   font-weight: var(--md-sys-typescale-article-blockquote-font-weight);
@@ -3893,14 +4043,14 @@ function getReadTime(content) {
 }
 
 /* img */
-.ed-preview-content :deep(img) {
+.ed-preview-blog-content img {
   width: 100%;
   border-radius: 16px;
   margin: 24px 0;
 }
 
 /* links */
-.ed-preview-content :deep(a) {
+.ed-preview-blog-content a {
   color: var(--md-sys-color-primary);
   text-decoration: none;
   border-radius: 4px;
@@ -3908,19 +4058,19 @@ function getReadTime(content) {
   transition: background-color 0.15s ease;
 }
 
-.ed-preview-content :deep(a:hover) {
+.ed-preview-blog-content a:hover {
   background: var(--md-sys-color-primary-container);
 }
 
 /* hr */
-.ed-preview-content :deep(hr) {
+.ed-preview-blog-content hr {
   border: none;
   border-top: 1px solid var(--md-sys-color-outline-variant);
   margin: 48px 0;
 }
 
 /* table */
-.ed-preview-content :deep(table) {
+.ed-preview-blog-content table {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
@@ -3931,8 +4081,8 @@ function getReadTime(content) {
   overflow: hidden;
 }
 
-.ed-preview-content :deep(table th),
-.ed-preview-content :deep(table td) {
+.ed-preview-blog-content table th,
+.ed-preview-blog-content table td {
   padding: 16px 24px;
   border-top: 1px solid var(--md-sys-color-surface-variant, #e7e0ec);
   border-right: 1px solid var(--md-sys-color-surface-variant, #e7e0ec);
@@ -3940,7 +4090,7 @@ function getReadTime(content) {
   text-align: left;
 }
 
-.ed-preview-content :deep(table th) {
+.ed-preview-blog-content table th {
   font-family: 'Google Sans Text', 'Google Sans', 'Noto Sans SC', sans-serif;
   font-weight: 500;
   font-variation-settings: "GRAD" 0, "opsz" 17;
@@ -3948,14 +4098,14 @@ function getReadTime(content) {
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
-.ed-preview-content :deep(table thead tr:first-child th),
-.ed-preview-content :deep(table tbody tr:first-child td),
-.ed-preview-content :deep(table tbody tr:first-child th) {
+.ed-preview-blog-content table thead tr:first-child th,
+.ed-preview-blog-content table tbody tr:first-child td,
+.ed-preview-blog-content table tbody tr:first-child th {
   border-top: 0;
 }
 
-.ed-preview-content :deep(table tr th:last-child),
-.ed-preview-content :deep(table tr td:last-child) {
+.ed-preview-blog-content table tr th:last-child,
+.ed-preview-blog-content table tr td:last-child {
   border-right: 0;
 }
 
@@ -3963,7 +4113,7 @@ function getReadTime(content) {
    copy-link 样式（m3Renderer 输出包含 .block/.copy-button 等）
    完全对齐 BlogArticleView
    ================================================================ */
-.ed-preview-content :deep(.block) {
+.ed-preview-blog-content .block {
   display: grid;
   position: relative;
   grid-template-columns: 68px auto 0px 0px;
@@ -3971,7 +4121,7 @@ function getReadTime(content) {
   margin: 80px 0 24px -90px;
 }
 
-.ed-preview-content :deep(.copy-button-container) {
+.ed-preview-blog-content .copy-button-container {
   display: flex;
   position: relative;
   align-items: flex-start;
@@ -3982,7 +4132,7 @@ function getReadTime(content) {
   cursor: auto;
 }
 
-.ed-preview-content :deep(.copy-button) {
+.ed-preview-blog-content .copy-button {
   display: flex;
   position: relative;
   align-items: center;
@@ -4001,13 +4151,13 @@ function getReadTime(content) {
   user-select: none;
 }
 
-.ed-preview-content :deep(.block:hover .copy-button),
-.ed-preview-content :deep(.copy-button:focus-visible),
-.ed-preview-content :deep(.copy-button:hover) {
+.ed-preview-blog-content .block:hover .copy-button,
+.ed-preview-blog-content .copy-button:focus-visible,
+.ed-preview-blog-content .copy-button:hover {
   opacity: 1;
 }
 
-.ed-preview-content :deep(.copy-button-background) {
+.ed-preview-blog-content .copy-button-background {
   position: absolute;
   width: 48px;
   height: 48px;
@@ -4019,19 +4169,19 @@ function getReadTime(content) {
   z-index: 1;
 }
 
-.ed-preview-content :deep(.copy-button:focus-visible + .copy-button-background),
-.ed-preview-content :deep(.copy-button:hover + .copy-button-background) {
+.ed-preview-blog-content .copy-button:focus-visible + .copy-button-background,
+.ed-preview-blog-content .copy-button:hover + .copy-button-background {
   opacity: 1;
 }
 
-.ed-preview-content :deep(.scroll-target) {
+.ed-preview-blog-content .scroll-target {
   display: block;
   position: absolute;
   width: 0;
   height: 0;
 }
 
-.ed-preview-content :deep(.tooltip) {
+.ed-preview-blog-content .tooltip {
   display: block;
   position: absolute;
   bottom: -28px;
@@ -4051,31 +4201,31 @@ function getReadTime(content) {
   white-space: nowrap;
 }
 
-.ed-preview-content :deep(.tooltip .deactivated) {
+.ed-preview-blog-content .tooltip .deactivated {
   position: absolute;
   transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
   opacity: 1;
   visibility: visible;
 }
 
-.ed-preview-content :deep(.tooltip .activated) {
+.ed-preview-blog-content .tooltip .activated {
   position: absolute;
   transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
   opacity: 0;
   visibility: hidden;
 }
 
-.ed-preview-content :deep(.text-chunk) {
+.ed-preview-blog-content .text-chunk {
   display: block;
 }
 
 /* 移动端隐藏 copy-button */
 @media screen and (max-width: 1294px) {
-  .ed-preview-content :deep(.block) {
+  .ed-preview-blog-content .block {
     display: block;
     margin: 64px 0 24px 0;
   }
-  .ed-preview-content :deep(.copy-button-container) {
+  .ed-preview-blog-content .copy-button-container {
     display: none;
   }
 }
@@ -4096,87 +4246,113 @@ function getReadTime(content) {
   color: var(--md-sys-color-on-surface, #e6e1e5);
 }
 
-[data-theme="dark"] .ed-preview-title {
+/* mio-header 暗色 */
+[data-theme="dark"] .ed-preview-primary-container {
+  background: var(--md-sys-color-surface-container-low, #1d1b20);
+}
+
+[data-theme="dark"] .ed-preview-date,
+[data-theme="dark"] .ed-preview-title-block h1,
+[data-theme="dark"] .ed-preview-description {
   color: var(--md-sys-color-on-surface, #e6e1e5);
 }
 
-[data-theme="dark"] .ed-preview-excerpt {
+[data-theme="dark"] .ed-preview-split-asset-image {
+  border-color: var(--md-sys-color-surface-variant, #49454f);
+}
+
+[data-theme="dark"] .ed-preview-split-asset-image__foreground {
+  background: linear-gradient(
+    135deg,
+    var(--md-sys-color-primary-container, #4a3d6a) 0%,
+    var(--md-sys-color-secondary-container, #4a436a) 50%,
+    var(--md-sys-color-tertiary-container, #6a3d4a) 100%
+  );
+}
+
+/* authors 暗色 */
+[data-theme="dark"] .ed-preview-overline {
+  color: var(--md-sys-color-on-surface-variant, #cac4d0);
+}
+
+[data-theme="dark"] .ed-preview-author-name {
   color: var(--md-sys-color-on-surface, #e6e1e5);
 }
 
-[data-theme="dark"] .ed-preview-meta {
-  color: var(--md-sys-color-on-surface, #e6e1e5);
+[data-theme="dark"] .ed-preview-author-role {
+  color: var(--md-sys-color-on-surface-variant, #cac4d0);
 }
 
 [data-theme="dark"] .ed-preview-separator {
   border-top-color: var(--md-sys-color-outline-variant, #49454f);
 }
 
-[data-theme="dark"] .ed-preview-content {
+/* blog-content 暗色 */
+[data-theme="dark"] .ed-preview-blog-content {
   color: var(--md-sys-color-on-surface, #e6e1e5);
 }
 
-[data-theme="dark"] .ed-preview-content :deep(h2),
-[data-theme="dark"] .ed-preview-content :deep(h2.linkable) {
+[data-theme="dark"] .ed-preview-blog-content h2,
+[data-theme="dark"] .ed-preview-blog-content h2.linkable {
   color: var(--md-sys-color-on-surface, #e6e1e5);
 }
 
-[data-theme="dark"] .ed-preview-content :deep(h3) {
+[data-theme="dark"] .ed-preview-blog-content h3 {
   color: var(--md-sys-color-on-surface, #e6e1e5);
 }
 
-[data-theme="dark"] .ed-preview-content :deep(p),
-[data-theme="dark"] .ed-preview-content :deep(li) {
+[data-theme="dark"] .ed-preview-blog-content p,
+[data-theme="dark"] .ed-preview-blog-content li {
   color: var(--md-sys-color-on-surface, #e6e1e5);
 }
 
-[data-theme="dark"] .ed-preview-content :deep(blockquote) {
+[data-theme="dark"] .ed-preview-blog-content blockquote {
   color: var(--md-sys-color-on-surface-variant, #cac4d0);
 }
 
-[data-theme="dark"] .ed-preview-content :deep(code) {
+[data-theme="dark"] .ed-preview-blog-content code {
   background: var(--md-sys-color-surface-container, #2b292b);
   color: var(--md-sys-color-on-surface, #e6e1e5);
 }
 
-[data-theme="dark"] .ed-preview-content :deep(pre) {
+[data-theme="dark"] .ed-preview-blog-content pre {
   background: #1c1b1f;
   border-color: var(--md-sys-color-surface-variant, #49454f);
 }
 
-[data-theme="dark"] .ed-preview-content :deep(strong) {
+[data-theme="dark"] .ed-preview-blog-content strong {
   color: var(--md-sys-color-on-surface, #e6e1e5);
 }
 
-[data-theme="dark"] .ed-preview-content :deep(a) {
+[data-theme="dark"] .ed-preview-blog-content a {
   color: var(--md-sys-color-primary, #d0bcff);
 }
 
-[data-theme="dark"] .ed-preview-content :deep(a:hover) {
+[data-theme="dark"] .ed-preview-blog-content a:hover {
   background: var(--md-sys-color-primary-container, #4a3d6a);
 }
 
-[data-theme="dark"] .ed-preview-content :deep(table) {
+[data-theme="dark"] .ed-preview-blog-content table {
   border-color: var(--md-sys-color-surface-variant, #49454f);
 }
 
-[data-theme="dark"] .ed-preview-content :deep(table th) {
+[data-theme="dark"] .ed-preview-blog-content table th {
   background: var(--md-sys-color-surface-container-low, #1e1b1f);
   color: var(--md-sys-color-on-surface-variant, #cac4d0);
 }
 
-[data-theme="dark"] .ed-preview-content :deep(table td),
-[data-theme="dark"] .ed-preview-content :deep(table th) {
+[data-theme="dark"] .ed-preview-blog-content table td,
+[data-theme="dark"] .ed-preview-blog-content table th {
   border-top-color: var(--md-sys-color-surface-variant, #49454f);
   border-right-color: var(--md-sys-color-surface-variant, #49454f);
 }
 
-[data-theme="dark"] .ed-preview-content :deep(ol > li::before) {
+[data-theme="dark"] .ed-preview-blog-content ol > li::before {
   background: var(--md-sys-color-inverse-surface, #dadce0);
   color: var(--md-sys-color-inverse-on-surface, #1c1b1f);
 }
 
-[data-theme="dark"] .ed-preview-content :deep(ul li::before) {
+[data-theme="dark"] .ed-preview-blog-content ul li::before {
   filter: brightness(0) invert(1);
   opacity: 0.7;
 }
