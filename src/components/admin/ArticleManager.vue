@@ -23,7 +23,7 @@
     <div v-else :class="{ 'content-fadein': loader.fadeInActive.value }">
 
       <!-- ======== 编辑器模式 ======== -->
-      <section v-if="editingIndex !== -1" class="ed">
+      <section v-if="editingIndex !== -1" class="ed" :class="{ 'ed--enter': editorTransition === 'enter' }">
         <!-- ======== 编辑器 Topbar ======== -->
         <header class="ed-topbar">
           <div class="ed-topbar__left">
@@ -382,7 +382,7 @@
       </section>
 
       <!-- ======== 列表模式 ======== -->
-      <template v-else>
+      <div v-else class="am-list-wrapper" :class="{ 'am-list--enter': editorTransition === 'leave' }">
         <!-- 顶部栏（共享组件） -->
         <AdminTopbar @new-article="onCreate" />
 
@@ -571,7 +571,7 @@
             </div>
           </div>
         </div>
-      </template>
+      </div>
 
       <!-- 删除确认 -->
       <md-dialog :open="showDeleteConfirm" @close="showDeleteConfirm = false">
@@ -623,7 +623,7 @@
 
     <!-- ======== 博客预览弹窗（完全复刻 BlogArticleView 发布页面布局）======== -->
     <Teleport to="body">
-      <div v-if="showPreviewDialog" class="ed-preview-overlay" @click.self="closePreview" @keydown.esc="closePreview">
+      <div v-show="showPreviewDialog" class="ed-preview-overlay" :class="{ 'ed-preview-overlay--leave': previewClosing }" @click.self="closePreview" @keydown.esc="closePreview">
         <!-- 预览工具栏 -->
         <header class="ed-preview-toolbar">
           <span class="ed-preview-toolbar__label">Preview</span>
@@ -712,6 +712,7 @@ const saving = ref(false)
 const showDeleteConfirm = ref(false)
 const deleteTarget = ref(null)
 const editingIndex = ref(-1)
+const editorTransition = ref('') // 'enter' | 'leave' | ''
 const markdownTab = ref('edit')
 const showPublishedFilter = ref('all')
 const textareaRef = ref(null)
@@ -854,6 +855,7 @@ const renderedMarkdown = computed(() => {
 
 // ===== 博客预览渲染（使用全局 marked + m3Renderer，与发布效果一致）=====
 const showPreviewDialog = ref(false)
+const previewClosing = ref(false)
 
 const previewHtml = computed(() => {
   try {
@@ -864,11 +866,26 @@ const previewHtml = computed(() => {
 })
 
 function onPreview() {
+  previewClosing.value = false
   showPreviewDialog.value = true
+  // 下一帧添加进入动画 class，确保 v-show 切换后动画能触发
+  requestAnimationFrame(() => {
+    const overlay = document.querySelector('.ed-preview-overlay')
+    if (overlay) {
+      overlay.classList.add('ed-preview-overlay--enter')
+      overlay.addEventListener('animationend', () => {
+        overlay.classList.remove('ed-preview-overlay--enter')
+      }, { once: true })
+    }
+  })
 }
 
 function closePreview() {
-  showPreviewDialog.value = false
+  previewClosing.value = true
+  setTimeout(() => {
+    showPreviewDialog.value = false
+    previewClosing.value = false
+  }, 250)
 }
 
 // ===== 字符/行统计 =====
@@ -1067,6 +1084,7 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside, 
 
 // ===== 编辑操作 =====
 function onCreate() {
+  editorTransition.value = 'enter'
   editingIndex.value = -2  // -2 表示新建模式（<0 且 ≠ -1，触发编辑器 v-if）
   form.value = {
     title: '',
@@ -1085,11 +1103,13 @@ function onCreate() {
   }
   markdownTab.value = 'edit'
   lastSavedAt.value = ''
+  setTimeout(() => { editorTransition.value = '' }, 350)
 }
 
 function onEdit(i) {
   if (i < 0 || i >= articles.value.length) return
   const art = articles.value[i]
+  editorTransition.value = 'enter'
   editingIndex.value = i
   const tags = Array.isArray(art.tags) ? art.tags : []
   form.value = {
@@ -1109,10 +1129,14 @@ function onEdit(i) {
   }
   markdownTab.value = 'edit'
   lastSavedAt.value = ''
+  setTimeout(() => { editorTransition.value = '' }, 350)
 }
 
 function closeEditor() {
+  editorTransition.value = 'leave'
   editingIndex.value = -1
+  // 动画结束后重置，避免后续切换残留
+  setTimeout(() => { editorTransition.value = '' }, 300)
 }
 
 // ===== 保存 =====
@@ -2248,6 +2272,55 @@ function getReadTime(content) {
   flex-direction: column;
   height: calc(100dvh - 16px);
   overflow: hidden;
+}
+
+/* 编辑器进入：从右侧滑入 + 淡入 */
+.ed--enter {
+  animation: editor-slide-in 300ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+@keyframes editor-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 列表进入：轻微淡入 + 上移 */
+.am-list--enter {
+  animation: list-fade-in 250ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+.am-list-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+@keyframes list-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 无障碍：减少动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .ed--enter,
+  .am-list--enter,
+  .ed-preview-overlay--enter,
+  .ed-preview-overlay--leave {
+    animation: none;
+  }
 }
 
 /* ======== 编辑器 Topbar ======== */
@@ -3687,6 +3760,38 @@ function getReadTime(content) {
   background: var(--md-sys-color-surface, #fff);
   display: flex;
   flex-direction: column;
+}
+
+/* 预览对话框进入：从底部滑入 + 淡入 */
+.ed-preview-overlay--enter {
+  animation: preview-slide-in 300ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+/* 预览对话框离开：向下滑出 + 淡出 */
+.ed-preview-overlay--leave {
+  animation: preview-slide-out 250ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+@keyframes preview-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes preview-slide-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(24px);
+  }
 }
 
 .ed-preview-toolbar {
