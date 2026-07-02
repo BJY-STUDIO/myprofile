@@ -3681,6 +3681,9 @@ function getReadTime(content) {
   padding: 56px;
   border-radius: 24px;
   background: var(--md-sys-color-surface-container-low, #f8f1f6);
+  background-repeat: no-repeat;
+  background-position: 0 50%;
+  background-size: cover;
   min-height: 544px;
 }
 
@@ -3759,14 +3762,16 @@ function getReadTime(content) {
 .ed-preview-blog-content-container {
   display: flex;
   flex-direction: row-reverse;
-  max-width: 1040px;
+  justify-content: center;
+  max-width: 1200px;
   margin: 0 auto;
   width: 100%;
 }
 
 .ed-preview-blog-section {
-  flex: 1;
+  flex: 1 1 0%;
   min-width: 0;
+  max-width: 840px;
 }
 
 /* authors（对照 BlogArticleView .authors）*/
@@ -4170,8 +4175,29 @@ function getReadTime(content) {
 }
 
 .ed-preview-blog-content .copy-button:focus-visible + .copy-button-background,
-.ed-preview-blog-content .copy-button:hover + .copy-button-background {
+.ed-preview-blog-content .copy-button:focus-visible ~ .tooltip,
+.ed-preview-blog-content .copy-button:hover + .copy-button-background,
+.ed-preview-blog-content .copy-button:hover ~ .tooltip {
   opacity: 1;
+}
+
+/* activated 状态：背景变色 + tooltip 切换文字 */
+.ed-preview-blog-content .copy-button.activated + .copy-button-background {
+  background: var(--md-sys-color-tertiary-container, #ffd8e4);
+}
+
+.ed-preview-blog-content .copy-button.activated ~ .tooltip {
+  width: 86px;
+}
+
+.ed-preview-blog-content .copy-button.activated ~ .tooltip .deactivated {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.ed-preview-blog-content .copy-button.activated ~ .tooltip .activated {
+  opacity: 1;
+  visibility: visible;
 }
 
 .ed-preview-blog-content .scroll-target {
@@ -4219,6 +4245,24 @@ function getReadTime(content) {
   display: block;
 }
 
+/* ================================================================
+   相邻兄弟选择器（对照 BlogArticleView 间距规则）
+   ================================================================ */
+.ed-preview-blog-content mio-code-snippet + p {
+  margin-top: 32px;
+}
+
+.ed-preview-blog-content mio-code-snippet + ol,
+.ed-preview-blog-content mio-code-snippet + ul,
+.ed-preview-blog-content figure + ol,
+.ed-preview-blog-content figure + ul {
+  margin-top: 56px;
+}
+
+.ed-preview-blog-content .mio-table + p {
+  margin-top: 32px;
+}
+
 /* 移动端隐藏 copy-button */
 @media screen and (max-width: 1294px) {
   .ed-preview-blog-content .block {
@@ -4264,9 +4308,9 @@ function getReadTime(content) {
 [data-theme="dark"] .ed-preview-split-asset-image__foreground {
   background: linear-gradient(
     135deg,
-    var(--md-sys-color-primary-container, #4a3d6a) 0%,
-    var(--md-sys-color-secondary-container, #4a436a) 50%,
-    var(--md-sys-color-tertiary-container, #6a3d4a) 100%
+    var(--md-sys-color-primary-container, #21005d) 0%,
+    var(--md-sys-color-secondary-container, #4a4458) 50%,
+    var(--md-sys-color-tertiary-container, #633b48) 100%
   );
 }
 
@@ -4353,7 +4397,20 @@ function getReadTime(content) {
 }
 
 [data-theme="dark"] .ed-preview-blog-content ul li::before {
-  filter: brightness(0) invert(1);
-  opacity: 0.7;
+  background-image: url("data:image/svg+xml,%3Csvg width='8' height='8' viewBox='0 0 8 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.95843 0.279933C5.5378 -0.353974 6.58452 0.173492 6.41974 1.01632L6.05454 2.88412C5.99767 3.17501 6.09646 3.47451 6.31525 3.67447L7.72007 4.95843C8.35397 5.5378 7.82651 6.58452 6.98368 6.41974L5.11588 6.05454C4.82499 5.99767 4.52549 6.09646 4.32553 6.31525L3.04157 7.72007C2.4622 8.35397 1.41548 7.82651 1.58026 6.98368L1.94545 5.11588C2.00233 4.82499 1.90354 4.52549 1.68475 4.32553L0.279933 3.04157C-0.353974 2.4622 0.173492 1.41548 1.01632 1.58026L2.88412 1.94545C3.17501 2.00233 4.47451 1.90354 3.67447 1.68475L4.95843 0.279933Z' fill='%23E3E3E3'/%3E%3C/svg%3E");
+}
+
+/* copy-button 暗色 */
+[data-theme="dark"] .ed-preview-blog-content .copy-button {
+  color: var(--md-sys-color-on-surface, #e6e1e5);
+}
+
+[data-theme="dark"] .ed-preview-blog-content .copy-button-background {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #cac4d0) 8%, transparent);
+}
+
+[data-theme="dark"] .ed-preview-blog-content .tooltip {
+  background: #fefbff;
+  color: #1f1f1f;
 }
 </style>
