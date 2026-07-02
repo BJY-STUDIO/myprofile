@@ -2436,7 +2436,8 @@ function getReadTime(content) {
 }
 
 .ed-outline__item-remove {
-  display: none;
+  visibility: hidden;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 20px;
@@ -2454,7 +2455,7 @@ function getReadTime(content) {
 }
 
 .ed-outline__item:hover .ed-outline__item-remove {
-  display: inline-flex;
+  visibility: visible;
 }
 
 .ed-outline__empty {
@@ -2681,8 +2682,8 @@ function getReadTime(content) {
   border: none;
   background: var(--md-sys-color-surface, #fff);
   color: var(--md-sys-color-on-surface, #1c1b1f);
-  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-  font-size: 14px;
+  font-family: 'Google Sans', 'Noto Sans SC', 'Google Sans Mono', monospace;
+  font-size: 15px;
   line-height: 1.7;
   resize: none;
   outline: none;
