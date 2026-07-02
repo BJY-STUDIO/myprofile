@@ -627,7 +627,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { cmCreate, cmUpdate, cmDelete } from '@/services/articleService'
 import { useAdminLoader } from '@/composables/useAdminLoader'
-import { marked } from 'marked'
+import { Marked } from 'marked'
 import '@material/web/button/filled-button'
 import '@material/web/button/outlined-button'
 import '@material/web/button/text-button'
@@ -780,9 +780,12 @@ const form = ref({
 })
 
 // ===== Markdown 渲染 =====
+// 使用独立的 Marked 实例，避免 articleService 全局配置的 m3Renderer（copy-link 等）
+const editorMarked = new Marked()
+
 const renderedMarkdown = computed(() => {
   try {
-    return marked.parse(form.value.content || '')
+    return editorMarked.parse(form.value.content || '')
   } catch {
     return form.value.content || ''
   }
