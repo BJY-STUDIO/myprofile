@@ -3604,9 +3604,14 @@ function getReadTime(content) {
   color: #eeffff;
 }
 
+[data-theme="dark"] .ed-content__preview pre code {
+  background: none;
+  color: inherit;
+}
+
 [data-theme="dark"] .ed-content__preview code {
-  background: #2b2b2b;
-  color: #eeffff;
+  background: var(--md-sys-color-surface-container, #2b292b);
+  color: var(--md-sys-color-on-surface, #e6e1e3);
 }
 
 [data-theme="dark"] .ed-content__title {
