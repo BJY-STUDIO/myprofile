@@ -620,6 +620,35 @@
         <span class="operation-notice__text">{{ operationMessage }}</span>
       </div>
     </div>
+
+    <!-- ======== 博客预览弹窗 ======== -->
+    <Teleport to="body">
+      <div v-if="showPreviewDialog" class="ed-preview-overlay" @click.self="closePreview" @keydown.esc="closePreview">
+        <!-- 预览工具栏 -->
+        <header class="ed-preview-toolbar">
+          <span class="ed-preview-toolbar__label">Preview</span>
+          <div class="ed-preview-toolbar__right">
+            <button class="ed-btn ed-btn--outlined ed-preview-toolbar__btn" @click="closePreview">
+              <span class="material-symbols-rounded">close</span> Close
+            </button>
+          </div>
+        </header>
+        <!-- 预览内容（博客风格） -->
+        <article class="ed-preview-body">
+          <h1 class="ed-preview-title">{{ form.title || 'Untitled Article' }}</h1>
+          <p v-if="form.description" class="ed-preview-excerpt">{{ form.description }}</p>
+          <div class="ed-preview-meta">
+            <span v-if="form.date">{{ form.date }}</span>
+            <span v-else>{{ new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span>
+            <span v-if="formTags.length" class="ed-preview-tags">
+              <AdminTag v-for="tag in formTags.slice(0, 5)" :key="tag" :text="tag" size="sm" />
+            </span>
+          </div>
+          <hr class="ed-preview-separator" />
+          <div class="blog-content ed-preview-content" v-html="previewHtml"></div>
+        </article>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -628,6 +657,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { cmCreate, cmUpdate, cmDelete } from '@/services/articleService'
 import { useAdminLoader } from '@/composables/useAdminLoader'
 import { Marked } from 'marked'
+import { marked as globalMarked } from 'marked'
 import '@material/web/button/filled-button'
 import '@material/web/button/outlined-button'
 import '@material/web/button/text-button'
@@ -791,6 +821,25 @@ const renderedMarkdown = computed(() => {
   }
 })
 
+// ===== 博客预览渲染（使用全局 marked + m3Renderer，与发布效果一致）=====
+const showPreviewDialog = ref(false)
+
+const previewHtml = computed(() => {
+  try {
+    return globalMarked.parse(form.value.content || '')
+  } catch {
+    return form.value.content || ''
+  }
+})
+
+function onPreview() {
+  showPreviewDialog.value = true
+}
+
+function closePreview() {
+  showPreviewDialog.value = false
+}
+
 // ===== 字符/行统计 =====
 const charCount = computed(() => (form.value.content || '').length)
 const lineCount = computed(() => {
@@ -898,10 +947,6 @@ function toggleMarkdownMode() {
   const modes = ['edit', 'split', 'preview']
   const idx = modes.indexOf(markdownTab.value)
   markdownTab.value = modes[(idx + 1) % modes.length]
-}
-
-function onPreview() {
-  markdownTab.value = 'preview'
 }
 
 // ===== 筛选 =====
@@ -3546,5 +3591,277 @@ function getReadTime(content) {
 [data-theme="dark"] .am-subnav::-webkit-scrollbar-thumb {
   background: var(--md-sys-color-outline-variant, #49454f);
   border-radius: 4px;
+}
+
+/* ======== 博客预览弹窗 ======== */
+.ed-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: var(--md-sys-color-surface, #fff);
+  display: flex;
+  flex-direction: column;
+  font-family: 'Google Sans', 'Noto Sans SC', sans-serif;
+}
+
+.ed-preview-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  height: 56px;
+  min-height: 56px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+  background: var(--md-sys-color-surface, #fff);
+  flex-shrink: 0;
+}
+
+.ed-preview-toolbar__label {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #111827);
+}
+
+.ed-preview-toolbar__right {
+  display: flex;
+  gap: 8px;
+}
+
+.ed-preview-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 48px 24px 80px;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ed-preview-title {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--md-sys-color-on-surface, #111827);
+  margin: 0 0 16px;
+}
+
+.ed-preview-excerpt {
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  margin: 0 0 20px;
+}
+
+.ed-preview-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
+  margin-bottom: 24px;
+}
+
+.ed-preview-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ed-preview-separator {
+  border: none;
+  border-top: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+  margin: 0 0 32px;
+}
+
+.ed-preview-content {
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+.ed-preview-content :deep(h2) {
+  font-size: 24px;
+  font-weight: 700;
+  margin-top: 40px;
+  margin-bottom: 12px;
+  line-height: 1.3;
+  color: var(--md-sys-color-on-surface, #111827);
+}
+
+.ed-preview-content :deep(h3) {
+  font-size: 20px;
+  font-weight: 600;
+  margin-top: 32px;
+  margin-bottom: 10px;
+  line-height: 1.3;
+  color: var(--md-sys-color-on-surface, #1f2937);
+}
+
+.ed-preview-content :deep(p) {
+  margin: 0 0 16px;
+}
+
+.ed-preview-content :deep(ul),
+.ed-preview-content :deep(ol) {
+  margin: 0 0 16px;
+  padding-left: 24px;
+}
+
+.ed-preview-content :deep(li) {
+  margin-bottom: 4px;
+}
+
+.ed-preview-content :deep(blockquote) {
+  border-left: 3px solid var(--md-sys-color-primary, #635bff);
+  padding: 12px 20px;
+  margin: 0 0 16px;
+  background: var(--md-sys-color-surface-container-lowest, #f9fafb);
+  border-radius: 0 8px 8px 0;
+  color: var(--md-sys-color-on-surface-variant, #4b5563);
+}
+
+.ed-preview-content :deep(code) {
+  background: var(--md-sys-color-surface-container-highest, #f3f4f6);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Google Sans Mono', monospace;
+  font-size: 0.9em;
+}
+
+.ed-preview-content :deep(pre) {
+  background: #1e1e2e;
+  color: #cdd6f4;
+  padding: 16px 20px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 0 0 16px;
+}
+
+.ed-preview-content :deep(pre code) {
+  background: none;
+  padding: 0;
+  color: inherit;
+  font-size: 14px;
+}
+
+.ed-preview-content :deep(a) {
+  color: var(--md-sys-color-primary, #635bff);
+  text-decoration: none;
+}
+
+.ed-preview-content :deep(a:hover) {
+  text-decoration: underline;
+}
+
+.ed-preview-content :deep(img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 16px 0;
+}
+
+.ed-preview-content :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 16px;
+}
+
+.ed-preview-content :deep(th),
+.ed-preview-content :deep(td) {
+  border: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.ed-preview-content :deep(th) {
+  background: var(--md-sys-color-surface-container, #f9fafb);
+  font-weight: 600;
+}
+
+.ed-preview-content :deep(hr) {
+  border: none;
+  border-top: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+  margin: 24px 0;
+}
+
+/* copy-link 按钮样式（博客渲染结果中包含） */
+.ed-preview-content :deep(.copy-button-container) {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+.ed-preview-content :deep(.copy-button) {
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+  font-size: 18px !important;
+}
+
+.ed-preview-content :deep(.copy-button:hover) {
+  opacity: 1;
+}
+
+.ed-preview-content :deep(.tooltip) {
+  display: none;
+}
+
+/* 暗色模式预览 */
+[data-theme="dark"] .ed-preview-overlay {
+  background: var(--md-sys-color-surface, #141218);
+}
+
+[data-theme="dark"] .ed-preview-toolbar {
+  background: var(--md-sys-color-surface, #1d1b20);
+  border-bottom-color: var(--md-sys-color-outline-variant, #49454f);
+}
+
+[data-theme="dark"] .ed-preview-title {
+  color: var(--md-sys-color-on-surface, #e6e1e5);
+}
+
+[data-theme="dark"] .ed-preview-excerpt {
+  color: var(--md-sys-color-on-surface-variant, #cac4d0);
+}
+
+[data-theme="dark"] .ed-preview-meta {
+  color: var(--md-sys-color-on-surface-variant, #cac4d0);
+}
+
+[data-theme="dark"] .ed-preview-separator {
+  border-top-color: var(--md-sys-color-outline-variant, #49454f);
+}
+
+[data-theme="dark"] .ed-preview-content {
+  color: var(--md-sys-color-on-surface, #e6e1e5);
+}
+
+[data-theme="dark"] .ed-preview-content :deep(h2) {
+  color: var(--md-sys-color-on-surface, #e6e1e5);
+}
+
+[data-theme="dark"] .ed-preview-content :deep(h3) {
+  color: var(--md-sys-color-on-surface-variant, #d0bcff);
+}
+
+[data-theme="dark"] .ed-preview-content :deep(blockquote) {
+  background: var(--md-sys-color-surface-container-high, #36343b);
+  color: var(--md-sys-color-on-surface-variant, #cac4d0);
+}
+
+[data-theme="dark"] .ed-preview-content :deep(code) {
+  background: var(--md-sys-color-surface-container-high, #36343b);
+  color: var(--md-sys-color-on-surface, #e6e1e5);
+}
+
+[data-theme="dark"] .ed-preview-content :deep(th) {
+  background: var(--md-sys-color-surface-container, #2b2930);
+}
+
+[data-theme="dark"] .ed-preview-content :deep(td),
+[data-theme="dark"] .ed-preview-content :deep(th) {
+  border-color: var(--md-sys-color-outline-variant, #49454f);
 }
 </style>
